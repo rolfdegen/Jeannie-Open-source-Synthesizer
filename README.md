@@ -13,3 +13,6 @@ color 1.8 inch TFT display allows a clear menu structure and easy operation of t
 parameters are entered via four rotary knobs below the display and an encoder for selecting the sound
 programmes and switching to the menu functions. In addition, there are six buttons for operating special
 synthesizer functions.
+
+
+![Jeannie 1](https://user-images.githubusercontent.com/16689445/152534814-87334fe1-94c6-498a-ba04-e4dca6247ee5.PNG)
