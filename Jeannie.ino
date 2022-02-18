@@ -6,10 +6,10 @@
 //
 //  Software and Software by Rolf Degen / TSynt 
 //
-//  Build Version 1.22.X with State Variable Filter or Ladder Filter
+//  Build Version 1.30.X with State Variable Filter or Ladder Filter
 //  Info: Filter type can be set by definition on the AudioPatching.h
 //
-//  Date: 03.02.2022
+//  Date: 15.02.2022
 //  Teensy 4.1 Development Board
 //  ARM Cortex-M7 CPU 600MHz 1024K RAM  8MB Flash 4K EEPROM
 //*************************************************************************
@@ -21,7 +21,6 @@
 #include <SPI.h>
 #include <SD.h>
 #include <MIDI.h>
-#include <TeensyThreads.h>
 #include <Mcp320x.h>
 #include <Entropy.h>
 #include "MidiCC.h"
@@ -190,30 +189,22 @@ boolean myPrgChangeFlag = false;
 uint8_t myPrgChangeChannel = 0;
 uint8_t myPrgChangeProgram = 0;
 
-//*************************************************************************
-// Prototyp
-//*************************************************************************
-void setLED (uint8_t Pin, boolean Status);
-void initHC595 (void);
-void initPWMFx (void);
-void setFxPrg (uint8_t PrgNo);
-void updateFxChip (void);
-int convertLFOWaveform(int value);
-void updateBoost (void);
-void reinitialisePots (void);
-void printError(uint8_t index);
-void convertINTtoFloat (void);
-void set_initPatchData (void);
-void initPotentiometers (void);
-void printUnisonDetune(void);
-void Sequencer_MidiClk(void);
-void SequencerRecNotes (uint8_t note, uint8_t velo);
-int freeRam (void);
+// test free ram -----------------------------------------------------
+#define NUM_SHOW sizeofFreeITCM
+uint32_t *ptrFreeITCM;  // Set to Usable ITCM free RAM
+uint32_t  sizeofFreeITCM; // sizeof free RAM in uint32_t units.
+uint32_t  SizeLeft_etext;
+extern unsigned long _stextload;  // FROM LINKER
+extern unsigned long _stext;
+extern unsigned long _etext;
+
 
 //*************************************************************************
 // Setup
 //*************************************************************************
-FLASHMEM void setup(void) {
+FLASHMEM void setup() {
+
+	Serial.begin(9600);
 	setupDisplay();
 	setupHardware();
 	Entropy.Initialize();	// Random generator
@@ -228,7 +219,8 @@ FLASHMEM void setup(void) {
 	setLED(2,false);
 	setLED(3,false);
 	setLED(4,false);
-	Serial.begin(9600);
+	
+	// Audio Memory buffer ------------------------------------------------
 	AudioMemory(84);	// Sample Blocks
 	
 	// init Waveforms -----------------------------------------------------
@@ -240,7 +232,6 @@ FLASHMEM void setup(void) {
 	pwmLfoB.phase(10.0f);//Off set phase of second osc
 	
 	filterMixer1.gain(1,-1.0f);
-	
 	
 	waveformMod1a.frequencyModulation(PITCHLFOOCTAVERANGE);
 	waveformMod1a.begin(WAVEFORMLEVEL, 440.0f, oscWaveformA);
@@ -449,12 +440,23 @@ FLASHMEM void setup(void) {
 	getPRGchange();
 	
 	// load Sound Programm ------------------------------------------------
-	initPatternData();
-	Init_Patch();
+	mux5Read = MCP_adc.read(MCP3208::Channel::SINGLE_7);
+	uint8_t value = mux5Read >> 5;
+	
+	// If the "Mute" button is pressed when switching on, then the system boots with patch A000
+	if (value < (S4 + hysteresis) && value > (S4 - hysteresis)) {
+	
+	} else {
+		initPatternData();
+		Init_Patch();
+	}
 	
 	// read Temp.
 	CPUdegree = tempmonGetTemp();
 	
+	// freeMem Monitor ----------------------------------------------------
+	Serial.println();
+	flexRamInfo();
 }
 
 
@@ -633,6 +635,7 @@ FLASHMEM void myNoteOn(byte channel, byte note, byte velocity) {
 	}
 
 	MidiStatusSymbol = 1;
+	EnvIdelFlag = true; // oscilloscope enabled
 	drawVoiceLED ();
 	
 	// Sequencer Recording notes
@@ -762,6 +765,7 @@ FLASHMEM void myNoteOn2(byte channel, byte note, byte velocity) {
 	}
 
 	MidiStatusSymbol = 1;
+	EnvIdelFlag = true; // oscilloscope enabled
 	drawVoiceLED ();
 	
 	// Sequencer Recording notes
@@ -926,7 +930,7 @@ FLASHMEM void voice8On(byte note, byte velocity, float level) {
 //*************************************************************************
 // endVoice
 //*************************************************************************
-void endVoice(int voice) {
+FLASHMEM void endVoice(int voice) {
 	switch (voice) {
 		case 1:
 		filterEnvelope1.noteOff();
@@ -986,7 +990,7 @@ void endVoice(int voice) {
 //*************************************************************************
 // my Note Off
 //*************************************************************************
-void myNoteOff(byte channel, byte note, byte velocity) {
+FLASHMEM void myNoteOff(byte channel, byte note, byte velocity) {
 	
 	if (SeqRecNoteCount > 0){
 		SeqRecNoteCount--;
@@ -1016,7 +1020,7 @@ void myNoteOff(byte channel, byte note, byte velocity) {
 //*************************************************************************
 // all Notes Off
 //*************************************************************************
-void allNotesOff() {
+FLASHMEM void allNotesOff() {
 	notesOn = 0;
 	for (int v = 0; v < NO_OF_VOICES; v++) {
 		endVoice(v + 1);
@@ -1026,7 +1030,7 @@ void allNotesOff() {
 //*************************************************************************
 // get VoiceNo
 //*************************************************************************
-int getVoiceNo(int note) {
+FLASHMEM int getVoiceNo(int note) {
 	voiceToReturn = -1;      //Initialise
 	earliestTime = millis(); //Initialise to now
 	if (note == -1) {
@@ -1069,7 +1073,7 @@ int getVoiceNo(int note) {
 //*************************************************************************
 // update Voices
 //*************************************************************************
-void updateVoice1() {
+FLASHMEM void updateVoice1() {
 
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1086,7 +1090,7 @@ void updateVoice1() {
 	}
 }
 
-void updateVoice2() {
+FLASHMEM void updateVoice2() {
 	
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1103,7 +1107,7 @@ void updateVoice2() {
 	}
 }
 
-void updateVoice3() {
+FLASHMEM void updateVoice3() {
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
 	
@@ -1118,7 +1122,7 @@ void updateVoice3() {
 		waveformMod3b.frequency((NOTEFREQS[voices[2].note + pitchNoteb] * detune) * oscMasterTune);
 	}
 }
-void updateVoice4() {
+FLASHMEM void updateVoice4() {
 	
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1135,7 +1139,7 @@ void updateVoice4() {
 	}
 }
 
-void updateVoice5() {
+FLASHMEM void updateVoice5() {
 	
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1152,7 +1156,7 @@ void updateVoice5() {
 	}
 }
 
-void updateVoice6() {
+FLASHMEM void updateVoice6() {
 	
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1169,7 +1173,7 @@ void updateVoice6() {
 	}
 }
 
-void updateVoice7() {
+FLASHMEM void updateVoice7() {
 	
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1187,7 +1191,7 @@ void updateVoice7() {
 }
 
 
-void updateVoice8() {
+FLASHMEM void updateVoice8() {
 
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
@@ -1918,40 +1922,6 @@ FLASHMEM void updateDetune() {
 }
 
 FLASHMEM void updatesAllVoices() {
-	
-	
-	// if oscDetune = 0 then sync all Osc
-	/*
-	if (oscDetuneSync  == true) {
-	
-	waveformMod1a.sync();
-	waveformMod1b.sync();
-	waveformMod2a.sync();
-	waveformMod2b.sync();
-	waveformMod3a.sync();
-	waveformMod3b.sync();
-	waveformMod4a.sync();
-	waveformMod4b.sync();
-	waveformMod5a.sync();
-	waveformMod5b.sync();
-	waveformMod6a.sync();
-	waveformMod6b.sync();
-	waveformMod7a.sync();
-	waveformMod7b.sync();
-	waveformMod8a.sync();
-	waveformMod8b.sync();
-	
-	oscSync1 = true;
-	oscSync2 = true;
-	oscSync3 = true;
-	oscSync4 = true;
-	oscSync5 = true;
-	oscSync6 = true;
-	oscSync7 = true;
-	oscSync8 = true;
-	oscDetuneSync = false;
-	}
-	*/
 	updateVoice1();
 	updateVoice2();
 	updateVoice3();
@@ -2138,12 +2108,6 @@ FLASHMEM void updateOscLevelA() {
 		setWaveformMixerLevel(0, (oscALevel / 2));//Osc 1 (A)
 		setWaveformMixerLevel(3, (oscALevel + oscBLevel) / 2.0f);//oscFX XOR level
 		setOscModMixerA(3,oscBLevel / 2);
-		/*
-		setWaveformMixerLevel(0, 1); //Osc1
-		setWaveformMixerLevel(3,0); //oscFX1
-		//setWaveformMixerLevel(3, (oscALevel + oscBLevel) / 2.0f);//oscFX XOR level
-		setOscModMixerA(3,oscBLevel);
-		*/
 		break;
 		case 2://XMod
 		//osc A sounds with increasing osc B mod
@@ -2186,12 +2150,6 @@ FLASHMEM void updateOscLevelB() {
 		setWaveformMixerLevel(1, (oscBLevel / 2));//Osc 2 (B)
 		setWaveformMixerLevel(3, (oscALevel + oscBLevel) / 2.0f);//oscFX XOR level
 		setOscModMixerA(3,oscALevel / 2);
-		/*
-		setWaveformMixerLevel(1, 0); //Osc2
-		setWaveformMixerLevel(3, 0); //oscFX1
-		//setWaveformMixerLevel(3, (oscALevel + oscBLevel) / 2.0f);//oscFX XOR level
-		setOscModMixerA(3,oscBLevel * 4);
-		*/
 		break;
 		case 2://XMod
 		//osc B sounds with increasing osc A mod
@@ -2289,7 +2247,6 @@ FLASHMEM void updateFilterFreq() {
 	}
 	*/
 	
-	
 	filterOctave = 6.9999f;
 	filter1.octaveControl(filterOctave);
 	filter2.octaveControl(filterOctave);
@@ -2298,17 +2255,13 @@ FLASHMEM void updateFilterFreq() {
 	filter5.octaveControl(filterOctave);
 	filter6.octaveControl(filterOctave);
 	filter7.octaveControl(filterOctave);
-	filter8.octaveControl(filterOctave);
-	
-	
-	//showCurrentParameterPage("Cutoff", String(int(filterFreq)) + " Hz");
-	
+	filter8.octaveControl(filterOctave);	
 }
 
 FLASHMEM void updateFilterRes() {
 	
 #if Filter == 1
-	const float maxReso = 3.9f;
+	const float maxReso = 4.9f;
 #else
 	const float maxReso = 1.8f;
 #endif
@@ -2386,14 +2339,12 @@ FLASHMEM void updateFilterMixer() {
 }
 
 FLASHMEM void updateLadderFilterDrive(uint8_t value) {
+#if Filter == 2
 	if (value <= 1) {
 		value = 1;
 	}
 	float Div = 4.0f / 128;
 	float drv = float(value * Div);
-	Serial.print("Filter drive: ");
-	Serial.println(drv);
-#if Filter == 2
 	filter1.inputDrive(drv);
 	filter2.inputDrive(drv);
 	filter3.inputDrive(drv);
@@ -2406,9 +2357,9 @@ FLASHMEM void updateLadderFilterDrive(uint8_t value) {
 }
 
 FLASHMEM void updateLadderFilterPassbandGain(uint8_t value) {
+#if Filter == 2
 		float Div = 0.5f / 128;
 		float drv = float(value * Div);
-#if Filter == 2
 		filter1.passbandGain(drv);
 		filter2.passbandGain(drv);
 		filter3.passbandGain(drv);
@@ -2422,16 +2373,7 @@ FLASHMEM void updateLadderFilterPassbandGain(uint8_t value) {
 
 FLASHMEM void updateFilterEnv() {
 	setFilterModMixer(0, filterEnv);
-	//showCurrentParameterPage("Filter Env.", String(filterEnv));
 }
-
-/*
-FLASHMEM void updatePitchEnv() {
-setOscModMixerA(1, pitchEnv);
-setOscModMixerB(1, pitchEnv);
-showCurrentParameterPage("Pitch Env Amt", String(pitchEnv));
-}
-*/
 
 FLASHMEM void updatePitchEnv() {
 	setOscModMixerA(1, pitchEnvA);
@@ -3100,28 +3042,8 @@ FLASHMEM void myCCgroup1 (byte control, byte value)
 	
 	// CC control No: 24
 	else if (control == CCoscfx) {
-		uint8_t val = (value / 21);
-		if (val == 0) {
-			oscFX = 0;
-		}
-		else if (val == 1) {
-			oscFX = 1;
-		}
-		else if (val == 2) {
-			oscFX = 2;
-		}
-		else if (val == 3) {
-			oscFX = 3;
-		}
-		else if (val == 4) {
-			oscFX = 4;
-		}
-		else if (val == 5) {
-			oscFX = 5;
-		}
-		else if (val == 6) {
-			oscFX = 6;
-		}
+		uint8_t val = (value / 21);		
+		oscFX = (val < 7)? val : 0;	
 		updateOscFX();
 	}
 	
@@ -3187,8 +3109,8 @@ FLASHMEM void myCCgroup2 (byte control, byte value)
 		if (Filter == 1) {
 			if (control == CCfilterres) {   // Filter_variable
 				//Pick up
-				if (!pickUpActive && pickUp && (resonancePrevValue <  ((3.9 * POWER[value - TOLERANCE]) + 1.1f) || resonancePrevValue >  ((3.9f * POWER[value + TOLERANCE]) + 1.1f))) return; //PICK-UP
-				filterRes = (3.9f * POWER[value]) + 1.1f; //If <1.1 there is noise at high cutoff freq
+				if (!pickUpActive && pickUp && (resonancePrevValue <  ((3.8 * LINEAR[value - TOLERANCE]) + 1.1f) || resonancePrevValue >  ((3.8f * LINEAR[value + TOLERANCE]) + 1.1f))) return; //PICK-UP
+				filterRes = (3.8f * LINEAR[value]) + 1.1f; //If <1.1 there is noise at high cutoff freq
 				updateFilterRes();
 				resonancePrevValue = filterRes;//PICK-UP
 				FilterRes = value;
@@ -5829,7 +5751,6 @@ FLASHMEM void checkSwitches(void) {
 
 	mux5Read = MCP_adc.read(MCP3208::Channel::SINGLE_7);
 	uint8_t value = mux5Read >> 5;
-	uint8_t hysteresis = 5;
 	
 	// Key S2 "UNISONO" ---------------------------------------------------
 	if (value < (S2 + hysteresis) && value > (S2 - hysteresis)) {
@@ -5964,7 +5885,7 @@ FLASHMEM void checkSwitches(void) {
 				renderCurrentPatchPage();
 			}
 		}
-		if (KeyDebounce == 5000 && KeyStatus == 0 && PageNr == 0) {
+		if (KeyDebounce == 50 && KeyStatus == 0 && PageNr == 0) {
 			PrgSelShift = true;
 		}
 	}
@@ -5996,7 +5917,6 @@ FLASHMEM void checkSwitches(void) {
 					renderCurrentPatchPage();	// draw "Load Pattern" screen
 				}
 			}
-			//else if (PageNr > 0 && S7KeyStatus == 1) {
 			else if (S7KeyStatus == 1) {
 				if (PageNr == 99) {				// save Patch Data
 					patchName = oldPatchName;
@@ -6039,7 +5959,7 @@ FLASHMEM void checkSwitches(void) {
 		}
 		
 		// long press LOAD/SAVE Key ---------------------------------------
-		if (KeyDebounce == 6000 && KeyStatus == 1) {
+		if (KeyDebounce == 2000 && KeyStatus == 1) {
 			if (PageNr == 97) {
 				PageNr = 98;				// draw "Save Pattern" Menu
 				renderCurrentPatchPage();
@@ -6367,13 +6287,76 @@ FLASHMEM void printCPUmon(void) {
 }
 
 //*************************************************************************
-// Check free Ram
+// print freeMem
 //*************************************************************************
 
-extern "C" char* sbrk(int incr);
-int freeRam() {
-	char top;
-	return &top - reinterpret_cast<char*>(sbrk(0));
+FLASHMEM void startup_late_hook(void) {
+		extern unsigned long _ebss;
+		unsigned long * p =  &_ebss;
+		size_t size = (size_t)(uint8_t*)__builtin_frame_address(0) - 16 - (uintptr_t) &_ebss;
+		memset((void*)p, 0, size);
+	}
+
+FLASHMEM unsigned long maxstack(void) {
+	extern unsigned long _ebss;
+	extern unsigned long _estack;
+	unsigned long * p =  &_ebss;
+	while (*p == 0) p++;
+	return (unsigned) &_estack - (unsigned) p;
+}
+
+FLASHMEM void flexRamInfo(void) {
+	
+	#if defined(__IMXRT1062__)
+	const unsigned DTCM_START = 0x20000000UL;
+	const unsigned OCRAM_START = 0x20200000UL;
+	const unsigned OCRAM_SIZE = 512;
+	const unsigned FLASH_SIZE = 8192;
+	#endif
+	
+	int itcm = 0;
+	int dtcm = 0;
+	int ocram = 0;
+	uint32_t gpr17 = IOMUXC_GPR_GPR17;
+
+	char __attribute__((unused)) dispstr[17] = {0};
+	dispstr[16] = 0;
+
+	for (int i = 15; i >= 0; i--) {
+		switch ((gpr17 >> (i * 2)) & 0b11) {
+			default: dispstr[15 - i] = '.'; break;
+			case 0b01: dispstr[15 - i] = 'O'; ocram++; break;
+			case 0b10: dispstr[15 - i] = 'D'; dtcm++; break;
+			case 0b11: dispstr[15 - i] = 'I'; itcm++; break;
+		}
+	}
+	
+	const char* fmtstr = "%-6s%7d %5.02f%% of %4dkB (%7d Bytes free) %s\n";
+	extern unsigned long _stext;
+	extern unsigned long _etext;
+	extern unsigned long _sdata;
+	extern unsigned long _ebss;
+	extern unsigned long _flashimagelen;
+	extern unsigned long _heap_start;
+	extern unsigned long _estack;
+
+	Serial.printf(fmtstr, "ITCM:",
+	(unsigned)&_etext - (unsigned)&_stext,
+	(float)((unsigned)&_etext - (unsigned)&_stext) / ((float)itcm * 32768.0f) * 100.0f,
+	itcm * 32,
+	itcm * 32768 - ((unsigned)&_etext - (unsigned)&_stext), "(RAM1) FASTRUN");
+
+	Serial.printf(fmtstr, "OCRAM:",
+	(unsigned)&_heap_start - OCRAM_START,
+	(float)((unsigned)&_heap_start - OCRAM_START) / (OCRAM_SIZE * 1024.0f) * 100.0f,
+	OCRAM_SIZE,
+	OCRAM_SIZE * 1024 - ((unsigned)&_heap_start - OCRAM_START), "(RAM2) DMAMEM, Heap");
+
+	Serial.printf(fmtstr, "FLASH:",
+	(unsigned)&_flashimagelen,
+	((unsigned)&_flashimagelen) / (FLASH_SIZE * 1024.0f) * 100.0f,
+	FLASH_SIZE,
+	FLASH_SIZE * 1024 - ((unsigned)&_flashimagelen), "FLASHMEM, PROGMEM");
 }
 
 //*************************************************************************
@@ -6607,6 +6590,7 @@ FLASHMEM void Sequencer (void) {
 						int bufAddr = (i * 16);
 						int myNote = SeqNote1Buf[SEQselectStepNo + bufAddr];
 						myNoteOn2(1,myNote, velo);
+						EnvIdelFlag = true; // oscilloscope enabled
 					}
 					if (SEQselectStepNo == 0 || SEQselectStepNo == 4 || SEQselectStepNo == 8 || SEQselectStepNo == 12) {
 						TempoLEDstate = true;	// set Tempo LED on
@@ -6727,6 +6711,31 @@ FLASHMEM void SequencerRecNotes (uint8_t note, uint8_t velo)
 }
 
 //*************************************************************************
+// Measurement free Memory
+//*************************************************************************
+
+FLASHMEM void getFreeITCM() { // end of CODE ITCM, skip full 32 bits
+	SizeLeft_etext = (32 * 1024) - (((uint32_t)&_etext - (uint32_t)&_stext) % (32 * 1024));
+	sizeofFreeITCM = SizeLeft_etext - 4;
+	sizeofFreeITCM /= sizeof(ptrFreeITCM[0]);
+	ptrFreeITCM = (uint32_t *) ( (uint32_t)&_stext + (uint32_t)&_etext + 4 );
+}
+FLASHMEM void showNumsITCM() {
+	// sizeofFreeITCM=9180 [#uint32_t=2295] SizeLeft_etext=9184   len ITCM=23584
+	Serial.printf( "\n\nsizeofFreeITCM=%u [#uint32_t=%u]\tSizeLeft_etext=%u \tlen ITCM=%u\n", sizeofFreeITCM * sizeof(uint32_t),
+	sizeofFreeITCM, SizeLeft_etext, ((uint32_t)&_etext - (uint32_t)&_stext) );
+	// &stext=0(0)  &_stextload=60001720(1610618656)  &etext=5c20(23584)
+	Serial.printf( "\n&stext=%x(%u) \t&_stextload=%x(%u)\t&etext=%x(%u) \n",
+	(uint32_t)&_stext, (uint32_t)&_stext, (uint32_t)&_stextload, (uint32_t)&_stextload,
+	(uint32_t)&_etext, (uint32_t)&_etext );
+	// &stext=0(0)  &etext=5c20(23584)  ptrFreeITCM[0]=5c24(23588)  pLast=8000(32768)
+	Serial.printf( "\n&stext=%x(%u) \t&etext=%x(%u) \tptrFreeITCM[0]=%x(%u) \tpLast=%x(%u) \n",
+	(uint32_t)&_stext, (uint32_t)&_stext, (uint32_t)&_etext, (uint32_t)&_etext,
+	(uint32_t)ptrFreeITCM, (uint32_t)ptrFreeITCM,
+	(uint32_t)ptrFreeITCM + sizeofFreeITCM * sizeof(uint32_t), (uint32_t)ptrFreeITCM + sizeofFreeITCM * sizeof(uint32_t) );
+}
+
+//*************************************************************************
 // LFO Modulator
 //*************************************************************************
 /*
@@ -6756,61 +6765,75 @@ FLASHMEM void MidiClockTimer (void)
 }
 
 
+
 //*************************************************************************
 // Main Loop
 //*************************************************************************
-void loop(void) {
-			
-		myPrgChange();
-		checkEncoder();
-		checkPots();
-		checkSwitches();
-		displayThread();
-		
-		if (PageNr == 9 && SEQStepStatus == true) {
-			drawSEQStepFrame(SEQselectStepNo);
-			SEQStepStatus = false;
+FLASHMEM void loop(void) {
+	
+	myPrgChange();
+	checkEncoder();
+	checkPots();
+	checkSwitches();
+	displayThread();
+	
+	if (PageNr == 9 && SEQStepStatus == true) {
+		drawSEQStepFrame(SEQselectStepNo);
+		SEQStepStatus = false;
+	}
+	
+	// set Midi Clock LED ------------------------------------------------
+	if (TempoLEDchange == true) {
+		setLED(3, TempoLEDstate);
+		TempoLEDchange = false;
+	}
+	
+	// read CPU Temp ------------------------------------------------------
+	if ((millis() - timer_Temperature) > 1250){
+		static uint8_t count = 0;
+		CPUdegree_temp += tempmonGetTemp();
+		count++;
+		if (count >= 32 ) {
+			CPUdegree = (CPUdegree_temp >> 5);
+			printTemperature();
+			CPUdegree_temp = 0;
+			count = 0;
 		}
-		
-		// set Midi Clock LED ------------------------------------------------
-		if (TempoLEDchange == true) {
-			setLED(3, TempoLEDstate);
-			TempoLEDchange = false;
+		timer_Temperature = millis();
+	}
+	
+	// CPU Audio Memory ---------------------------------------------------
+	if ((millis() - timer_CPUmon) > 500){
+		if (PageNr == 10) {
+			CPUaudioMem = AudioMemoryUsageMax();
+			printCPUmon();
+			AudioMemoryUsageMaxReset();
 		}
-		
-		// read CPU Temp ------------------------------------------------------
-			if ((millis() - timer_Temperature) > 1250){
-				static uint8_t count = 0;
-				CPUdegree_temp += tempmonGetTemp();
-				count++;
-				if (count >= 128 ) {
-					CPUdegree = (CPUdegree_temp >> 7); 
-					printTemperature();
-					CPUdegree_temp = 0;
-					count = 0;
-				}
-				timer_Temperature = millis();
-			}
-		
-		// CPU Audio Memory ---------------------------------------------------
-		if ((millis() - timer_CPUmon) > 577){
-			if (PageNr == 10) {
-				CPUaudioMem = AudioMemoryUsageMax();
-				printCPUmon();
-				AudioMemoryUsageMaxReset();
-			}
-			timer_CPUmon = millis();
-			if (unison == 2) {
-				if (unisoFlashStatus == 0) {
-					unisoFlashStatus = 1;
-					setLED(UnisonoLED, false);
-					
-				}
-				else {
-					setLED(UnisonoLED, true);
-					unisoFlashStatus = 0;
-				}
+		if (PageNr == 0) {
+			if (ampEnvelope1.isActive() == false &&
+			ampEnvelope2.isActive() == false &&
+			ampEnvelope3.isActive() == false &&
+			ampEnvelope4.isActive() == false &&
+			ampEnvelope5.isActive() == false &&
+			ampEnvelope6.isActive() == false &&
+			ampEnvelope7.isActive() == false &&
+			ampEnvelope8.isActive() == false) {
+			EnvIdelFlag = false;
 			}
 		}
+		timer_CPUmon = millis();
+		if (unison == 2) {
+			if (unisoFlashStatus == 0) {
+				unisoFlashStatus = 1;
+				setLED(UnisonoLED, false);
+				
+			}
+			else {
+				setLED(UnisonoLED, true);
+				unisoFlashStatus = 0;
+			}
+		}
+	}
 }
+
 
