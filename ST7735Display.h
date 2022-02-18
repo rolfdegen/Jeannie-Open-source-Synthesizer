@@ -101,6 +101,7 @@ void drawLFOframe(uint8_t frameNo);
 void drawMainPage (void);
 void drawOsc1Page (void);
 void drawOsc2Page (void);
+void drawOscSubMenu (void);
 void drawFilterPage (void);
 void drawFilterEnvPage (void);
 void drawAmpEnvPage (void);
@@ -129,6 +130,18 @@ void draw_PWM_curve(float value);
 void drawEnvMarkerVCF(int posx);
 void drawLFOMarkerVCF(int posx);
 void drawSEQpitchValue2(uint8_t SEQselectStepNo);
+
+
+//*************************************************************************
+// print const Text string from flash memory to xpos ypos on screen
+//*************************************************************************
+FLASHMEM print_String(uint16_t index, uint8_t xpos, uint8_t ypos) {
+	
+	char buffer[20];
+	strcpy_P(buffer, (char*)pgm_read_dword(&(String_Tab[index])));
+	tft.setCursor(xpos, ypos);
+	tft.println(buffer);
+}
 
 //*************************************************************************
 // draw Filter EnvMarker
@@ -1485,350 +1498,32 @@ FLASHMEM void printFxName(uint8_t PrgNo)
 //*************************************************************************
 FLASHMEM void printFxPOT(uint8_t PotNo, uint8_t PrgNo)
 {
-	tft.fillRect(3,71,155,10,ST7735_BLACK);
-	tft.setCursor(75,72);
-	tft.setTextColor(ST7735_GRAY);
-	tft.print("Time/Feedb.");
+	if (PrgNo == 0) {
+		return;
+	}
 	
-	switch (PrgNo) {
-		
-		case 1:			// Chorus 1
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(10,72);
-			tft.print("RevMix");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(67,72);
-			tft.print("Rate");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(112,72);
-			tft.print("ChorMix");
-			break;
-		};
-		break;
-		
-		case 2:			// Flanger
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(10,72);
-			tft.print("RevMix");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(67,72);
-			tft.print("Rate");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(112,72);
-			tft.print("FlanMix");
-			break;
-		};
-		break;
-		
-		case 3:			// Tremolo
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(10,72);
-			tft.print("RevMix");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(67,72);
-			tft.print("Rate");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(112,72);
-			tft.print("TremMix");
-			break;
-		};
-		break;
-		
-		case 4:			// Pitch-Shift
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(10,72);
-			tft.print("Pitch");
-			break;
-			case 1:
-			break;
-			case 2:
-			break;
-		};
-		break;
-		
-		case 5:			// Pitch-Echo
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(12,72);
-			tft.print("Shift");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(61,72);
-			tft.print("EchoDel");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(113,72);
-			tft.print("EchoMix");
-			break;
-		};
-		break;
-		
-		case 6:			// Reverb 1
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(15,72);
-			tft.print("Time");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(76,72);
-			tft.print("HP");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(128,72);
-			tft.print("LP");
-			break;
-		};
-		break;
-		
-		case 7:			// Reverb 2
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(15,72);
-			tft.print("Time");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(76,72);
-			tft.print("HP");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(128,72);
-			tft.print("LP");
-			break;
-		};
-		break;
-		
-		case 8:			// X-Delay
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(15,72);
-			tft.print("Time");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(57,72);
-			tft.print("Feedback");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(110,72);
-			tft.print("DMP/High");
-			break;
-		};
-		break;
-		
-		case 9:			// Chorus 2
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(7,72);
-			tft.print("LFO-FRQ");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(59,72);
-			tft.print("AMT/DEL");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(127,72);
-			tft.print("MIX");
-			break;
-		};
-		break;
-		
-		case 10:			// TONATOR
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(7,72);
-			tft.print("Pitch-L");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(59,72);
-			tft.print("Pitch-R");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(110,72);
-			tft.print("Feedback");
-			break;
-		};
-		break;
-		
-		case 11:			// Phaser
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(9,72);
-			tft.print("Depth");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(59,72);
-			tft.print("LFO-Frq");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(110,72);
-			tft.print("FrqRange");
-			break;
-		};
-		break;
-		
-		case 12:			// Flangerator
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(7,72);
-			tft.print("LFO-Frq");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(57,72);
-			tft.print("Time/Frq");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(118,72);
-			tft.print("Depth");
-			break;
-		};
-		break;
-		
-		case 13:			// Distorter
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(18,72);
-			tft.print("Mix");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(59,72);
-			tft.print("DistFrq");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(110,72);
-			tft.print("Feedback");
-			break;
-		};
-		break;
-		
-		case 14:			// Stereo-Echo-Rev
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(16,72);
-			tft.print("Time");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(62,72);
-			tft.print("Repeat");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(115,72);
-			tft.print("Reverb");
-			break;
-		};
-		break;
-		
-		case 15:			// Gate
-		switch(PotNo){
-			case 0:
-			tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(5,72);
-			tft.print("PreTime");
-			break;
-			case 1:
-			tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(59,72);
-			tft.print("GatTime");
-			break;
-			case 2:
-			tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
-			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(112,72);
-			tft.print("Damping");
-			break;
-		};
-		break;
-	};	
+	tft.fillRect(3,71,155,10,ST7735_BLACK);
+	tft.setTextColor(ST7735_GRAY);
+	print_String(65,75,72);			// print "Time/Feedb."
+	
+	if (PotNo == 0) {
+		tft.fillRoundRect(3,71,49,10,2,ST7735_GREEN);
+		tft.setTextColor(ST7735_BLACK);
+		// print Fx Parameter Name
+		print_String((FxName[PrgNo][PotNo]),FxName[PrgNo][PotNo + 3],72);
+	}
+	else if (PotNo == 1) {
+		tft.fillRoundRect(56,71,49,10,2,ST7735_GREEN);
+		tft.setTextColor(ST7735_BLACK);
+		// print Fx Parameter Name
+		print_String((FxName[PrgNo][PotNo]),FxName[PrgNo][PotNo + 3],72);
+	}
+	else if (PotNo == 2) {
+		tft.fillRoundRect(109,71,49,10,2,ST7735_GREEN);
+		tft.setTextColor(ST7735_BLACK);
+		// print Fx Parameter Name
+		print_String((FxName[PrgNo][PotNo]),FxName[PrgNo][PotNo + 3],72);
+	}
 }
 
 //*************************************************************************
@@ -2299,8 +1994,7 @@ FLASHMEM void drawEnvCurve(uint8_t ATKvalue, uint8_t DCYvalue, uint8_t SUSvalue,
 	} else envelopeType = envelopeType2;
 	
 	// delete old Envelope lines ------------------------------------------
-	tft.fillRect(8,36,90,52,ST7735_BLACK);
-	
+	tft.fillRect(8,36,115,52,ST7735_BLACK);
 	
 	// draw new Attack line ----------------------------------------------
 	float k = (envelopeType / 2);
@@ -5078,44 +4772,29 @@ FLASHMEM void drawOsc1Page (void)
 	enableScope(false);
 	tft.fillScreen(ST7735_BLACK);
 	
-	if (myPageShiftStatus[PageNr] == false) {	// shift key disabled
-		
+	if (myPageShiftStatus[PageNr] == false) {	// Osc1 Main Menu
 		tft.setCursor(0,0);
 		tft.fillRect(0,0,160,13,ST7735_GRAY);
 		tft.setTextColor(ST7735_WHITE);
 		tft.setFont(NULL);
 		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.println("OSC");
-		tft.setCursor(24,3);
-		tft.println("1");
-		tft.setCursor(5,21);
+		print_String(0,5,3);		// print "OSC"
+		print_String(27,24,3);		// print "1"
 		tft.setTextColor(ST7735_GRAY);
-		tft.println("WAVE");
-		tft.setCursor(5,40);
-		tft.println("PITCH");
-		tft.setCursor(5,59);
-		tft.println("P.ENV");
-		tft.setCursor(5,78);
-		tft.println("GLIDE");
-		tft.setCursor(5,97);
-		tft.println("LEVEL");
-		tft.setCursor(85,59);
-		tft.println("PWAMT");
-		tft.setCursor(85,78);
-		tft.println("PWMOD");
-		tft.setCursor(85,97);
-		tft.println("OSCMIX");
+		print_String(1,5,21);		// print "WAVE"
+		print_String(2,5,40);		// print "PITCH"
+		print_String(3,5,59);		// print "P.ENV"
+		print_String(4,5,78);		// print "GLIDE"
+		print_String(5,5,97);		// print "LEVEL"
+		print_String(6,85,59);		// print "PWAMT"
+		print_String(7,85,78);		// print "PWMOD"
+		print_String(8,85,97);		// print "OSCMIX"
 		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(5,115);
-		tft.println("SELECT");
-		tft.setCursor(50,115);
-		tft.println("VALUE");
-		tft.setCursor(95,115);
-		tft.println("BANK");
-		tft.setCursor(135,115);
-		tft.println("---");
-
+		print_String(29,5,115);		// print "SELECT"
+		print_String(30,50,115);	// print "VALUE"
+		print_String(36,95,115);	// print "BANK"
+		print_String(31,135,115);	// print "---"
+		
 		// draw Rect and Lines
 		for (uint8_t i = 0; i < 5; i++){
 			tft.fillRoundRect(54,19+(19*i),22,10,2,ST7735_BLUE);
@@ -5143,9 +4822,8 @@ FLASHMEM void drawOsc1Page (void)
 		tft.drawFastHLine(81,33,78,ST7735_BLACK);
 		
 		// draw inactive SUB maker
-		tft.setCursor(33,3);
 		tft.setTextColor(ST7735_LIGHTGRAY);
-		tft.print("SUB");
+		print_String(35,33,3);		// print "SUB"
 		
 		// draw WaveNr and WaveBank ---------------------------------------
 		tft.setCursor(56,21);
@@ -5211,7 +4889,6 @@ FLASHMEM void drawOsc1Page (void)
 		printPWMrate();
 		
 		// OSCMIX ---------------------------------------------------------
-		//tft.fillRoundRect(133,95,22,10,2,ST7735_BLUE);
 		tft.setCursor(135,97);
 		tft.setTextColor(ST7735_WHITE);
 		
@@ -5243,191 +4920,15 @@ FLASHMEM void drawOsc1Page (void)
 		
 		// Update parameter -----------------------------------------------
 		ParameterNr = ParameterNrMem[1];
-		drawParamterFrame(PageNr, ParameterNr);		
-	}
-	
-	// Shift key enabled --------------------------------------------------
-	else
-	{
-		tft.setCursor(0,0);
-		tft.fillRect(0,0,160,13,ST7735_GRAY);
-		tft.setTextColor(ST7735_GREEN);
-		tft.setFont(NULL);
-		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.println("OSC");
-		tft.setCursor(24,3);
-		tft.println("1");
-		tft.setCursor(5,21);
-		tft.setTextColor(ST7735_GRAY);
-		tft.println("WSHAPE");
-		tft.setCursor(5,40);
-		tft.println("GAIN");
-		tft.setCursor(5,59);
-		tft.println("SYNC");
-		tft.setCursor(5,78);
-		tft.println("TRANSP");
-		tft.setCursor(5,97);
-		tft.println("TUNE");
-		tft.setCursor(85,59);
-		tft.println("NOISE");
-		tft.setCursor(85,78);
-		tft.println("OSCMOD");
-		tft.setCursor(85,97);
-		tft.println("LFO2MOD");	
-		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(5,115);
-		tft.println("SELECT");
-		tft.setCursor(50,115);
-		tft.println("VALUE");
-		tft.setCursor(95,115);
-		tft.println("---");
-		tft.setCursor(135,115);
-		tft.println("---");
-		
-		// draw Rect and Lines
-		for (uint8_t i = 0; i < 5; i++){
-			tft.fillRoundRect(54,19+(19*i),22,10,2,ST7735_BLUE);
-		}
-		for (uint8_t i = 2; i < 5; i++){
-			tft.fillRoundRect(133,19+(19*i),22,10,2,ST7735_BLUE);
-		}
-		tft.drawFastVLine(0,14,95,ST7735_GRAY);
-		tft.drawFastVLine(80,14,95,ST7735_GRAY);
-		tft.drawFastVLine(159,14,95,ST7735_GRAY);
-		for (uint8_t i = 0; i < 6; i++){
-			tft.drawFastHLine(0,14+(19*i),160,ST7735_GRAY);
-		}
-		tft.drawFastHLine(81,33,78,ST7735_BLACK);
-		
-		// Wafeshaper -----------------------------------------------------
-		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(56, 21);
-		if (WShaperNo == 0) {
-			tft.print("OFF");
-		}
-		else tft.print(WShaperNo);
-		drawWaveshaperCurve(WShaperNo);
-		
-		// Waveshaper Drive
-		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(56, 40);
-		tft.print(WShaperDrive,1);
-		
-		// SYNC -----------------------------------------------------------
-		tft.fillRoundRect(54,57,22,10,2,ST7735_BLUE);
-		tft.setTextColor(ST7735_WHITE);
-		if (oscDetuneSync == true) {
-			tft.setCursor(59,59);
-			tft.print("ON");
-			} else {
-			tft.setCursor(56,59);
-			tft.print("OFF");
-		}
-		
-		// Transpose ------------------------------------------------------
-		tft.setCursor(56,78);
-		tft.setTextColor(ST7735_WHITE);
-		if (oscTranspose > 0) {
-			tft.print("+");
-		}
-		tft.print(oscTranspose);
-		
-		// Tune -----------------------------------------------------------
-		tft.setCursor(56,97);
-		tft.setTextColor(ST7735_WHITE);
-		int val = 0;
-		for (uint8_t i = 0; i < 128; i++) {
-			float mtune = MASTERTUNE[i];
-			if (mtune == oscMasterTune) {
-				val = i;
-				if (val >= 64) {
-					val--;
-				}
-				break;
-			}
-		}
-		if (val > 63) {
-			tft.print("+");
-		}
-		tft.print(val-63);
-		
-		// Noise ----------------------------------------------------------
-		for (uint8_t i = 0; i < 128; i++) {
-			myValue = LINEARCENTREZERO[i];
-			if (noiseLevel == myValue) {
-				value = i;
-				break;
-			}
-		}
-		tft.setCursor(135,59);
-		tft.setTextColor(ST7735_WHITE);
-		if (value >= 126) {
-			value = 126;
-		}
-		if (value >= 62 && value <= 64) {
-			tft.fillRoundRect(133,59,21,8,2,ST7735_BLUE);
-			tft.setCursor(135,59);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print("OFF");
-			tft.fillRect(128,59,5,7,ST7735_BLACK);
-		}
-		else if (value < 62) {
-			tft.println(62 - value);
-			tft.setCursor(122,59);
-			tft.fillRect(122,59,5,7,ST7735_BLACK);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print("W");
-		}
-		else {
-			tft.println(value - 64);
-			tft.setCursor(122,59);
-			tft.fillRect(122,59,5,7,ST7735_BLACK);
-			tft.setTextColor(ST77XX_MAGENTA);
-			tft.print("P");
-		}
-		
-		// OSCMOD ---------------------------------------------------------
-		tft.fillRoundRect(133,78,21,8,2,ST7735_BLUE);
-		tft.setCursor(135,78);
-		tft.setTextColor(ST7735_WHITE);
-		if (oscFX == 0) {
-			tft.println("OFF");
-		}
-		else if (oscFX == 1) {
-			tft.println("XOR");
-		}
-		else if (oscFX == 2) {
-			tft.println("XMO");
-		}
-		else if (oscFX == 3) {
-			tft.println("MOD");
-		}
-		else if (oscFX == 4) {
-			tft.println("AND");
-		}
-		else if (oscFX == 5) {
-			tft.setCursor(137,78);
-			tft.println("OR");
-		}
-		else if (oscFX == 6) {
-			tft.setCursor(137,78);
-			tft.println("FM");
-		}
-		
-		// VCFMOD ---------------------------------------------------------
-		uint8_t oscvcfmod = (OscVCFMOD * 127);
-		tft.fillRoundRect(133,97,21,8,2,ST7735_BLUE);
-		tft.setCursor(135,97);
-		tft.setTextColor(ST7735_WHITE);
-		tft.print(oscvcfmod);
-		
-		// Update parameter -----------------------------------------------
-		ParameterNr = ParameterNrMem[3];	// SUB Page
 		drawParamterFrame(PageNr, ParameterNr);
 	}
-		MidiStatusSymbol = 2; MidiSymbol();
-		drawPeakmeter();
+	
+	// Osc1 SUB Menu --------------------------------------------------
+	else { drawOscSubMenu();
+	}
+	
+	MidiStatusSymbol = 2; MidiSymbol();
+	drawPeakmeter();
 }
 
 //*************************************************************************
@@ -5438,46 +4939,34 @@ FLASHMEM void drawOsc2Page (void)
 	float myValue = 0;
 	int value = 0;
 	int parameter = 0;
+	
+	
 	enableScope(false);
 	tft.fillScreen(ST7735_BLACK);
 	
 	
-	if (myPageShiftStatus[PageNr] == false) {	// shift key disabled
+	if (myPageShiftStatus[PageNr] == false) {	// Osc2 main page
 		tft.setCursor(0,0);
 		tft.fillRect(0,0,160,13,ST7735_GRAY);
 		tft.setTextColor(ST7735_WHITE);
 		tft.setFont(NULL);
 		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.println("OSC");
-		tft.setCursor(24,3);
-		tft.println("2");
-		tft.setCursor(5,21);
+		print_String(0,5,3);		// print "OSC"
+		print_String(28,24,3);		// print "2"
 		tft.setTextColor(ST7735_GRAY);
-		tft.println("WAVE");
-		tft.setCursor(5,40);
-		tft.println("PITCH");
-		tft.setCursor(5,59);
-		tft.println("P.ENV");
-		tft.setCursor(5,78);
-		tft.println("DETUNE");
-		tft.setCursor(5,97);
-		tft.println("LEVEL");
-		tft.setCursor(85,59);
-		tft.println("PWAMT");
-		tft.setCursor(85,78);
-		tft.println("PWMOD");
-		tft.setCursor(85,97);
-		tft.print("OSCMIX");
+		print_String(1,5,21);		// print "WAVE"
+		print_String(2,5,40);		// print "PITCH"
+		print_String(3,5,59);		// print "P.ENV"
+		print_String(9,5,78);		// print "DETUNE"
+		print_String(5,5,97);		// print "LEVEL"
+		print_String(6,85,59);		// print "PWAMT"
+		print_String(7,85,78);		// print "PWMOD"
+		print_String(8,85,97);		// print "OSCMIX"
 		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(5,115);
-		tft.println("SELECT");
-		tft.setCursor(50,115);
-		tft.println("VALUE");
-		tft.setCursor(95,115);
-		tft.println("BANK");
-		tft.setCursor(135,115);
-		tft.println("---");
+		print_String(29,5,115);		// print "SELECT"
+		print_String(30,50,115);	// print "VALUE"
+		print_String(36,95,115);	// print "BANK"
+		print_String(31,135,115);	// print "---"
 		
 		// draw Rect and Lines
 		for (uint8_t i = 0; i < 5; i++){
@@ -5507,9 +4996,8 @@ FLASHMEM void drawOsc2Page (void)
 		tft.drawFastHLine(81,33,78,ST7735_BLACK);
 		
 		// draw inactive SUB maker
-		tft.setCursor(33,3);
 		tft.setTextColor(ST7735_LIGHTGRAY);
-		tft.print("SUB");
+		print_String(35,33,3);					// print "SUB"
 		
 		// draw Wave and BankNo -------------------------------------------
 		tft.setCursor(56,21);
@@ -5602,189 +5090,157 @@ FLASHMEM void drawOsc2Page (void)
 		drawParamterFrame(PageNr, ParameterNr);
 	}
 	
-	// Shift key enabled --------------------------------------------------
-	else
-	{
-		tft.setCursor(0,0);
-		tft.fillRect(0,0,160,13,ST7735_GRAY);
-		tft.setTextColor(ST7735_GREEN);
-		tft.setFont(NULL);
-		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.println("OSC");
-		tft.setCursor(24,3);
-		tft.println("2");
-		tft.setCursor(5,21);
-		tft.setTextColor(ST7735_GRAY);
-		tft.println("WSHAPE");
-		tft.setCursor(5,40);
-		tft.println("GAIN");
-		tft.setCursor(5,59);
-		tft.println("SYNC");
-		tft.setCursor(5,78);
-		tft.println("TRANSP");
-		tft.setCursor(5,97);
-		tft.println("TUNE");
-		tft.setCursor(85,59);
-		tft.println("NOISE");
-		tft.setCursor(85,78);
-		tft.println("OSCMOD");
-		tft.setCursor(85,97);
-		tft.println("LFO2MOD");
-		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(5,115);
-		tft.println("SELECT");
-		tft.setCursor(50,115);
-		tft.println("VALUE");
-		tft.setCursor(95,115);
-		tft.println("---");
-		tft.setCursor(135,115);
-		tft.println("---");
-		
-		// draw Rect and Lines
-		for (uint8_t i = 0; i < 5; i++){
-			tft.fillRoundRect(54,19+(19*i),22,10,2,ST7735_BLUE);
-		}
-		for (uint8_t i = 2; i < 5; i++){
-			tft.fillRoundRect(133,19+(19*i),22,10,2,ST7735_BLUE);
-		}
-		tft.drawFastVLine(0,14,95,ST7735_GRAY);
-		tft.drawFastVLine(80,14,95,ST7735_GRAY);
-		tft.drawFastVLine(159,14,95,ST7735_GRAY);
-		for (uint8_t i = 0; i < 6; i++){
-			tft.drawFastHLine(0,14+(19*i),160,ST7735_GRAY);
-		}
-		tft.drawFastHLine(81,33,78,ST7735_BLACK);
-		
-		// Wafeshaper and Gain --------------------------------------------
-		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(56, 21);
-		if (WShaperNo == 0) {
-			tft.print("OFF");
-		}
-		else tft.print(WShaperNo);
-		drawWaveshaperCurve(WShaperNo);
-		
-		// Waveshaper Gain
-		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(56, 40);
-		tft.print(WShaperDrive,1);
-		
-		// SYNC -----------------------------------------------------------
-		tft.fillRoundRect(54,57,22,10,2,ST7735_BLUE);
-		tft.setTextColor(ST7735_WHITE);
-		if (oscDetuneSync == true) {
-			tft.setCursor(59,59);
-			tft.print("ON");
-			} else {
-			tft.setCursor(56,59);
-			tft.print("OFF");
-		}
-		
-		// Transpose ------------------------------------------------------
-		tft.setCursor(56,78);
-		tft.setTextColor(ST7735_WHITE);
-		if (oscTranspose > 0) {
-			tft.print("+");
-		}
-		tft.print(oscTranspose);
-		
-		// Tune -----------------------------------------------------------
-		tft.setCursor(56,97);
-		tft.setTextColor(ST7735_WHITE);
-		int val = 0;
-		for (uint8_t i = 0; i < 128; i++) {
-			float mtune = MASTERTUNE[i];
-			if (mtune == oscMasterTune) {
-				val = i;
-				if (val >= 64) {
-					val--;
-				}
-				break;
-			}
-		}
-		if (val > 63) {
-			tft.print("+");
-		}
-		tft.print(val-63);
-		
-		// Noise ----------------------------------------------------------
-		for (uint8_t i = 0; i < 128; i++) {
-			myValue = LINEARCENTREZERO[i];
-			if (noiseLevel == myValue) {
-				value = i;
-				break;
-			}
-		}
-		tft.setCursor(135,59);
-		tft.setTextColor(ST7735_WHITE);
-		if (value >= 126) {
-			value = 126;
-		}
-		if (value >= 62 && value <= 64) {
-			tft.fillRoundRect(133,59,21,8,2,ST7735_BLUE);
-			tft.setCursor(135,59);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print("OFF");
-			tft.fillRect(128,59,5,7,ST7735_BLACK);
-		}
-		else if (value < 62) {
-			tft.println(62 - value);
-			tft.setCursor(122,59);
-			tft.fillRect(122,59,5,7,ST7735_BLACK);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print("W");
-		}
-		else {
-			tft.println(value - 64);
-			tft.setCursor(122,59);
-			tft.fillRect(122,59,5,7,ST7735_BLACK);
-			tft.setTextColor(ST77XX_MAGENTA);
-			tft.print("P");
-		}
-		
-		// OSCMOD ---------------------------------------------------------
-		tft.fillRoundRect(133,78,21,8,2,ST7735_BLUE);
-		tft.setCursor(135,78);
-		tft.setTextColor(ST7735_WHITE);
-		if (oscFX == 0) {
-			tft.println("OFF");
-		}
-		else if (oscFX == 1) {
-			tft.println("XOR");
-		}
-		else if (oscFX == 2) {
-			tft.println("XMO");
-		}
-		else if (oscFX == 3) {
-			tft.println("MOD");
-		}
-		else if (oscFX == 4) {
-			tft.println("AND");
-		}
-		else if (oscFX == 5) {
-			tft.setCursor(137,78);
-			tft.println("OR");
-		}
-		else if (oscFX == 6) {
-			tft.setCursor(137,78);
-			tft.println("FM");
-		}
-		
-		// VCFMOD ---------------------------------------------------------
-		uint8_t oscvcfmod = (OscVCFMOD * 127);
-		tft.fillRoundRect(133,97,21,8,2,ST7735_BLUE);
-		tft.setCursor(135,97);
-		tft.setTextColor(ST7735_WHITE);
-		tft.print(oscvcfmod);
-		
-		// Update parameter -----------------------------------------------
-		ParameterNr = ParameterNrMem[3]; // SUB Page
-		drawParamterFrame(PageNr, ParameterNr);
+	// SUB menu -----------------------------------------------------------
+	else { drawOscSubMenu();
 	}
 	
 	MidiStatusSymbol = 2; MidiSymbol();
 	drawPeakmeter();
+}
+
+//*************************************************************************
+// Osc SUB Menu
+//*************************************************************************
+FLASHMEM void drawOscSubMenu () {
+	
+	float myValue = 0;
+	int value = 0;
+	
+	tft.setCursor(0,0);
+	tft.fillRect(0,0,160,13,ST7735_GRAY);
+	tft.setTextColor(ST7735_GREEN);
+	tft.setFont(NULL);
+	tft.setTextSize(0);
+	print_String(0,5,3);			// print "OSC"
+	tft.setTextColor(ST7735_GRAY);
+	print_String(10,5,21);			// print "WSHAPE"
+	print_String(11,5,40);			// print "GAIN"
+	print_String(12,5,59);			// print "SYNC"
+	print_String(13,5,78);			// print "TRANSP"
+	print_String(14,5,97);			// print "TUNE"
+	print_String(15,85,59);			// print "NOISE"
+	print_String(16,85,78);			// print "OSCMOD"
+	print_String(17,85,97);			// print "LFO2MOD"
+	tft.setTextColor(ST7735_WHITE);
+	print_String(29,5,115);			// print "SELECT"
+	print_String(30,50,115);		// print "VALUE"
+	print_String(31,95,115);		// print "---"
+	print_String(31,135,115);		// print "---"
+	
+	// draw Rect and Lines
+	for (uint8_t i = 0; i < 5; i++){
+		tft.fillRoundRect(54,19+(19*i),22,10,2,ST7735_BLUE);
+	}
+	for (uint8_t i = 2; i < 5; i++){
+		tft.fillRoundRect(133,19+(19*i),22,10,2,ST7735_BLUE);
+	}
+	tft.drawFastVLine(0,14,95,ST7735_GRAY);
+	tft.drawFastVLine(80,14,95,ST7735_GRAY);
+	tft.drawFastVLine(159,14,95,ST7735_GRAY);
+	for (uint8_t i = 0; i < 6; i++){
+		tft.drawFastHLine(0,14+(19*i),160,ST7735_GRAY);
+	}
+	tft.drawFastHLine(81,33,78,ST7735_BLACK);
+	
+	// Wafeshaper --------------------------------------------
+	tft.setTextColor(ST7735_WHITE);
+	if (WShaperNo == 0) {
+		print_String(18,56,21);		// print "OFF"
+	}
+	else {
+		tft.setCursor(56,21);
+		tft.print(WShaperNo);
+	}
+	drawWaveshaperCurve(WShaperNo);
+	
+	// Waveshaper Gain -----------------------------------------------
+	tft.setTextColor(ST7735_WHITE);
+	tft.setCursor(56, 40);
+	tft.print(WShaperDrive,1);
+	
+	// SYNC -----------------------------------------------------------
+	tft.fillRoundRect(54,57,22,10,2,ST7735_BLUE);
+	tft.setTextColor(ST7735_WHITE);
+	if (oscDetuneSync == true) {
+		print_String(33,59,59);		// print "ON"
+		} else {
+		print_String(18,56,59);		// print "ON"
+	}
+	
+	// Transpose ------------------------------------------------------
+	tft.setTextColor(ST7735_WHITE);
+	if (oscTranspose > 0) {
+		print_String(34,56,78);		// print "+"
+	}
+	tft.setCursor(56,78);
+	tft.print(oscTranspose);
+	
+	// Tune -----------------------------------------------------------
+	tft.setCursor(56,97);
+	tft.setTextColor(ST7735_WHITE);
+	int val = 0;
+	for (uint8_t i = 0; i < 128; i++) {
+		float mtune = MASTERTUNE[i];
+		if (mtune == oscMasterTune) {
+			val = i;
+			if (val >= 64) {
+				val--;
+			}
+			break;
+		}
+	}
+	if (val > 63) {
+		tft.print("+");
+	}
+	tft.print(val-63);
+	
+	// Noise ----------------------------------------------------------
+	for (uint8_t i = 0; i < 128; i++) {
+		myValue = LINEARCENTREZERO[i];
+		if (noiseLevel == myValue) {
+			value = i;
+			break;
+		}
+	}
+	tft.setCursor(135,59);
+	tft.setTextColor(ST7735_WHITE);
+	if (value >= 126) {
+		value = 126;
+	}
+	if (value >= 62 && value <= 64) {
+		tft.fillRoundRect(133,59,21,8,2,ST7735_BLUE);
+		tft.setTextColor(ST7735_WHITE);
+		print_String(18,135,59);		// print "OFF"
+		tft.fillRect(128,59,5,7,ST7735_BLACK);
+	}
+	else if (value < 62) {
+		tft.println(62 - value);
+		tft.fillRect(122,59,5,7,ST7735_BLACK);
+		tft.setTextColor(ST7735_WHITE);
+		print_String(32,122,59);		// print "W"
+	}
+	else {
+		tft.println(value - 64);
+		tft.fillRect(122,59,5,7,ST7735_BLACK);
+		tft.setTextColor(ST77XX_MAGENTA);
+		print_String(25,122,59);		// print "P"
+	}
+	
+	// OSCMOD ---------------------------------------------------------
+	tft.fillRoundRect(133,78,21,8,2,ST7735_BLUE);
+	tft.setTextColor(ST7735_WHITE);
+	print_String((18 + oscFX),136,78);
+
+	// VCFMOD ---------------------------------------------------------
+	uint8_t oscvcfmod = (OscVCFMOD * 127);
+	tft.fillRoundRect(133,97,21,8,2,ST7735_BLUE);
+	tft.setCursor(135,97);
+	tft.setTextColor(ST7735_WHITE);
+	tft.print(oscvcfmod);
+	
+	// Update parameter -----------------------------------------------
+	ParameterNr = ParameterNrMem[3]; // SUB Page
+	drawParamterFrame(PageNr, ParameterNr);
 }
 
 //*************************************************************************
@@ -5798,49 +5254,34 @@ FLASHMEM void drawFilterPage (void)
 	tft.fillRect(0,0,160,13,ST7735_GRAY);
 	
 	// State Variable Filter ----------------------------------------------
-	if (Filter == 1) { 
+	if (Filter == 1) {
 		if (myPageShiftStatus[PageNr] == false) {	// Main page enabled
 			tft.setTextColor(ST7735_WHITE);
 			tft.setFont(NULL);
 			tft.setTextSize(0);
-			tft.setCursor(5,3);
-			tft.println("FILTER");
+			print_String(37,5,3);					// print "FILTER"
 			tft.setTextColor(ST7735_LIGHTGRAY);
-			tft.setCursor(5,19);
-			tft.print("STATE VARIABLE");
+			print_String(38,5,19);					// print "STATE VARIABLE"
 			tft.setTextColor(ST7735_WHITE);
-			tft.setCursor(10, 103);
-			tft.print("CUT");
-			tft.setCursor(50, 103);
-			tft.print("RES");
-			tft.setCursor(90, 103);
-			tft.print("ENV");
-			tft.setCursor(130, 103);
-			tft.print("TYP");
-			
-			// draw inactive SUB maker
-			tft.setCursor(45,3);
+			print_String(40,10,103);				// print "CUT"
+			print_String(41,50,103);				// print "RES"
+			print_String(42,90,103);				// print "ENV"
+			print_String(43,130,103);				// print "TYP"
 			tft.setTextColor(ST7735_LIGHTGRAY);
-			tft.print("SUB");
+			print_String(35,45,3);					// print "SUB"
 		}
 		else {	// SUB page enabled
 			tft.setTextColor(ST7735_GREEN);
 			tft.setFont(NULL);
 			tft.setTextSize(0);
-			tft.setCursor(5,3);
-			tft.println("FILTER");
-			tft.setCursor(5,19);
+			print_String(37,5,3);					// print "FILTER"
 			tft.setTextColor(ST7735_LIGHTGRAY);
-			tft.print("STATE VARIABLE");
+			print_String(38,5,19);					// print "STATE VARIABLE"
 			tft.setTextColor(ST7735_WHITE);
-			tft.setCursor(9, 103);
-			tft.print("KEY");
-			tft.setCursor(50, 103);
-			tft.print("VEL");
-			tft.setCursor(90, 103);
-			tft.print("LFO");
-			tft.setCursor(130, 103);
-			tft.print("---");
+			print_String(44,9,103);					// print "KEY"
+			print_String(45,50,103);				// print "VEL"
+			print_String(46,90,103);				// print "LFO"
+			print_String(31,130,103);				// print "---"
 		}
 		
 		
@@ -5870,9 +5311,9 @@ FLASHMEM void drawFilterPage (void)
 		}
 		
 		// calc Resonance
-		float Reso = ((filterRes - 1.1f) / 3.9f);
+		float Reso = ((filterRes -1.1f) / 3.8f);
 		for (int i = 0; i < 128; i++) {
-			float myresonance = POWER[i];
+			float myresonance = LINEAR[i];
 			if ((myresonance - Reso) < 0.00001f) {
 				FilterReso = 128;
 			}
@@ -5903,7 +5344,7 @@ FLASHMEM void drawFilterPage (void)
 			//printFilterFrq(filterFreq);
 			printDataValue (0, (DIV100 * (FilterCut >> 1)));
 			printRedMarker (0, (FilterCut >> 1));
-			printFilterRes(FilterReso * 0.788f);	// value 0-100
+			printFilterRes(FilterReso * 0.788f);	// value 0-100			
 			
 			// calc and print Filter Env Amount
 			float EnvAmt = filterEnv / FILTERMODMIXERMAX;
@@ -5951,61 +5392,44 @@ FLASHMEM void drawFilterPage (void)
 			printDataValue (3, 0);
 			printRedMarker (3, 0);
 		}
-	} 
+	}
 	else {
 		// Ladder Filter ----------------------------------------------------
-			if (myPageShiftStatus[PageNr] == false) {	// Main Page
+		if (myPageShiftStatus[PageNr] == false) {	// Main Page
 			tft.setTextColor(ST7735_WHITE);
 			tft.setFont(NULL);
 			tft.setTextSize(0);
-			tft.setCursor(5,3);
-			tft.println("FILTER");
+			print_String(37,5,3);					// print "FILTER"
 			tft.setTextColor(ST7735_LIGHTGRAY);
-			tft.setCursor(5,19);
-			tft.print("LADDER VERSION");
+			print_String(39,5,19);					// print "LADDER VERSION"
 			tft.setTextColor(ST7735_WHITE);
-			tft.setCursor(10, 103);
-			tft.print("CUT");
-			tft.setCursor(50, 103);
-			tft.print("RES");
-			tft.setCursor(90, 103);
-			tft.print("ENV");
-			tft.setCursor(130, 103);
-			tft.print("DRV");
-			
-			// draw inactive SUB maker
-			tft.setCursor(45,3);
+			print_String(40,10,103);				// print "CUT"
+			print_String(41,50,103);				// print "RES"
+			print_String(42,90,103);				// print "ENV"
+			print_String(47,130,103);				// print "DRV"
 			tft.setTextColor(ST7735_LIGHTGRAY);
-			tft.print("SUB");
+			print_String(35,45,3);					// print "SUB"
 		}
-		else {									// SUB Page
+		else {										// Filter SUB menu
 			tft.setTextColor(ST7735_GREEN);
 			tft.setFont(NULL);
 			tft.setTextSize(0);
-			tft.setCursor(5,3);
-			tft.println("FILTER");
+			print_String(37,5,3);					// print "FILTER"
 			tft.setTextColor(ST7735_LIGHTGRAY);
-			tft.setCursor(5,19);
-			tft.print("LADDER VERSION");
+			print_String(39,5,19);					// print "LADDER VERSION"
 			tft.setTextColor(ST7735_WHITE);
-			tft.setCursor(9, 103);
-			tft.print("KEY");
-			tft.setCursor(50, 103);
-			tft.print("VEL");
-			tft.setCursor(90, 103);
-			tft.print("PBG");
-			tft.setCursor(130, 103);
-			tft.print("LFO");
+			print_String(44,9,103);					// print "KEY"
+			print_String(45,50,103);				// print "VEL"
+			print_String(48,90,103);				// print "PBG"
+			print_String(49,130,103);				// print "LFO"
 		}
 		
 		// draw diagramm line
 		tft.drawLine(19,39,19,86,ST7735_GRAY);
 		tft.drawLine(19,86,134,86,ST7735_GRAY);
 		tft.setTextColor(ST7735_GRAY);
-		tft.setCursor(7, 40);
-		tft.print("dB");
-		tft.setCursor(110, 88);
-		tft.print("f/Hz");
+		print_String(50,7,40);						// print 2dB"
+		print_String(51,110,88);					// print "f/Hz"
 		
 		uint8_t Frq_value = 0;
 		uint8_t FilterReso = 0;
@@ -6104,7 +5528,7 @@ FLASHMEM void drawFilterPage (void)
 			printDataValue (3, value);
 			printRedMarker (3, value);
 		}
-	} 
+	}
 	
 	MidiStatusSymbol = 2; MidiSymbol();
 	drawPeakmeter();
@@ -6116,145 +5540,125 @@ FLASHMEM void drawFilterPage (void)
 FLASHMEM void drawFilterEnvPage (void)
 {
 	enableScope(false);
-		tft.fillScreen(ST7735_BLACK);
-		tft.setCursor(0,0);
-		tft.fillRect(0,0,160,13,ST7735_GRAY);
+	tft.fillScreen(ST7735_BLACK);
+	tft.setCursor(0,0);
+	tft.fillRect(0,0,160,13,ST7735_GRAY);
+	tft.setTextColor(ST7735_WHITE);
+	tft.setFont(NULL);
+	tft.setTextSize(0);
+	print_String(52,5,3);		// print "VCF"
+	print_String(42,25,3);		// print "ENV"
+	tft.fillRoundRect(126,25,21,11,2,ST7735_ORANGE);
+	tft.setTextColor(ST7735_WHITE);
+	print_String(52,128,27);		// print "VCF"
+	tft.setTextColor(ST7735_LIGHTGRAY);
+	print_String(35,45,3);			// print "SUB"
+	
+	
+	// VCF ENV Main menu
+	if (myPageShiftStatus[PageNr] == false) {
 		tft.setTextColor(ST7735_WHITE);
+		print_String(54,10,103);		// print "ATK"
+		print_String(55,50,103);		// print "DCY"
+		print_String(56,90,103);		// print "SUS"
+		print_String(57,130,103);		// print "REL"
+	}
+	// VCF ENV SUB menu
+	else {
+		tft.setTextColor(ST7735_GREEN);
 		tft.setFont(NULL);
 		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.print("VCF");
-		tft.setCursor(25,3);
-		tft.print("ENV");
-		
-		tft.fillRoundRect(109,25,38,19,2,ST7735_ORANGE);
+		print_String(52,5,3);			// print "VCF"
+		print_String(42,25,3);			// print "ENV"
 		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(111,27);
-		tft.setTextSize(2);
-		tft.print("VCF");
-		
-		
-		// draw inactive SUB maker
-		tft.setCursor(45,3);
-		tft.setTextColor(ST7735_LIGHTGRAY);
-		tft.setTextSize(NULL);
-		tft.print("SUB");
-		
-		tft.setTextColor(ST7735_WHITE);
-		// shift key disabled
-		if (myPageShiftStatus[PageNr] == false) {
-			tft.setCursor(10, 103);
-			tft.print("ATK");
-			tft.setCursor(50, 103);
-			tft.print("DCY");
-			tft.setCursor(90, 103);
-			tft.print("SUS");
-			tft.setCursor(130, 103);
-			tft.print("REL");
+		print_String(58,10,103);		// print "CUR"
+		print_String(31,50,103);		// print "---"
+		print_String(31,90,103);		// print "---"
+		print_String(31,130,103);		// print "---"
+	}
+	
+	uint8_t ATKvalue = 0;
+	uint8_t DCYvalue = 0;
+	uint8_t SUSvalue = 0;
+	uint8_t RELvalue = 0;
+	
+	// read env time
+	for (int i = 0; i < 128; i++) {
+		uint16_t timeMS = ENVTIMES[i];
+		if (filterAttack <= timeMS){
+			ATKvalue = i;
+			break;
 		}
-		// shift key akctivated
-		else {
-			tft.setTextColor(ST7735_GREEN);
-			tft.setFont(NULL);
-			tft.setTextSize(0);
-			tft.setCursor(5,3);
-			tft.println("VCF");
-			tft.setCursor(25,3);
-			tft.print("ENV");
-			tft.setTextColor(ST7735_WHITE);
-			tft.setCursor(10, 103);
-			tft.print("CUR");
-			tft.setCursor(10 + 40, 103);
-			tft.print("---");
-			tft.setCursor(10 + 40 + 40, 103);
-			tft.print("---");
-			tft.setCursor(6 + 40 + 40 + 40+4, 103);
-			tft.print("---");
+	}
+	for (int i = 0; i < 128; i++) {
+		uint16_t timeMS = ENVTIMES[i];
+		if (filterDecay <= timeMS){
+			DCYvalue = i;
+			break;
 		}
+	}
+	for (int i = 0; i < 128; i++) {
+		float timeMS = LINEAR[i];
+		if (filterSustain <= timeMS){
+			SUSvalue = i;
+			break;
+		}
+	}
+	for (int i = 0; i < 128; i++) {
+		uint16_t timeMS = ENVTIMES[i];
+		if (filterRelease <= timeMS){
+			RELvalue = i;
+			break;
+		}
+	}
+	drawEnvCurve(ATKvalue, DCYvalue, SUSvalue, RELvalue);
+	
+	// Main menu
+	if (myPageShiftStatus[PageNr] == false) {
+		printEnvATKvalues(ATKvalue);
+		printEnvDCYvalues(DCYvalue);
+		printEnvSUSvalues(SUSvalue);
+		printEnvRELvalues(RELvalue);
+		Env1Atk = ATKvalue;
+		Env1Dcy = DCYvalue;
+		Env1Sus = SUSvalue;
+		Env1Rel = RELvalue;
+	}
+	// SUB menu
+	else {
 		
-		uint8_t ATKvalue = 0; 
-		uint8_t DCYvalue = 0; 
-		uint8_t SUSvalue = 0; 
-		uint8_t RELvalue = 0;
+		printDataValue (1, 0);
+		printRedMarker (1, 0);
+		printDataValue (2, 0);
+		printRedMarker (2, 0);
+		printDataValue (3, 0);
+		printRedMarker (3, 0);
 		
+		// print CUR value
+		int8_t curVal = (envelopeType1 * 7.47f);
+		curVal += 64;
+		printRedMarker (0, curVal);
 		
-		for (int i = 0; i < 128; i++) {
-			float timeMS = ENVTIMES[i];
-			if (filterAttack <= timeMS){
-				ATKvalue = i;
-				break;
-			}
+		if (envelopeType1 < 0) {
+			tft.setCursor(13,116);
+			tft.setTextColor(ST7735_GRAY);
+			tft.print(envelopeType1);
 		}
-		for (int i = 0; i < 128; i++) {
-			float timeMS = ENVTIMES[i];
-			if (filterDecay <= timeMS){
-				DCYvalue = i;
-				break;
-			}
+		else if (envelopeType1 == 0) {
+			tft.setCursor(15,116);
+			tft.setTextColor(ST7735_GRAY);
+			tft.print(envelopeType1);
 		}
-		for (int i = 0; i < 128; i++) {
-			float timeMS = LINEAR[i];
-			if (filterSustain <= timeMS){
-				SUSvalue = i;
-				break;
-			}
+		else if (envelopeType1 > 0) {
+			tft.setCursor(13,116);
+			tft.setTextColor(ST7735_GRAY);
+			tft.print("+");
+			tft.print(envelopeType1);
 		}
-		for (int i = 0; i < 128; i++) {
-			float timeMS = ENVTIMES[i];
-			if (filterRelease <= timeMS){
-				RELvalue = i;
-				break;
-			}
-		}
-		
-		drawEnvCurve(ATKvalue, DCYvalue, SUSvalue, RELvalue);
-		
-		// shift key disabled
-		if (myPageShiftStatus[PageNr] == false) {
-			printEnvATKvalues(ATKvalue);
-			printEnvDCYvalues(DCYvalue);
-			printEnvSUSvalues(SUSvalue);
-			printEnvRELvalues(RELvalue);
-			Env1Atk = ATKvalue;
-			Env1Dcy = DCYvalue;
-			Env1Sus = SUSvalue;
-			Env1Rel = RELvalue;
-		}
-		// shift key enabled
-		else {
-			
-			printDataValue (1, 0);
-			printRedMarker (1, 0);
-			printDataValue (2, 0);
-			printRedMarker (2, 0);
-			printDataValue (3, 0);
-			printRedMarker (3, 0);
-			
-			// print CUR value
-			int8_t curVal = (envelopeType1 * 7.47f);
-			curVal += 64;
-			printRedMarker (0, curVal);
-			
-			if (envelopeType1 < 0) {
-				tft.setCursor(13,116);
-				tft.setTextColor(ST7735_GRAY);
-				tft.print(envelopeType1);
-			}
-			else if (envelopeType1 == 0) {
-				tft.setCursor(15,116);
-				tft.setTextColor(ST7735_GRAY);
-				tft.print(envelopeType1);
-			}
-			else if (envelopeType1 > 0) {
-				tft.setCursor(13,116);
-				tft.setTextColor(ST7735_GRAY);
-				tft.print("+");
-				tft.print(envelopeType1);
-			}
-		}
-				
-		MidiStatusSymbol = 2; MidiSymbol();
-		drawPeakmeter();
+	}
+	
+	MidiStatusSymbol = 2; MidiSymbol();
+	drawPeakmeter();
 }
 
 //*************************************************************************
@@ -6269,47 +5673,37 @@ FLASHMEM void drawAmpEnvPage (void)
 	tft.setTextColor(ST7735_WHITE);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(5,3);
-	tft.print("AMP");
-	tft.setCursor(25,3);
-	tft.print("ENV");
+	print_String(53,5,3);			// print "AMP"
+	print_String(42,25,3);			// print "ENV"
 	
-	// draw inactive SUB maker
-	tft.setCursor(45,3);
-	tft.setTextColor(ST7735_LIGHTGRAY);
-	tft.print("SUB");
-	
+	tft.fillRoundRect(126,25,21,11,2,ST7735_DARKGREEN);
 	tft.setTextColor(ST7735_WHITE);
+	print_String(53,128,27);		// print "AMP"
+	tft.setTextColor(ST7735_LIGHTGRAY);
+	print_String(35,45,3);			// print "SUB"
 	
-	// AMP Main page enabled
+	
+	
+	// AMP ENV Main menu
 	if (myPageShiftStatus[PageNr] == false) {
-		tft.setCursor(10, 103);
-		tft.print("ATK");
-		tft.setCursor(50, 103);
-		tft.print("DCY");
-		tft.setCursor(90, 103);
-		tft.print("SUS");
-		tft.setCursor(130, 103);
-		tft.print("REL");
+		tft.setTextColor(ST7735_WHITE);
+		print_String(54,10,103);		// print "ATK"
+		print_String(55,50,103);		// print "DCY"
+		print_String(56,90,103);		// print "SUS"
+		print_String(57,130,103);		// print "REL"
 	}
 	// AMP SUB page enabled
 	else {
 		tft.setTextColor(ST7735_GREEN);
 		tft.setFont(NULL);
 		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.println("AMP");
-		tft.setCursor(25,3);
-		tft.print("ENV");
+		print_String(53,5,3);			// print "AMP"
+		print_String(42,25,3);			// print "ENV"
 		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(10, 103);
-		tft.print("CUR");
-		tft.setCursor(10 + 40, 103);
-		tft.print("VEL");
-		tft.setCursor(10 + 40 + 40, 103);
-		tft.print("---");
-		tft.setCursor(6 + 40 + 40 + 40+4, 103);
-		tft.print("---");
+		print_String(58,10,103);		// print "CUR"
+		print_String(45,50,103);		// print "VEL"
+		print_String(31,90,103);		// print "---"
+		print_String(31,130,103);		// print "---"
 	}
 	
 	uint8_t ATKvalue = 0;
@@ -6319,15 +5713,16 @@ FLASHMEM void drawAmpEnvPage (void)
 	uint8_t DELvalue = 0;
 	uint8_t HOLvalue = 0;
 	
+	// read envelope times
 	for (int i = 0; i < 128; i++) {
-		float timeMS = ENVTIMES[i];
+		uint16_t timeMS = ENVTIMES[i];
 		if (ampAttack <= timeMS){
 			ATKvalue = i;
 			break;
 		}
 	}
 	for (int i = 0; i < 128; i++) {
-		float timeMS = ENVTIMES[i];
+		uint16_t timeMS = ENVTIMES[i];
 		if (ampDecay <= timeMS){
 			DCYvalue = i;
 			break;
@@ -6341,7 +5736,7 @@ FLASHMEM void drawAmpEnvPage (void)
 		}
 	}
 	for (int i = 0; i < 128; i++) {
-		float timeMS = ENVTIMES[i];
+		uint16_t timeMS = ENVTIMES[i];
 		if (ampRelease <= timeMS){
 			RELvalue = i;
 			break;
@@ -6364,7 +5759,7 @@ FLASHMEM void drawAmpEnvPage (void)
 	// Sub page enabled
 	else {
 		// print VEL value
-		uint8_t myVelo = ((127 * myAmpVelocity) * 2) + 0.1f;	// 0.1f fürs runden
+		uint8_t myVelo = ((127 * myAmpVelocity) * 2) + 0.1f;	// 0.1f f?rs runden
 		printRedMarker (1, myVelo);
 		printPercentValue(1, (DIV100 * myVelo)); // to %
 		
@@ -6412,24 +5807,16 @@ FLASHMEM void drawFxDspPage (void)
 	tft.setTextColor(ST7735_WHITE);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(5,3);
-	tft.println("FxDSP");
+	print_String(59,5,3);				// print "FX DSP"
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(10, 103);
-	tft.print("SEL");
-	tft.setCursor(50, 103);
-	tft.print("VAL");
-	tft.setCursor(90, 103);
-	tft.print("MIX");
-	tft.setCursor(130, 103);
-	tft.print("PRG");
-	tft.setCursor(5, 88);
+	print_String(60,10,103);			// print "SEL"
+	print_String(61,50,103);			// print "VAL"
+	print_String(62,90,103);			// print "MIX"
+	print_String(63,130,103);			// print "PRG"
 	tft.setTextColor(ST7735_GRAY);
-	tft.print("P1");
-	tft.setCursor(58, 88);
-	tft.print("P2");
-	tft.setCursor(112, 88);
-	tft.print("P3");
+	print_String(110,5,88);				// print "P1"
+	print_String(111,58,88);			// print "P2"
+	print_String(111,112,88);			// print "P3"
 	tft.drawRect(0,14,160,86,ST7735_GRAY);
 	tft.drawFastHLine(0,83,160,ST7735_GRAY);
 	tft.drawFastVLine(53,83,16,ST7735_GRAY);
@@ -6438,10 +5825,8 @@ FLASHMEM void drawFxDspPage (void)
 	tft.fillRoundRect(76,86,25,10,2,ST7735_BLUE);
 	tft.fillRoundRect(128,86,25,10,2,ST7735_BLUE);
 	tft.setTextColor(ST7735_GRAY);
-	tft.setCursor(5,28);
-	tft.print("Vol");
-	tft.setCursor(75,72);
-	tft.print("Time/Feedb.");
+	print_String(64,5,28);				// print "Vol"
+	print_String(65,75,72);				// print "Time/Feedb."
 	if (FxPrgNo >= 1) {
 		drawFxGrafic(FxMixValue,FxTimeValue,FxFeedbackValue, FxPot3value);
 		printFxPotValue(0, FxPot1value);
@@ -6511,18 +5896,16 @@ FLASHMEM void drawLFO1Page (void)
 	tft.setTextColor(ST7735_WHITE);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(5,3);
-	tft.println("LFO1 (Osc)");
+	print_String(115,5,3);				// print "LFO1" (Osc)
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(3, 103);
-	tft.print("SHAPE");
+	print_String(116,3,103);			// print "SHAPE"
 	tft.setCursor(47, 103);
 	tft.print("RATE");
 	tft.setCursor(90, 103);
 	tft.print("AMT");
 	tft.setCursor(130, 103);
 	tft.print("SYN");
-		
+	
 	// draw LFO Shapes and Frames
 	drawLFOshape(ST7735_RED);
 	tft.drawRect(2,22,50,35,ST7735_GRAY);
@@ -6619,7 +6002,7 @@ FLASHMEM void drawLFO2Page (void)
 	tft.print("AMT");
 	tft.setCursor(130, 103);
 	tft.print("SYN");
-		
+	
 	// draw LFO Shapes and Frames
 	drawLFOshape(ST7735_ORANGE);
 	tft.drawRect(2,22,50,35,ST7735_GRAY);
@@ -6646,18 +6029,18 @@ FLASHMEM void drawLFO2Page (void)
 		tft.print(filterLFOTimeDivStr);
 		
 		} else {
-			if (myFilterLFORateValue <= 1) {
-				myFilterLFORateValue = 1;
-			}
-			printDataValue (1, myFilterLFORateValue);
+		if (myFilterLFORateValue <= 1) {
+			myFilterLFORateValue = 1;
 		}
-		
-		if (filterLfoRetrig == 3 && MidiSyncSwitch == false) {
-			tft.fillRect(46, 116, 24, 7, ST7735_BLACK);
-			tft.setTextColor(ST7735_RED);
-			tft.setCursor(46,116);
-			tft.print("CLK?");
-		}
+		printDataValue (1, myFilterLFORateValue);
+	}
+	
+	if (filterLfoRetrig == 3 && MidiSyncSwitch == false) {
+		tft.fillRect(46, 116, 24, 7, ST7735_BLACK);
+		tft.setTextColor(ST7735_RED);
+		tft.setCursor(46,116);
+		tft.print("CLK?");
+	}
 	
 	// LFO AMT
 	float LFOamt = (filterLfoAmt * FILTERMODMIXERMAX);
@@ -6743,31 +6126,31 @@ FLASHMEM void drawSEQPage (void)
 	tft.setTextColor(ST7735_WHITE);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(5,3);
-	tft.print("SEQ");
+	print_String(117,5,3);			// print "SEQ"
 	
 	// draw inactive SUB maker
-	tft.setCursor(26,3);
 	tft.setTextColor(ST7735_LIGHTGRAY);
-	tft.print("SUB");
+	print_String(35,26,3);			// print "SUB"
 	
 	} else {
 		tft.setTextColor(ST7735_GREEN);
 		tft.setFont(NULL);
 		tft.setTextSize(0);
-		tft.setCursor(5,3);
-		tft.print("SEQ");
+		print_String(117,5,3);			// print "SEQ"
 	}
 	tft.setTextColor(ST7735_GREEN);
-	tft.setCursor(65,3);
-	tft.print("PAT:");
+	print_String(118,65,3);			// print "PAT:"
 	if (SEQPatternNo == 0) {
-		tft.print("--");
+		print_String(119,90,3);			// print "--"
 	} else {
 		if (SEQPatternNo < 10) {
-			tft.print("0");
+			print_String(152,90,3);			// print "0"
+			tft.setCursor(96,3);
+			tft.print(SEQPatternNo);
+		} else {
+			tft.setCursor(90,3);
+			tft.print(SEQPatternNo);
 		}
-		tft.print(SEQPatternNo);
 	}
 	
 	// draw all 16 Note Steps
@@ -6784,22 +6167,17 @@ FLASHMEM void drawSEQPage (void)
 	// Main Page ---------------------------------------------------
 	if (myPageShiftStatus[PageNr] == false) {
 		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(7, 103);
-		tft.print("STEP");
-		tft.setCursor(43, 103);
-		tft.print("PITCH");
-		tft.setCursor(89, 103);
-		tft.print("BPM");
-		tft.setCursor(130, 103);
-		tft.print("DIV");
+		print_String(121,7,103);			// print "STEP"
+		print_String(122,43,103);			// print "PITCH"
+		print_String(123,89,103);			// print "BPM"
+		print_String(124,130,103);			// print "BPM"
 		printDataValue (0, SEQselectStepNo + 1);
 		printRedMarker (0, SEQselectStepNo * 8);
 		printSeqPitchNote();
 		if (SEQMidiClkSwitch == false) {
 			printDataValue (2, SEQbpmValue);
 		} else {
-			tft.setCursor(86,116);
-			tft.print("MIDI");
+			print_String(125,186,116);		// print "MIDI"
 		}
 		printRedMarker (2, ((SEQbpmValue - 50)/1.484f));
 		
@@ -6818,14 +6196,10 @@ FLASHMEM void drawSEQPage (void)
 	// SUB Page ---------------------------------------------------
 	else {
 		tft.setTextColor(ST7735_WHITE);
-		tft.setCursor(10, 103);
-		tft.print("LEN");
-		tft.setCursor(46, 103);
-		tft.print("TIME");
-		tft.setCursor(89, 103);
-		tft.print("DIR");
-		tft.setCursor(126, 103);
-		tft.print("MODE");
+		print_String(126,10,103);		// print "LEN"
+		print_String(127,46,103);		// print "TIME"
+		print_String(128,89,103);		// print "DIR"
+		print_String(129,126,103);		// print "MODE"
 		
 		// calc GateTime
 		uint8_t gateTimeVal = 0;
@@ -6846,18 +6220,15 @@ FLASHMEM void drawSEQPage (void)
 		// print REC Mode
 		if (SEQmode == 0) {
 			tft.setTextColor(ST7735_GRAY);
-			tft.setCursor(130,116);
-			tft.print("KEY");
+			print_String(130,130,116);		// print "KEY"
 			} 
 		else if (SEQmode == 1){
 			tft.setTextColor(ST7735_GRAY);
-			tft.setCursor(130,116);
-			tft.print("TRP");
+			print_String(131,130,116);		// print "TRP"
 		}
 		else {
 			tft.setTextColor(ST7735_GRAY);
-			tft.setCursor(130,116);
-			tft.print("REC");
+			print_String(132,130,116);		// print "REC"
 		}
 		
 		int mode = SEQmode << 6;
@@ -6883,42 +6254,27 @@ FLASHMEM void drawSystemPage (void)
 	tft.setTextColor(ST7735_WHITE);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(5,3);
 #if Filter == 1
-	tft.println("System V1.22");
+	print_String(133,5,3);		// print "System V1.xx"
 #else
-tft.println("System V1.22.L");
+	print_String(134,5,3);		// print "System V1.xx.L"
 #endif
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(5,115);
-	tft.println("SELECT");
-	tft.setCursor(50,115);
-	tft.println("VALUE");
-	tft.setCursor(95,115);
-	tft.println("---");
-	tft.setCursor(135,115);
-	tft.println("---");
+	print_String(29,5,115);		// print "SELECTL"
+	print_String(30,50,115);	// print "VALUE"
+	print_String(31,95,115);	// print "---"
+	print_String(31,135,115);	// print "---"
 	tft.setTextColor(ST7735_GRAY);
-	tft.setCursor(5,21);
-	tft.println("CPU-MHz");
-	tft.setCursor(5,40);
-	tft.println("CPU-TEMP");
-	tft.setCursor(5,59);
-	tft.println("CPU-MEM");
-	tft.setCursor(5,78);
-	tft.println("PIWHEEL");
-	tft.setCursor(5,97);
-	tft.println("MOWHEEL");
-	tft.setCursor(85,21);
-	tft.println("MIDICHA");
-	tft.setCursor(85,40);
-	tft.println("VELCURV");
-	tft.setCursor(85,59);
-	tft.println("UNISONO");
-	tft.setCursor(85,78);
-	tft.println("MIDICLK");
-	tft.setCursor(85,97);
-	tft.println("PCHANGE");
+	print_String(135,5,21);		// print "CPU-MHz"
+	print_String(136,5,40);		// print "CPU-TEMP"
+	print_String(137,5,59);		// print "CPU-MEM"
+	print_String(138,5,78);		// print "PWHEEL"
+	print_String(139,5,97);		// print "MWHELL"
+	print_String(140,85,21);	// print "MIDICHA"
+	print_String(141,85,40);	// print "VELCURV"
+	print_String(142,85,59);	// print "UNISONO"
+	print_String(143,85,78);	// print "MIDICLK"
+	print_String(144,85,97);	// print "PCHANGE"
 	
 	// draw Rect and Lines
 	for (uint8_t i = 0; i < 5; i++){
@@ -6958,8 +6314,7 @@ tft.println("System V1.22.L");
 	
 	// Midi Channel
 	if (midiChannel == 0) {
-		tft.setCursor(136,21);
-		tft.print("ALL");
+		print_String(145,136,21);	// print "ALL"
 	}
 	else {
 		tft.setCursor(137,21);
@@ -6969,8 +6324,7 @@ tft.println("System V1.22.L");
 	// print Velocity
 	tft.setTextColor(ST7735_WHITE);
 	if (velocitySens == 0) {
-		tft.setCursor(137, 40);
-		tft.print("OFF");
+		print_String(18,137,40);	// print "OFF"
 	}
 	else {
 		tft.setCursor(137, 40);
@@ -6979,31 +6333,28 @@ tft.println("System V1.22.L");
 	
 	// Unisono mode
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(136, 59);
 	if (myUnisono == 0) {
-		tft.print("8-1");
+		print_String(146,136,59);	// print "8-1"
 	}
 	else if (myUnisono == 1) {
-		tft.print("4-2");
+		print_String(147,136,59);	// print "4-2"
 	}
 	
 	// MidiSync
 	tft.setTextColor(ST7735_WHITE);
 	if (MidiSyncSwitch == true) {
-		tft.setCursor(136, 78);
-		tft.print("EXT");
+		print_String(148,136,78);	// print "EXT"
 	} else {
-		tft.setCursor(136, 78);
-		tft.print("INT");
+		print_String(149,136,78);	// print "INT"
 	}
 	
 	// PRGchange
 	if (PrgChangeSW == false) {
-		tft.setCursor(136,97);
-		tft.print("OFF");
+		print_String(18,136,97);	// print "OFF"
 	} else {
 		tft.setCursor(138,97);
 		tft.print("ON");
+		print_String(33,138,97);	// print "ON"
 	}
 	
 	ParameterNr = ParameterNrMem[PageNr];
@@ -7025,9 +6376,8 @@ FLASHMEM void drawSavePage (void)
 	tft.fillRect(0,0,160,13,ST7735_GRAY);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(5,3);
 	tft.setTextColor(ST7735_WHITE);
-	tft.println("SAVE PROGRAM");
+	print_String(150,5,3);			// print "SAVE PROGRAM"
 	// print PatchNo (1-128)
 	tft.setCursor(23, 23);
 	tft.setTextColor(ST7735_YELLOW);
@@ -7073,26 +6423,19 @@ FLASHMEM void drawSavePage (void)
 	tft.setCursor(8,50);
 	tft.setTextColor(ST7735_GRAY);
 	tft.println(newPatchName);
-	tft.setCursor(8,57);
 	tft.setTextSize(2);
 	tft.setTextColor(ST7735_WHITE);
-	tft.println("____________");
+	print_String(153,8,57);			// print "____________"
 	tft.setTextColor(ST7735_GRAY);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-	tft.setCursor(25,80);
-	tft.println("Press SAVE or SHIFT");
-	tft.setCursor(25,90);
-	tft.println("for cancel");
+	print_String(154,25,80);		// print "Press SAVE or SHIFT"
+	print_String(155,25,90);		// print "for cancel"
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(5,117);
-	tft.println("BANK");
-	tft.setCursor(50,117);
-	tft.println("PATCH");
-	tft.setCursor(95,117);
-	tft.println("CHAR");
-	tft.setCursor(135,117);
-	tft.println("<->");
+	print_String(36,5,115);			// print "BANK"
+	print_String(156,50,115);		// print "PATCH"
+	print_String(157,95,115);		// print "CHAR"
+	print_String(158,135,115);		// print "<->"
 }
 
 //*************************************************************************
@@ -7599,7 +6942,7 @@ FLASHMEM void setupDisplay() {
 	}
 	
 	uint8_t waitTime = 1;
-	for (uint8_t i = 0; i < 2; i++) {
+	for (uint8_t i = 0; i < 1; i++) {
 		bmpDraw("PIC/PIC1.bmp",0,0);
 		tft.setCursor(xpos,ypos);
 		tft.print(version);
@@ -7648,7 +6991,15 @@ FLASHMEM void setupDisplay() {
 		tft.setCursor(xpos,ypos);
 		tft.print(version);
 		delay(waitTime);
+		bmpDraw("PIC/PIC11.bmp",0,0);
+		tft.setCursor(xpos,ypos);
+		tft.print(version);
+		delay(waitTime);
 		bmpDraw("PIC/PIC10.bmp",0,0);
+		tft.setCursor(xpos,ypos);
+		tft.print(version);
+		delay(waitTime);
+		bmpDraw("PIC/PIC9.bmp",0,0);
 		tft.setCursor(xpos,ypos);
 		tft.print(version);
 		delay(waitTime);
@@ -7660,21 +7011,36 @@ FLASHMEM void setupDisplay() {
 		tft.setCursor(xpos,ypos);
 		tft.print(version);
 		delay(waitTime);
+		bmpDraw("PIC/PIC6.bmp",0,0);
+		tft.setCursor(xpos,ypos);
+		tft.print(version);
+		delay(waitTime);
 		bmpDraw("PIC/PIC5.bmp",0,0);
+		tft.setCursor(xpos,ypos);
+		tft.print(version);
+		delay(waitTime);
+		bmpDraw("PIC/PIC4.bmp",0,0);
 		tft.setCursor(xpos,ypos);
 		tft.print(version);
 		delay(waitTime);
 		bmpDraw("PIC/PIC3.bmp",0,0);
 		tft.setCursor(xpos,ypos);
-		tft.print(version);		
+		tft.print(version);
+		delay(waitTime);
+		bmpDraw("PIC/PIC2.bmp",0,0);
+		tft.setCursor(xpos,ypos);
+		tft.print(version);
+		delay(waitTime);
+		bmpDraw("PIC/PIC1.bmp",0,0);
 	}
 	
-	delay(waitTime);
-	bmpDraw("PIC/PIC12.bmp",0,0);
+	#if Filter == 2
 	tft.setCursor(xpos,ypos);
-	tft.print(version);
-	delay(2000);
-	
+	tft.print(version);		// print "Ladder Version"
+	#endif
+	delay(1000);
 	tft.useFrameBuffer(true); // activate Screen Buffer
 }
+
+
 
