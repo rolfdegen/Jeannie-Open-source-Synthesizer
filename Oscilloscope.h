@@ -7,6 +7,7 @@ uint8_t bufferBlock = 0;
 uint8_t bufcount = 0;
 int16_t prev_pixel_y = 0;
 const int lineColor = 0x07B0;
+boolean EnvIdelFlag = false;
 
 class Oscilloscope : public AudioStream {
 	public:
@@ -74,8 +75,11 @@ void Oscilloscope::update(void) {
 		AddtoBuffer(block->data);
 		release(block);
 		if (bufferBlock == 0) {
-			Display();
+			if (EnvIdelFlag == true) {
+				Display();
+			}
 		}
 		
 	}
 }
+
