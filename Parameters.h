@@ -193,3 +193,4 @@ int8_t envelopeType2 = 0;
 boolean cutoffScreenFlag = false;
 boolean RefreshMainScreenFlag = true;
 boolean clearScreenFlag = true;
+const static uint8_t hysteresis = 7;
