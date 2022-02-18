@@ -3,7 +3,7 @@
 // Filtertyp
 // 1 = 12dB State Variable (Chamberlin) Filter
 // 2 = 24dB LowPass Ladder Filter
-#define Filter 1
+#define Filter 2
 
 AudioSynthWaveformDc     constant1Dc;    //xy=69.5,437
 AudioSynthWaveformDc     pitchBend;      //xy=128,74
@@ -591,4 +591,5 @@ AudioConnection          patchCord952(constant1Dc, 0, voiceMixerM, 2);
 
 AudioConnection          patchCord998(voiceMixerM, 0, PCM5102A, 0);
 AudioConnection          patchCord999(voiceMixerM, 0, PCM5102A, 1);
+
 
