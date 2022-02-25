@@ -1,10 +1,5 @@
 // Teensy AudioPatching.h
 
-// Filtertyp
-// 1 = 12dB State Variable (Chamberlin) Filter
-// 2 = 24dB LowPass Ladder Filter
-#define Filter 2
-
 AudioSynthWaveformDc     constant1Dc;    //xy=69.5,437
 AudioSynthWaveformDc     pitchBend;      //xy=128,74
 AudioSynthWaveformDc     pwa;            //xy=107,256
@@ -138,25 +133,23 @@ AudioMixer4              filterModMixer6;   //xy=855,1099
 AudioMixer4              filterModMixer7;   //xy=845,292
 AudioMixer4              filterModMixer8;   //xy=848,637
 
-#if Filter == 1
-	AudioFilterStateVariable filter1;        //xy=1000,210
-	AudioFilterStateVariable filter2;        //xy=994,498
-	AudioFilterStateVariable filter3;        //xy=1002,822
-	AudioFilterStateVariable filter4;        //xy=1022,1047
-	AudioFilterStateVariable filter5;        //xy=1002,822
-	AudioFilterStateVariable filter6;        //xy=1022,1047
-	AudioFilterStateVariable filter7;        //xy=994,498
-	AudioFilterStateVariable filter8;        //xy=1000,210
-#else
-	AudioFilterLadder filter1;        //xy=1000,210
-	AudioFilterLadder filter2;        //xy=994,498
-	AudioFilterLadder filter3;        //xy=1002,822
-	AudioFilterLadder filter4;        //xy=1022,1047
-	AudioFilterLadder filter5;        //xy=1002,822
-	AudioFilterLadder filter6;        //xy=1022,1047
-	AudioFilterLadder filter7;        //xy=994,498
-	AudioFilterLadder filter8;        //xy=1000,210
-#endif
+AudioFilterStateVariable filter1;        //xy=1000,210
+AudioFilterStateVariable filter2;        //xy=994,498
+AudioFilterStateVariable filter3;        //xy=1002,822
+AudioFilterStateVariable filter4;        //xy=1022,1047
+AudioFilterStateVariable filter5;        //xy=1002,822
+AudioFilterStateVariable filter6;        //xy=1022,1047
+AudioFilterStateVariable filter7;        //xy=994,498
+AudioFilterStateVariable filter8;        //xy=1000,210
+
+AudioFilterLadder filter2_1;        //xy=1000,210
+AudioFilterLadder filter2_2;        //xy=994,498
+AudioFilterLadder filter2_3;        //xy=1002,822
+AudioFilterLadder filter2_4;        //xy=1022,1047
+AudioFilterLadder filter2_5;        //xy=1002,822
+AudioFilterLadder filter2_6;        //xy=1022,1047
+AudioFilterLadder filter2_7;        //xy=994,498
+AudioFilterLadder filter2_8;        //xy=1000,210	
 
 AudioFilterStateVariable dcOffsetFilter;     //xy=1564,580
 
@@ -421,8 +414,7 @@ AudioConnection          patchCord656(oscFX6, 0, waveformMixer6, 3);
 AudioConnection          patchCord657(oscFX7, 0, waveformMixer7, 3);
 AudioConnection          patchCord658(oscFX8, 0, waveformMixer8, 3);
 
-// AudioFilter ----------------------------------------------------
-#if Filter == 1
+// State Variable Filter
 AudioConnection          patchCord701(filter1, 0, filterMixer1, 0);	// State Variable Filter
 AudioConnection          patchCord702(filter1, 1, filterMixer1, 1);
 AudioConnection          patchCord703(filter1, 2, filterMixer1, 2);
@@ -447,32 +439,16 @@ AudioConnection          patchCord721(filter7, 2, filterMixer7, 2);
 AudioConnection          patchCord722(filter8, 0, filterMixer8, 0);
 AudioConnection          patchCord723(filter8, 1, filterMixer8, 1);
 AudioConnection          patchCord724(filter8, 2, filterMixer8, 2);
-#else
-AudioConnection          patchCord701(filter1, 0, filterMixer1, 0);
-//AudioConnection          patchCord702(filter1, 1, filterMixer1, 1);
-//AudioConnection          patchCord703(filter1, 2, filterMixer1, 2);
-AudioConnection          patchCord704(filter2, 0, filterMixer2, 0);
-//AudioConnection          patchCord708(filter2, 1, filterMixer2, 1);
-//AudioConnection          patchCord706(filter2, 2, filterMixer2, 2);
-AudioConnection          patchCord707(filter3, 0, filterMixer3, 0);
-//AudioConnection          patchCord708(filter3, 1, filterMixer3, 1);
-//AudioConnection          patchCord709(filter3, 2, filterMixer3, 2);
-AudioConnection          patchCord710(filter4, 0, filterMixer4, 0);
-//AudioConnection          patchCord711(filter4, 1, filterMixer4, 1);
-//AudioConnection          patchCord712(filter4, 2, filterMixer4, 2);
-AudioConnection          patchCord713(filter5, 0, filterMixer5, 0);
-//AudioConnection          patchCord714(filter5, 1, filterMixer5, 1);
-//AudioConnection          patchCord715(filter5, 2, filterMixer5, 2);
-AudioConnection          patchCord716(filter6, 0, filterMixer6, 0);
-//AudioConnection          patchCord717(filter6, 1, filterMixer6, 1);
-//AudioConnection          patchCord718(filter6, 2, filterMixer6, 2);
-AudioConnection          patchCord719(filter7, 0, filterMixer7, 0);
-//AudioConnection          patchCord720(filter7, 1, filterMixer7, 1);
-//AudioConnection          patchCord721(filter7, 2, filterMixer7, 2);
-AudioConnection          patchCord722(filter8, 0, filterMixer8, 0);
-//AudioConnection          patchCord723(filter8, 1, filterMixer8, 1);
-//AudioConnection          patchCord724(filter8, 2, filterMixer8, 2);
-#endif
+
+// Ladder Filter
+AudioConnection          patchCord740(filter2_1, 0, filterMixer1, 3);
+AudioConnection          patchCord741(filter2_2, 0, filterMixer2, 3);
+AudioConnection          patchCord742(filter2_3, 0, filterMixer3, 3);
+AudioConnection          patchCord743(filter2_4, 0, filterMixer4, 3);
+AudioConnection          patchCord744(filter2_5, 0, filterMixer5, 3);
+AudioConnection          patchCord745(filter2_6, 0, filterMixer6, 3);
+AudioConnection          patchCord746(filter2_7, 0, filterMixer7, 3);
+AudioConnection          patchCord747(filter2_8, 0, filterMixer8, 3);
 
 // Mixer ----------------------------------------------------------------
 AudioConnection          patchCord751(noiseMixer, 0, waveformMixer1, 2);
@@ -527,6 +503,15 @@ AudioConnection          patchCord836(filterModMixer6, 0, filter6, 1);
 AudioConnection          patchCord837(filterModMixer7, 0, filter7, 1);
 AudioConnection          patchCord838(filterModMixer8, 0, filter8, 1);
 
+AudioConnection          patchCord8311(filterModMixer1, 0, filter2_1, 1);
+AudioConnection          patchCord8321(filterModMixer2, 0, filter2_2, 1);
+AudioConnection          patchCord8331(filterModMixer3, 0, filter2_3, 1);
+AudioConnection          patchCord8341(filterModMixer4, 0, filter2_4, 1);
+AudioConnection          patchCord8351(filterModMixer5, 0, filter2_5, 1);
+AudioConnection          patchCord8361(filterModMixer6, 0, filter2_6, 1);
+AudioConnection          patchCord8371(filterModMixer7, 0, filter2_7, 1);
+AudioConnection          patchCord8381(filterModMixer8, 0, filter2_8, 1);
+
 // waveshaper
 AudioConnection          patchCord841(filterMixer1, WaveshaperAmp1);
 AudioConnection          patchCord842(filterMixer2, WaveshaperAmp2);
@@ -572,6 +557,7 @@ AudioConnection          patchCord884(oscModMixer7b, 0, waveformMod7b, 0);
 AudioConnection          patchCord885(oscModMixer8a, 0, waveformMod8a, 0);
 AudioConnection          patchCord886(oscModMixer8b, 0, waveformMod8b, 0);
 
+// State Variable Filter
 AudioConnection          patchCord941(waveformMixer1, 0, filter1, 0);
 AudioConnection          patchCord942(waveformMixer2, 0, filter2, 0);
 AudioConnection          patchCord943(waveformMixer3, 0, filter3, 0);
@@ -581,15 +567,24 @@ AudioConnection          patchCord946(waveformMixer6, 0, filter6, 0);
 AudioConnection          patchCord947(waveformMixer7, 0, filter7, 0);
 AudioConnection          patchCord948(waveformMixer8, 0, filter8, 0);
 
-AudioConnection			patchCord960(voiceMixerM, 0, dcOffsetFilter, 0);
-AudioConnection			patchCord923(dcOffsetFilter, 2, scope, 0);
-AudioConnection			patchCord924(dcOffsetFilter, 2, peak, 0);
+// Ladder Filter
+AudioConnection          patchCord9411(waveformMixer1, 0, filter2_1, 0);
+AudioConnection          patchCord9421(waveformMixer2, 0, filter2_2, 0);
+AudioConnection          patchCord9431(waveformMixer3, 0, filter2_3, 0);
+AudioConnection          patchCord9441(waveformMixer4, 0, filter2_4, 0);
+AudioConnection          patchCord9451(waveformMixer5, 0, filter2_5, 0);
+AudioConnection          patchCord9461(waveformMixer6, 0, filter2_6, 0);
+AudioConnection          patchCord9471(waveformMixer7, 0, filter2_7, 0);
+AudioConnection          patchCord9481(waveformMixer8, 0, filter2_8, 0);
 
 AudioConnection          patchCord950(voiceMixer1, 0, voiceMixerM, 0);
 AudioConnection          patchCord951(voiceMixer2, 0, voiceMixerM, 1);
 AudioConnection          patchCord952(constant1Dc, 0, voiceMixerM, 2);
 
+AudioConnection			patchCord960(voiceMixerM, 0, dcOffsetFilter, 0);
+AudioConnection			patchCord923(dcOffsetFilter, 2, scope, 0);
+AudioConnection			patchCord924(dcOffsetFilter, 2, peak, 0);
+
 AudioConnection          patchCord998(voiceMixerM, 0, PCM5102A, 0);
 AudioConnection          patchCord999(voiceMixerM, 0, PCM5102A, 1);
-
 
