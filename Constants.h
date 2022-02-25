@@ -25,7 +25,7 @@ const static float UNISONVOICEMIXERLEVEL = 0.05f;
 const static float  OSCMODMIXERMAX = ONE;
 const static float  FILTERMODMIXERMAX = ONE;
 const static float  GLIDEFACTOR = 5000.0f;//Maximum glide time
-const static uint32_t NO_OF_PARAMS = 199;	 // parameters of Sound Patch + Seq.Pattern
+const static uint32_t NO_OF_PARAMS = 200;	 // parameters of Sound Patch + Seq.Pattern
 const static uint32_t NO_OF_SEQ_PARAMS = 118; // parameters of Seq.Pattern
 const static char* INITPATCHNAME = "            ";
 const static char* INITPATTERNNAME = "            ";
@@ -33,7 +33,7 @@ const static float HOLD_DURATION = 1000.0f;
 static const uint8_t S2 = 0;	// Resistor value Key "UNISONO"
 static const uint8_t S3 = 11;	// Resistor value Key "ARP/SEQ"
 static const uint8_t S4 = 30;	// Resistor value Key "MUTE/PANIC"
-static const uint8_t S5 = 56;	// Resistor value Key "BOOST"
+static const uint8_t S5 = 56;// 56;	// Resistor value Key "BOOST"
 static const uint8_t S6 = 81;	// Resistor value Key "SHIFT/ESC"
 static const uint8_t S7 = 101;	// Resistor value Key "SAVE"
 static const uint32_t myEEPROMinit = 1806104064;
@@ -172,21 +172,22 @@ const char String_129[] PROGMEM = "MODE";
 const char String_130[] PROGMEM = "KEY";
 const char String_131[] PROGMEM = "TRP";
 const char String_132[] PROGMEM = "REC";
-const char String_133[] PROGMEM = "System V1.30";
-const char String_134[] PROGMEM = "System V1.30.L";
+// Firmware Version
+const char String_133[] PROGMEM = "System V1.36";
+const char String_134[] PROGMEM = " ";
 const char String_135[] PROGMEM = "CPU-MHz";
 const char String_136[] PROGMEM = "CPU-TEMP";
-const char String_137[] PROGMEM = "CPU-MEM";
+const char String_137[] PROGMEM = "CPU-LOAD";
 const char String_138[] PROGMEM = "PWHEEL";
 const char String_139[] PROGMEM = "MWHEEL";
 const char String_140[] PROGMEM = "MIDICHA";
 const char String_141[] PROGMEM = "VELCURV";
-const char String_142[] PROGMEM = "UNISONO";
+const char String_142[] PROGMEM = "FILTER";
 const char String_143[] PROGMEM = "MIDICLK";
 const char String_144[] PROGMEM = "PCHANGE";
 const char String_145[] PROGMEM = "ALL";
-const char String_146[] PROGMEM = "8-1";
-const char String_147[] PROGMEM = "4-2";
+const char String_146[] PROGMEM = "STA";
+const char String_147[] PROGMEM = "LAD";
 const char String_148[] PROGMEM = "EXT";
 const char String_149[] PROGMEM = "INT";
 const char String_150[] PROGMEM = "SAVE PROGRAM";
@@ -293,7 +294,9 @@ const int16_t PROGMEM WAVESHAPER_Convert[1] = {
 };
 
 // Filter Frequency 18Hz - 12KHz
-const static uint16_t PROGMEM FILTERFREQS256[256] = {
+const float FILTERFREQS256[256] PROGMEM = {
+	
+	// TSynth Filter Table
 	   18,    19,    20,    20,    21,    22,    23,    23,
 	   24,    25,    26,    27,    28,    28,    29,    30,
 	   31,    32,    33,    34,    36,    37,    38,    39,
@@ -325,7 +328,45 @@ const static uint16_t PROGMEM FILTERFREQS256[256] = {
 	   6275,  6406,  6541,  6677,  6817,  6959,  7104,  7251,
 	   7402,  7555,  7711,  7871,  8033,  8198,  8367,  8538,
 	   8713,  8891,  9073,  9258,  9446,  9638,  9833, 10033,
-	   10235, 10442, 10652, 10867, 11085, 11308, 11534, 12000,
+	   10235, 10442, 10652, 10867, 11085, 11308, 11534, 12000
+	   
+	   
+	/*
+	// DeepMind6 Filter Table
+	50.0f, 51.1f, 52.4f, 53.6f, 54.9f, 56.2f, 57.5f, 58.9f,
+	60.3f, 61.7f, 63.2f, 64.7f, 66.2f, 67.8f, 69.4f, 71.1f,
+	72.8f, 74.5f, 76.3f, 78.1f, 79.9f, 81.8f, 83.8f, 85.8f,
+	87.8f, 89.9f, 92.1f, 94.2f, 96.5f, 98.8f, 101.1f, 103.5f,
+	106.0f, 108.5f, 111.1f, 113.7f, 116.4f, 119.2f, 122.1f, 125.0f,
+	127.9f, 131.0f, 134.1f, 137.3f, 140.5f, 143.9f, 147.3f, 150.8f,
+	154.4f, 158.1f, 161.8f, 165.7f, 169.6f, 173.6f, 177.8f, 182.0f,
+	186.3f, 190.8f, 195.3f, 199.9f, 204.7f, 209.6f, 214.5f, 219.7f,
+	224.9f, 230.2f, 235.7f, 241.3f, 247.0f, 252.0f, 258.9f, 265.1f,
+	271.4f, 277.8f, 284.4f, 291.2f, 298.1f, 305.2f, 312.5f, 319.9f,
+	327.5f, 335.3f, 343.3f, 351.4f, 359.8f, 368.4f, 377.1f, 386.1f,
+	395.3f, 404.7f, 414.3f, 424.1f, 434.2f, 444.5f, 455.1f, 465.9f,
+	477.0f, 488.3f, 500.0f, 511.8f, 524.0f, 536.5f, 549.2f, 562.3f,
+	575.7f, 589.3f, 603.4f, 617.7f, 632.4f, 647.4f, 662.8f, 678.6f,
+	694.7f, 711.2f, 738.1f, 745.5f, 763.2f, 781.3f, 799.9f, 818.9f,
+	838.4f, 858.3f, 878.7f, 899.6f, 921.0f, 942.9f, 965.3f, 988.3f,
+	1011.8f, 1035.8f, 1060.4f, 1085.7f, 1111.5f, 1137.9f, 1165.0f, 1192.7f,
+	1221.0f, 1250.0f, 1279.8f, 1310.2f, 1341.3f, 1373.2f, 1405.9f, 1439.3f,
+	1473.5f, 1508.5f, 1544.4f, 1581.1f, 1618.7f, 1657.2f, 1696.6f, 1736.9f,
+	1778.2f, 1820.5f, 1863.8f, 1908.1f, 1953.5f, 1999.9f, 2047.5f, 2096.1f,
+	2146.0f, 2197.0f, 2249.2f, 2302.7f, 2357.5f, 2413.5f, 2470.9f, 2529.6f,
+	2589.8f, 2651.3f, 2714.4f, 2778.9f, 2845.0f, 2912.6f, 2981.9f, 3052.7f,
+	3125.3f, 3199.6f, 3275.7f, 3353.6f, 3433.3f, 3514.9f, 3598.5f, 3684.0f,
+	3771.6f, 3861.3f, 3953.1f, 4047.1f, 4143.3f, 4241.8f, 4342.7f, 4445.9f,
+	4551.6f, 4659.8f, 4770.6f, 4884.0f, 5000.1f, 5119.0f, 5240.7f, 5365.3f,
+	5492.8f, 5623.4f, 5757.1f, 5894.0f, 6034.1f, 6177.6f, 6324.5f, 6474.8f,
+	6628.7f, 6786.3f, 6947.7f, 7112.9f, 7282.0f, 7455.1f, 7632.3f, 7813.8f,
+	7999.5f, 8189.7f, 8384.4f, 8583.8f, 8787.8f, 8996.8f, 9210.7f, 9429.6f,
+	9653.8f, 9883.3f, 10118.3f, 10358.8f, 10605.1f, 10857.3f, 11115.4f, 11379.6f,
+	11650.2f, 11927.2f, 12210.7f, 12501.0f, 12798.2f, 13102.5f, 13414.0f, 13732.9f,
+	14059.4f, 14393.6f, 14735.8f, 15086.2f, 15444.8f, 15812.0f, 16187.9f, 16572.8f,
+	16966.8f, 17370.2f, 17783.1f, 18205.9f, 18638.7f, 19081.9f, 19535.5f, 20000.0f
+	*/
+	
 };
 	  
 // Filter curve ---------------------------------------------------------

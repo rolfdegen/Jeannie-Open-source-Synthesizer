@@ -1556,7 +1556,7 @@ FLASHMEM int codingPotWaveNo (int value)
 FLASHMEM void draw_filter_curves (uint8_t FilterFrq, uint8_t FilterRes, uint8_t FilterMix)
 {
 	// Ladder Filter
-	if (Filter == 2) {
+	if (myFilter == 2) {
 		FilterMix = 0;
 	}
 	
@@ -2745,14 +2745,12 @@ FLASHMEM void renderCurrentParameter(uint8_t Page,uint16_t ParameterNr, uint8_t 
 				tft.fillRoundRect(54,57,22,10,2,ST7735_BLUE);
 				tft.setTextColor(ST7735_WHITE);
 				value = value >> 3;
-				if (value < 3 ) {
-					oscDetuneSync = false;
-					tft.setCursor(56,59);
-					tft.print("OFF");
+				if (value < 1 ) {
+					oscDetuneSync = 0;
+					print_String(18,56,59);		// ptint "OFF"
 				} else {
-					oscDetuneSync = true;
-					tft.setCursor(59,59);
-					tft.print("ON");
+					oscDetuneSync = 1;
+					print_String(33,59,59);		// print "ON"
 				}
 			}
 			// Transpose (max -6% NoteFrq)
@@ -3732,23 +3730,27 @@ FLASHMEM void renderCurrentParameter(uint8_t Page,uint16_t ParameterNr, uint8_t 
 			velocitySens = val;
 		}
 		
-		/*
-		// Unisono mode
-		else if (ParameterNr == myUnisonoMode) {
-			uint8_t val = (0.047 * value);
+		// Filtertyp switch 
+		else if (ParameterNr == myFilterSwitch) {
+			uint8_t val = (0.047f * value);
 			if (val >= 1) {
 				val = 1;
 			}
 			tft.fillRect(136,59,17,7,ST7735_BLUE);
 			tft.setCursor(136, 59);
 			if (val == 0) {
-				tft.print("8-1");
+				tft.print("STA");
+				myFilter = 1;
+				updateFilterMixer();
+				updateFilterRes();
 			}
-			else if (val == 1) {
-				tft.print("4-2");
+			else {
+				tft.print("LAD");
+				myFilter = 2;
+				updateFilterMixer();
+				updateFilterRes();
 			}
-			myUnisono = val;
-		} */
+		}
 		
 		// MidiClk
 		else if (ParameterNr == myMidiSyncSwitch) {
@@ -4620,9 +4622,6 @@ FLASHMEM void drawMainPage (void) {
 	int16_t x1, y1;
 	uint16_t w1, h1;
 
-	long RedrawTime = 0; // micros() - timer6;
-	timer6 = micros();
-	
 	if (clearScreenFlag == true) {
 		tft.fillScreen(ST7735_BLACK);
 		clearScreenFlag = false;
@@ -4639,10 +4638,8 @@ FLASHMEM void drawMainPage (void) {
 		tft.setFont(&FreeSans9pt7b);
 		tft.setCursor(xposBankNo[currentPatchBank], ypos);
 		tft.print(BankNo[currentPatchBank]);
-		
-		tft.setFont(&FreeSans9pt7b);
-		tft.setCursor(65, 22);
 		tft.setTextColor(ST7735_YELLOW);
+		tft.setCursor(65, 22);
 		tft.setTextSize(1);
 		int patchnumber = patchNo;
 		if (patchnumber < 10) {
@@ -4658,7 +4655,6 @@ FLASHMEM void drawMainPage (void) {
 		// print Patch Name
 		currentPatchName.trim();	// delete spaces
 		tft.drawFastHLine(10, 63, tft.width() - 20, ST7735_RED);
-		tft.setFont(&FreeSans9pt7b);
 		tft.getTextBounds(currentPatchName , 0, 0, &x1, &y1, &w1, &h1); // string width in pixels
 		tft.setCursor(80 - (w1 / 2), 52);	// print string in the middle
 		tft.setTextColor(ST7735_WHITE);
@@ -5161,10 +5157,10 @@ FLASHMEM void drawOscSubMenu () {
 	// SYNC -----------------------------------------------------------
 	tft.fillRoundRect(54,57,22,10,2,ST7735_BLUE);
 	tft.setTextColor(ST7735_WHITE);
-	if (oscDetuneSync == true) {
+	if (oscDetuneSync >= 1) {
 		print_String(33,59,59);		// print "ON"
 		} else {
-		print_String(18,56,59);		// print "ON"
+		print_String(18,56,59);		// print "OFF"
 	}
 	
 	// Transpose ------------------------------------------------------
@@ -5254,7 +5250,7 @@ FLASHMEM void drawFilterPage (void)
 	tft.fillRect(0,0,160,13,ST7735_GRAY);
 	
 	// State Variable Filter ----------------------------------------------
-	if (Filter == 1) {
+	if (myFilter == 1) {
 		if (myPageShiftStatus[PageNr] == false) {	// Main page enabled
 			tft.setTextColor(ST7735_WHITE);
 			tft.setFont(NULL);
@@ -6177,7 +6173,7 @@ FLASHMEM void drawSEQPage (void)
 		if (SEQMidiClkSwitch == false) {
 			printDataValue (2, SEQbpmValue);
 		} else {
-			print_String(125,186,116);		// print "MIDI"
+			print_String(125,86,116);		// print "MIDI"
 		}
 		printRedMarker (2, ((SEQbpmValue - 50)/1.484f));
 		
@@ -6254,11 +6250,7 @@ FLASHMEM void drawSystemPage (void)
 	tft.setTextColor(ST7735_WHITE);
 	tft.setFont(NULL);
 	tft.setTextSize(0);
-#if Filter == 1
 	print_String(133,5,3);		// print "System V1.xx"
-#else
-	print_String(134,5,3);		// print "System V1.xx.L"
-#endif
 	tft.setTextColor(ST7735_WHITE);
 	print_String(29,5,115);		// print "SELECTL"
 	print_String(30,50,115);	// print "VALUE"
@@ -6272,7 +6264,7 @@ FLASHMEM void drawSystemPage (void)
 	print_String(139,5,97);		// print "MWHELL"
 	print_String(140,85,21);	// print "MIDICHA"
 	print_String(141,85,40);	// print "VELCURV"
-	print_String(142,85,59);	// print "UNISONO"
+	print_String(142,85,59);	// print "FILTER"
 	print_String(143,85,78);	// print "MIDICLK"
 	print_String(144,85,97);	// print "PCHANGE"
 	
@@ -6331,13 +6323,13 @@ FLASHMEM void drawSystemPage (void)
 		tft.print(velocitySens);
 	}
 	
-	// Unisono mode
+	// Filter Typ
 	tft.setTextColor(ST7735_WHITE);
-	if (myUnisono == 0) {
-		print_String(146,136,59);	// print "8-1"
+	if (myFilter == 1) {
+		print_String(146,136,59);	// print "STA"
 	}
-	else if (myUnisono == 1) {
-		print_String(147,136,59);	// print "4-2"
+	else if (myFilter == 2) {
+		print_String(147,136,59);	// print "LAD"
 	}
 	
 	// MidiSync
@@ -6879,11 +6871,15 @@ void displayThread() {
 	const uint8_t timeVal2 = 50;
 	const uint8_t blinkiTime = 250;
 	
+	
+	
 		if (PageNr == 0) {					
 			vuMeter = false;
 			if ((millis() - timer1) > timeVal1){	// refresh Main Page and Scope all 25ms
+				//scopeIdel = true;
 				renderCurrentPatchPage();
-				tft.updateScreen();	
+				tft.updateScreen();
+				scopeIdel = false;	
 				timer1 = millis();
 				VoicLEDtime = 2;			// note off time for LED symbols	
 			}
@@ -6937,7 +6933,7 @@ FLASHMEM void setupDisplay() {
 	const uint8_t ypos = 38;
 	const char* version ="LADDER VERSION";
 	
-	if (Filter == 1) {
+	if (myFilter == 1) {
 		version = " ";
 	}
 	
@@ -7034,13 +7030,6 @@ FLASHMEM void setupDisplay() {
 		bmpDraw("PIC/PIC1.bmp",0,0);
 	}
 	
-	#if Filter == 2
-	tft.setCursor(xpos,ypos);
-	tft.print(version);		// print "Ladder Version"
-	#endif
-	delay(1000);
 	tft.useFrameBuffer(true); // activate Screen Buffer
 }
-
-
 

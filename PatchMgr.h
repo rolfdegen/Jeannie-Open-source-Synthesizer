@@ -147,9 +147,11 @@ FLASHMEM void savePatch(const char *patchNo, String patchData){
   File patchFile = SD.open(patchNo, FILE_WRITE);
   if (patchFile)
   {
+/*
   Serial.print("Writing Patch No:");
   Serial.println(patchNo);
   Serial.println(patchData);
+  */
     patchFile.println(patchData);
     patchFile.close();
   }

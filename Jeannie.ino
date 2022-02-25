@@ -6,10 +6,10 @@
 //
 //  Software and Software by Rolf Degen / TSynt 
 //
-//  Build Version 1.30.X with State Variable Filter or Ladder Filter
+//  Build Version 1.32.X with State Variable Filter or Ladder Filter
 //  Info: Filter type can be set by definition on the AudioPatching.h
 //
-//  Date: 15.02.2022
+//  Date: 20.02.2022
 //  Teensy 4.1 Development Board
 //  ARM Cortex-M7 CPU 600MHz 1024K RAM  8MB Flash 4K EEPROM
 //*************************************************************************
@@ -70,8 +70,11 @@ uint8_t ParameterNr = 0;
 boolean tftUpdate =  true;
 boolean ParUpdate = true;
 boolean Init_flag = true;
-float timer_Temperature = 2011;	// Measurement interval time (ms)
-float timer_CPUmon = 577;		// Measurement interval time (ms)
+long timer_Temperature = 2011;	// Measurement interval time (ms)
+long timer_CPUmon = 577;		// Measurement interval time (ms)
+long timer_keyquery = 1;       // Key query interval time 1ms
+long timer_encquery = 20;       // Encoder query interval time 1ms
+long timer_potquery = 50;       // pot query interval time 50ms
 uint32_t timer_intMidiClk = 0;   // interval Intern Midi Clock ms
 unsigned long timer_extMidiClk = 0;   // interval Intern Midi Clock ms
 unsigned long timer_envelopeMonitor = 0;
@@ -93,7 +96,7 @@ uint8_t Env2Atk = 0;
 uint8_t Env2Dcy = 0;
 uint8_t Env2Sus = 0;
 uint8_t Env2Rel = 0;
-uint16_t KeyDebounce = 50;
+uint16_t KeyDebounce = 2;
 uint8_t KeyStatus = 0;
 uint8_t S1KeyStatus = 0;
 uint8_t S2KeyStatus = 0;
@@ -197,6 +200,8 @@ uint32_t  SizeLeft_etext;
 extern unsigned long _stextload;  // FROM LINKER
 extern unsigned long _stext;
 extern unsigned long _etext;
+
+
 
 
 //*************************************************************************
@@ -320,7 +325,8 @@ FLASHMEM void setup() {
 	FilterVelo5.amplitude(0.5f);
 	FilterVelo6.amplitude(0.5f);
 	FilterVelo7.amplitude(0.5f);
-	FilterVelo8.amplitude(0.5f);
+	FilterVelo8.amplitude(0.5f);	
+	
 	//This removes dc offset (mostly from unison pulse waves) before the ensemble effect
 	dcOffsetFilter.octaveControl(1.0f); // only for Scope and Peak
 	dcOffsetFilter.frequency(5.0f);//Lower values will give clicks on note on/off
@@ -1935,6 +1941,8 @@ FLASHMEM void updatesAllVoices() {
 FLASHMEM void updateFilterEnvelopeType() {
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
+	//envelopeType1 = -128;	// old liniear curve
+	
 	filterEnvelope1.setEnvType(envelopeType1);
 	filterEnvelope2.setEnvType(envelopeType1);
 	filterEnvelope3.setEnvType(envelopeType1);
@@ -1949,14 +1957,16 @@ FLASHMEM void updateFilterEnvelopeType() {
 FLASHMEM void updateAmpEnvelopeType() {
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
-		ampEnvelope1.setEnvType(envelopeType2);
-		ampEnvelope2.setEnvType(envelopeType2);
-		ampEnvelope3.setEnvType(envelopeType2);
-		ampEnvelope4.setEnvType(envelopeType2);
-		ampEnvelope5.setEnvType(envelopeType2);
-		ampEnvelope6.setEnvType(envelopeType2);
-		ampEnvelope7.setEnvType(envelopeType2);
-		ampEnvelope8.setEnvType(envelopeType2);
+	//envelopeType2 = -128;	// old linear curve
+	
+	ampEnvelope1.setEnvType(envelopeType2);
+	ampEnvelope2.setEnvType(envelopeType2);
+	ampEnvelope3.setEnvType(envelopeType2);
+	ampEnvelope4.setEnvType(envelopeType2);
+	ampEnvelope5.setEnvType(envelopeType2);
+	ampEnvelope6.setEnvType(envelopeType2);
+	ampEnvelope7.setEnvType(envelopeType2);
+	ampEnvelope8.setEnvType(envelopeType2);
 }
 
 
@@ -2225,58 +2235,77 @@ FLASHMEM void updateNoiseLevel() {
 }
 
 FLASHMEM void updateFilterFreq() {
-	filter1.frequency(filterFreq);
-	filter2.frequency(filterFreq);
-	filter3.frequency(filterFreq);
-	filter4.frequency(filterFreq);
-	filter5.frequency(filterFreq);
-	filter6.frequency(filterFreq);
-	filter7.frequency(filterFreq);
-	filter8.frequency(filterFreq);
 	
-	/*
-	//Altering filterOctave to give more cutoff width for deeper bass, but sharper cuttoff at higher frequncies
-	if (filterFreq <= 2000) {
-	filterOctave = 4.0f + ((2000.0f - filterFreq) / 710.0f);//More bass
-	} else if (filterFreq > 2000 && filterFreq <= 3500) {
-	filterOctave = 3.0f + ((3500.0f - filterFreq) / 1500.0f);//Sharper cutoff
-	} else if (filterFreq > 3500 && filterFreq <= 7000) {
-	filterOctave = 2.0f + ((7000.0f - filterFreq) / 4000.0f);//Sharper cutoff
+	if (myFilter == 1) {
+		filter1.frequency(filterFreq);
+		filter2.frequency(filterFreq);
+		filter3.frequency(filterFreq);
+		filter4.frequency(filterFreq);
+		filter5.frequency(filterFreq);
+		filter6.frequency(filterFreq);
+		filter7.frequency(filterFreq);
+		filter8.frequency(filterFreq);
+		filterOctave = 6.9999f;
+		filter1.octaveControl(filterOctave);
+		filter2.octaveControl(filterOctave);
+		filter3.octaveControl(filterOctave);
+		filter4.octaveControl(filterOctave);
+		filter5.octaveControl(filterOctave);
+		filter6.octaveControl(filterOctave);
+		filter7.octaveControl(filterOctave);
+		filter8.octaveControl(filterOctave);
 	} else {
-	filterOctave = 1.0f + ((12000.0f - filterFreq) / 5100.0f);//Sharper cutoff
+		filter2_1.frequency(filterFreq);
+		filter2_2.frequency(filterFreq);
+		filter2_3.frequency(filterFreq);
+		filter2_4.frequency(filterFreq);
+		filter2_5.frequency(filterFreq);
+		filter2_6.frequency(filterFreq);
+		filter2_7.frequency(filterFreq);
+		filter2_8.frequency(filterFreq);
+		filterOctave = 6.9999f;
+		filter2_1.octaveControl(filterOctave);
+		filter2_2.octaveControl(filterOctave);
+		filter2_3.octaveControl(filterOctave);
+		filter2_4.octaveControl(filterOctave);
+		filter2_5.octaveControl(filterOctave);
+		filter2_6.octaveControl(filterOctave);
+		filter2_7.octaveControl(filterOctave);
+		filter2_8.octaveControl(filterOctave);
 	}
-	*/
-	
-	filterOctave = 6.9999f;
-	filter1.octaveControl(filterOctave);
-	filter2.octaveControl(filterOctave);
-	filter3.octaveControl(filterOctave);
-	filter4.octaveControl(filterOctave);
-	filter5.octaveControl(filterOctave);
-	filter6.octaveControl(filterOctave);
-	filter7.octaveControl(filterOctave);
-	filter8.octaveControl(filterOctave);	
 }
 
 FLASHMEM void updateFilterRes() {
 	
-#if Filter == 1
-	const float maxReso = 4.9f;
-#else
-	const float maxReso = 1.8f;
-#endif
-
-if (filterRes >= maxReso) {
-	filterRes = maxReso;
-}
-	filter1.resonance(filterRes);
-	filter2.resonance(filterRes);
-	filter3.resonance(filterRes);
-	filter4.resonance(filterRes);
-	filter5.resonance(filterRes);
-	filter6.resonance(filterRes);
-	filter7.resonance(filterRes);
-	filter8.resonance(filterRes);
+	float maxReso;
+	
+	if (myFilter == 1) {
+		maxReso = 4.9f;
+		if (filterRes >= maxReso) {
+			filterRes = maxReso;
+		}
+		filter1.resonance(filterRes);
+		filter2.resonance(filterRes);
+		filter3.resonance(filterRes);
+		filter4.resonance(filterRes);
+		filter5.resonance(filterRes);
+		filter6.resonance(filterRes);
+		filter7.resonance(filterRes);
+		filter8.resonance(filterRes);
+		} else {
+		maxReso = 1.8f;
+		if (filterRes >= maxReso) {
+			filterRes = maxReso;
+		}
+		filter2_1.resonance(filterRes);
+		filter2_2.resonance(filterRes);
+		filter2_3.resonance(filterRes);
+		filter2_4.resonance(filterRes);
+		filter2_5.resonance(filterRes);
+		filter2_6.resonance(filterRes);
+		filter2_7.resonance(filterRes);
+		filter2_8.resonance(filterRes);
+	}
 }
 
 //*******************************************************************
@@ -2285,90 +2314,100 @@ if (filterRes >= maxReso) {
 FLASHMEM void updateFilterMixer() {
 	
 	float LP = 1.0f;
-	float BP = 0;
-	float HP = 0;
+	float BP = 0.0f;
+	float HP = 0.0f;
+	float LA = 0.0f;
 	
 	// State Variable Filter
-	if (Filter == 1) {
+	if (myFilter == 1) {
 		String filterStr;
 		if (filterMix == LINEAR_FILTERMIXER[127]) {
 			//BP mode
-			LP = 0;
+			LP = 0.0f;
 			BP = 1.0f;
-			HP = 0;
+			HP = 0.0f;
+			LA = 0.0f;
 			filterStr = "Band Pass";
 			} else {
 			//LP-HP mix mode - a notch filter
 			LP = 1.0f - filterMix;
-			BP = 0;
+			BP = 0.0f;
 			HP = filterMix;
+			LA = 0.0f;
 		}
-	}
-	// Ladder Filter -----------------------------------
-	else {
-		LP = 1.0f;
+	} else {		// Ladder Filter
+		LP = 0.0f;
 		BP = 0.0f;
 		HP = 0.0f;
+		LA = 1.0f;
 	}
-	
+
 	filterMixer1.gain(0, LP);
 	filterMixer1.gain(1, BP);
 	filterMixer1.gain(2, HP);
+	filterMixer1.gain(3, LA);
 	filterMixer2.gain(0, LP);
 	filterMixer2.gain(1, BP);
 	filterMixer2.gain(2, HP);
+	filterMixer2.gain(3, LA);
 	filterMixer3.gain(0, LP);
 	filterMixer3.gain(1, BP);
 	filterMixer3.gain(2, HP);
+	filterMixer3.gain(3, LA);
 	filterMixer4.gain(0, LP);
 	filterMixer4.gain(1, BP);
 	filterMixer4.gain(2, HP);
+	filterMixer4.gain(3, LA);
 	filterMixer5.gain(0, LP);
 	filterMixer5.gain(1, BP);
 	filterMixer5.gain(2, HP);
+	filterMixer5.gain(3, LA);
 	filterMixer6.gain(0, LP);
 	filterMixer6.gain(1, BP);
 	filterMixer6.gain(2, HP);
+	filterMixer6.gain(3, LA);
 	filterMixer7.gain(0, LP);
 	filterMixer7.gain(1, BP);
 	filterMixer7.gain(2, HP);
+	filterMixer7.gain(3, LA);
 	filterMixer8.gain(0, LP);
 	filterMixer8.gain(1, BP);
 	filterMixer8.gain(2, HP);
-	
+	filterMixer8.gain(3, LA);
 }
 
 FLASHMEM void updateLadderFilterDrive(uint8_t value) {
-#if Filter == 2
-	if (value <= 1) {
-		value = 1;
+	if (myFilter == 2) {
+		if (value <= 1) {
+			value = 1;
+		}
+		float Div = 4.0f / 128;
+		float drv = float(value * Div);
+		filter2_1.inputDrive(drv);
+		filter2_2.inputDrive(drv);
+		filter2_3.inputDrive(drv);
+		filter2_4.inputDrive(drv);
+		filter2_5.inputDrive(drv);
+		filter2_6.inputDrive(drv);
+		filter2_7.inputDrive(drv);
+		filter2_8.inputDrive(drv);
 	}
-	float Div = 4.0f / 128;
-	float drv = float(value * Div);
-	filter1.inputDrive(drv);
-	filter2.inputDrive(drv);
-	filter3.inputDrive(drv);
-	filter4.inputDrive(drv);
-	filter5.inputDrive(drv);
-	filter6.inputDrive(drv);
-	filter7.inputDrive(drv);
-	filter8.inputDrive(drv);
-#endif
 }
 
 FLASHMEM void updateLadderFilterPassbandGain(uint8_t value) {
-#if Filter == 2
+
+	if (myFilter == 2) {
 		float Div = 0.5f / 128;
 		float drv = float(value * Div);
-		filter1.passbandGain(drv);
-		filter2.passbandGain(drv);
-		filter3.passbandGain(drv);
-		filter4.passbandGain(drv);
-		filter5.passbandGain(drv);
-		filter6.passbandGain(drv);
-		filter7.passbandGain(drv);
-		filter8.passbandGain(drv);
-#endif
+		filter2_1.passbandGain(drv);
+		filter2_2.passbandGain(drv);
+		filter2_3.passbandGain(drv);
+		filter2_4.passbandGain(drv);
+		filter2_5.passbandGain(drv);
+		filter2_6.passbandGain(drv);
+		filter2_7.passbandGain(drv);
+		filter2_8.passbandGain(drv);
+	}
 }
 
 FLASHMEM void updateFilterEnv() {
@@ -2472,12 +2511,6 @@ FLASHMEM void updateFilterAttack() {
 	filterEnvelope6.attack(filterAttack);
 	filterEnvelope7.attack(filterAttack);
 	filterEnvelope8.attack(filterAttack);
-
-	if (filterAttack < 1000) {
-		showCurrentParameterPage("Filter Attack", String(int(filterAttack)) + " ms", FILTER_ENV);
-		}  else {
-		showCurrentParameterPage("Filter Attack", String(filterAttack * 0.001f) + " s", FILTER_ENV);
-	}
 }
 
 FLASHMEM void updateFilterDecay() {
@@ -2489,11 +2522,6 @@ FLASHMEM void updateFilterDecay() {
 	filterEnvelope6.decay(filterDecay);
 	filterEnvelope7.decay(filterDecay);
 	filterEnvelope8.decay(filterDecay);
-	if (filterDecay < 1000) {
-		showCurrentParameterPage("Filter Decay", String(int(filterDecay)) + " ms", FILTER_ENV);
-		} else {
-		showCurrentParameterPage("Filter Decay", String(filterDecay * 0.001f) + " s", FILTER_ENV);
-	}
 }
 
 FLASHMEM void updateFilterSustain() {
@@ -2505,7 +2533,6 @@ FLASHMEM void updateFilterSustain() {
 	filterEnvelope6.sustain(filterSustain);
 	filterEnvelope7.sustain(filterSustain);
 	filterEnvelope8.sustain(filterSustain);
-	//showCurrentParameterPage("Filter Sustain", String(filterSustain), FILTER_ENV);
 }
 
 FLASHMEM void updateFilterRelease() {
@@ -2517,12 +2544,6 @@ FLASHMEM void updateFilterRelease() {
 	filterEnvelope6.release(filterRelease);
 	filterEnvelope7.release(filterRelease);
 	filterEnvelope8.release(filterRelease);
-
-	if (filterRelease < 1000) {
-		showCurrentParameterPage("Filter Release", String(int(filterRelease)) + " ms", FILTER_ENV);
-		} else {
-		showCurrentParameterPage("Filter Release", String(filterRelease * 0.001) + " s", FILTER_ENV);
-	}
 }
 
 FLASHMEM void updateAttack() {
@@ -3106,7 +3127,7 @@ FLASHMEM void myCCgroup2 (byte control, byte value)
 	// CC control No: 71
 	if (control == CCfilterres) {
 		// State Variable Filter -------------------
-		if (Filter == 1) {
+		if (myFilter == 1) {
 			if (control == CCfilterres) {   // Filter_variable
 				//Pick up
 				if (!pickUpActive && pickUp && (resonancePrevValue <  ((3.8 * LINEAR[value - TOLERANCE]) + 1.1f) || resonancePrevValue >  ((3.8f * LINEAR[value + TOLERANCE]) + 1.1f))) return; //PICK-UP
@@ -3168,8 +3189,8 @@ FLASHMEM void myCCgroup2 (byte control, byte value)
 	// CC control No: 74
 	else if (control == CCfilterfreq) {
 				
-		filterFreq = FILTERFREQS256[value];
-		
+	filterFreq = FILTERFREQS256[value];
+				
 		if (PageNr == 0) {
 			timer5 = millis(); // cutoffScreen Timer
 			
@@ -4000,13 +4021,7 @@ FLASHMEM void myPrgChange() {
 
 	if (PrgChangeSW == true && myPrgChangeFlag == true) {
 		if (patchNo != myPrgChangeProgram + 1) {
-			patchNo = myPrgChangeProgram + 1;
-			
-			Serial.print("patchNo: ");
-			Serial.println(patchNo);
-			Serial.print("currentPatchBank");
-			Serial.println(currentPatchBank);
-			
+			patchNo = myPrgChangeProgram + 1;			
 			recallPatch(patchNo);
 			storeSoundPatchNo(patchNo);
 			storePatchBankNo(currentPatchBank);
@@ -4075,11 +4090,11 @@ FLASHMEM void set_initPatchData()
 		/* 19 */ pwmRate = -10.00f;
 		/* 20 */ pwA = -1.00f;
 		/* 21 */ pwB = -1.00f;
-		#if Filter == 1
-		/* 22 */ filterRes = 1.10f;  // State Variable Filter
-		#else
-		/* 22 */ filterRes = 0.0f;  // Ladder Filter
-		#endif
+		if (myFilter == 1) {
+			/* 22 */ filterRes = 1.10f;  // State Variable Filter
+		} else {
+			/* 22 */ filterRes = 0.0f;  // Ladder Filter
+		}
 		resonancePrevValue = filterRes;//Pick-up
 		/* 23 */ filterFreq = 12000.00f;
 		filterfreqPrevValue = filterFreq; //Pick-up
@@ -4158,8 +4173,9 @@ FLASHMEM void set_initPatchData()
 		envelopeType2 = 0;
 		cutoffPickupFlag = false;
 		cutoffScreenFlag = false;
-		PitchWheelAmt = 1.0f;
-		MODWheelAmt = 1.0f;
+		PitchWheelAmt = 0.27f;
+		MODWheelAmt = 0.27f;
+		myFilter = 1;	// State Variable Filter
 		
 		
 		// Update Parameter
@@ -4179,10 +4195,10 @@ FLASHMEM void set_initPatchData()
 		updateNoiseLevel();
 		updateFilterFreq();
 		updateFilterRes();
-		#if Filter == 2
-		updateLadderFilterPassbandGain(LadderFilterpassbandgain);
-		updateLadderFilterDrive(LadderFilterDrive);
-		#endif
+		if (myFilter == 2) {	// Ladder Filter
+			updateLadderFilterPassbandGain(LadderFilterpassbandgain);
+			updateLadderFilterDrive(LadderFilterDrive);
+		}
 		updateFilterMixer();
 		updateFilterEnv();
 		updateKeyTracking();
@@ -4330,7 +4346,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	unison = data[4].toInt();
 	oscFX = data[5].toInt();
 	detune = data[6].toFloat();
-	oscDetuneSync = true;
+	//oscDetuneSync = true;
 	lfoSyncFreq = data[7].toInt();
 	midiClkTimeInterval = data[8].toInt();
 	lfoTempoValue = data[9].toFloat();
@@ -4421,6 +4437,9 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	}
 	LFO1phase = data[68].toFloat();
 	LFO2phase = data[69].toFloat();
+	oscDetuneSync = data[107].toInt();
+	Serial.print("oscDetuneSync:" );
+	Serial.println(oscDetuneSync);
 	
 	oscTranspose = data[108].toInt();
 	if (oscTranspose > 12) {
@@ -4485,7 +4504,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 			gateTime = (float)(SEQclkRate / SEQGateTime);
 			SEQdirection = data[106].toInt();
 			SEQdirectionFlag = false;
-			oscDetuneSync = data[107].toInt();
+			
 			// Sequencer Velocity data ------------------------------------
 			for (uint8_t i = 0; i < 16; i++) {
 				int dataAddr = i + 111;
@@ -4517,13 +4536,11 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	}
 		
 		// Ladder Filter --------------------------------------------------
-		#if Filter == 2
-		LadderFilterpassbandgain = data[193].toInt();
-		LadderFilterDrive = data[194].toInt();
-		if (LadderFilterDrive == 0) {	// old Patches
-			LadderFilterDrive = 63;
-		}
-		#endif
+			LadderFilterpassbandgain = data[193].toInt();
+			LadderFilterDrive = data[194].toInt();
+			if (LadderFilterDrive < 1) {	// old Patches
+				LadderFilterDrive = 64;
+			}
 		
 		// EnvelopeTyp ---------------------------------------------------
 		envelopeType1 = data[195].toInt();
@@ -4534,7 +4551,17 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 		cutoffScreenFlag = false;
 		RefreshMainScreenFlag = true;
 		PitchWheelAmt = data[197].toFloat();
+		if (PitchWheelAmt < 0) {
+			PitchWheelAmt = 0.27f;
+		}
 		MODWheelAmt = data[198].toFloat();
+		if (MODWheelAmt < 0) {
+			MODWheelAmt = 0.27f;
+		}
+		myFilter = data[199].toInt();
+		if (myFilter < 1) {
+			myFilter = 1;
+		}
 		
 		
 	// Update parameter ---------------------------------------------------
@@ -4564,10 +4591,10 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateNoiseLevel();
 	updateFilterFreq();
 	updateFilterRes();
-#if Filter == 2
-	updateLadderFilterPassbandGain(LadderFilterpassbandgain);
-	updateLadderFilterDrive(LadderFilterDrive);
-#endif
+	if (myFilter == 2) {		// Ladder Filter
+		updateLadderFilterPassbandGain(LadderFilterpassbandgain);
+		updateLadderFilterDrive(LadderFilterDrive);
+	}
 	updateFilterMixer();
 	updateFilterEnvelopeType();
 	updateAmpEnvelopeType();
@@ -4649,7 +4676,7 @@ FLASHMEM String getCurrentPatchData() {
 	+ "," + String(SeqNoteCount[12]) + "," + String(SeqNoteCount[13]) + "," + String(SeqNoteCount[14]) + "," + String(SeqNoteCount[15])
 	+ "," + String(SEQmode) + "," + String(SEQMidiClkSwitch)
 	+ "," + String(LadderFilterpassbandgain) + "," + String(LadderFilterDrive) + "," + String(envelopeType1) + "," + String(envelopeType2)
-	+ "," + String(PitchWheelAmt) + "," + String(MODWheelAmt);
+	+ "," + String(PitchWheelAmt) + "," + String(MODWheelAmt) + "," + String(myFilter);
 }
 
 //************************************************************************
@@ -4922,7 +4949,7 @@ FLASHMEM int selecdParameter(uint8_t PageNr, uint8_t ParameterNr)
 			parameter = myVelocity;
 			break;
 			case 7:
-			parameter = myUnisonoMode;
+			parameter = myFilterSwitch;
 			break;
 			case 8:
 			parameter = myMidiSyncSwitch;
@@ -4950,13 +4977,37 @@ FLASHMEM void checkPots(void) {
 		if (initStatus2 == 1) {
 			mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
 			mux1ValuesPrev[0] = mux1Read;
+			mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
+			mux3ValuesPrev[0] = mux3Read;
+			mux3Read = MCP_adc.read(MCP3208::Channel::SINGLE_2);
+			mux3ValuesPrev[0] = mux3Read;
 			mux4Read = MCP_adc.read(MCP3208::Channel::SINGLE_3);
 			mux4ValuesPrev[0] = mux4Read;
+			// read Pot1 (change Patch Bank)
+			mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
+			if (mux1Read > (mux1ValuesPrev[0] + (QUANTISE_FACTOR * 4)) || mux1Read < (mux1ValuesPrev[0] - (QUANTISE_FACTOR *4))) {
+				mux1ValuesPrev[0] = mux1Read;
+			}
+			// read Pot2 (non)
+			mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
+			if (mux2Read > (mux2ValuesPrev[0] + (QUANTISE_FACTOR * 4)) || mux2Read < (mux2ValuesPrev[0] - (QUANTISE_FACTOR *4))) {
+				mux2ValuesPrev[0] = mux2Read;
+			}
+			// read Pot3 (non)
+			mux3Read = MCP_adc.read(MCP3208::Channel::SINGLE_2);
+			if (mux3Read > (mux3ValuesPrev[0] + (QUANTISE_FACTOR * 4)) || mux3Read < (mux3ValuesPrev[0] - (QUANTISE_FACTOR *4))) {
+				mux3ValuesPrev[0] = mux3Read;
+			}
+			// read Pot4 (Cutoff value)
+			mux4Read = MCP_adc.read(MCP3208::Channel::SINGLE_3);
+			if (mux4Read > (mux4ValuesPrev[0] + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev[0] - QUANTISE_FACTOR)) {
+				mux4ValuesPrev[0] = mux4Read;
+			}
 			initStatus2 = 0;
-			return;
+			//return;
 		}
 		
-		// read Pot1	(change Patch Bank)
+		// read Pot1 (change Patch Bank)
 		mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
 		if (mux1Read > (mux1ValuesPrev[0] + (QUANTISE_FACTOR * 4)) || mux1Read < (mux1ValuesPrev[0] - (QUANTISE_FACTOR *4))) {
 			mux1ValuesPrev[0] = mux1Read;
@@ -4965,15 +5016,25 @@ FLASHMEM void checkPots(void) {
 			renderCurrentParameter(PageNr,parameter,mux1Readtemp);
 		}
 		
-		// read Pot4	(Cutoff value)
+		// read Pot2 (non)
+		mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
+		if (mux2Read > (mux2ValuesPrev[0] + (QUANTISE_FACTOR * 4)) || mux2Read < (mux2ValuesPrev[0] - (QUANTISE_FACTOR *4))) {
+			mux2ValuesPrev[0] = mux2Read;
+		}
+		
+		// read Pot3 (non)
+		mux3Read = MCP_adc.read(MCP3208::Channel::SINGLE_2);
+		if (mux3Read > (mux3ValuesPrev[0] + (QUANTISE_FACTOR * 4)) || mux3Read < (mux3ValuesPrev[0] - (QUANTISE_FACTOR *4))) {
+			mux3ValuesPrev[0] = mux3Read;
+		}
+		
+		// read Pot4 (Cutoff value)
 		mux4Read = MCP_adc.read(MCP3208::Channel::SINGLE_3);
+		// higher resolution for cutoff
 		if (mux4Read > (mux4ValuesPrev[0] + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev[0] - QUANTISE_FACTOR)) {
 			mux4ValuesPrev[0] = mux4Read;
 			int mux4Readtemp = (mux4Read >> 4 );
 			static int count = 0;
-			count++;
-			Serial.print("count: ");
-			Serial.println(count);
 			cutoffScreenFlag = true;
 			myCCgroup2 (CCfilterfreq, mux4Readtemp);
 		}
@@ -5121,7 +5182,7 @@ FLASHMEM void checkPots(void) {
 	// Page:3 (Filter) --------------------------------------------------
 	else if (PageNr == 3){
 		
-		if (Filter == 1) {
+		if (myFilter == 1) {
 			if (myPageShiftStatus[PageNr] == false) {
 				
 				// change Cutoff
@@ -5717,6 +5778,8 @@ FLASHMEM void checkPots(void) {
 //*************************************************************************
 FLASHMEM void checkSwitches(void) {
 	uint8_t parameter = 0;
+	static int Debounce = 5;
+	static int waitnext = 70; // 2.menu page on load/save key
 	
 	// Encoder switch -----------------------------------------------------
 	if (btnBouncer.update() && Keylock == false) {
@@ -5755,7 +5818,7 @@ FLASHMEM void checkSwitches(void) {
 	// Key S2 "UNISONO" ---------------------------------------------------
 	if (value < (S2 + hysteresis) && value > (S2 - hysteresis)) {
 		KeyDebounce++;
-		if (KeyDebounce == 50 && KeyStatus == 0) {
+		if (KeyDebounce == Debounce && KeyStatus == 0) {
 			KeyStatus = 1;
 			parameter = CCunison;
 			uint8_t value = 0;
@@ -5777,7 +5840,7 @@ FLASHMEM void checkSwitches(void) {
 	// Key S3 "SEQ" -------------------------------------------------------
 	else if (value < (S3 + hysteresis) && value > (S3 - hysteresis)) {
 		KeyDebounce++;
-		if (KeyDebounce == 50 && KeyStatus == 0 && Keylock == false) {
+		if (KeyDebounce == Debounce && KeyStatus == 0 && Keylock == false) {
 			KeyStatus = 1;
 			parameter = myARPSEQ;
 			if (SEQrunStatus == 0 && SeqNotesAvailable == true) {	// run sequencer
@@ -5803,7 +5866,7 @@ FLASHMEM void checkSwitches(void) {
 	// Key S4 "MUTE/PANIC" ------------------------------------------------
 	else if (value < (S4 + hysteresis) && value > (S4 - hysteresis)) {
 		KeyDebounce++;
-		if (KeyDebounce == 50 && KeyStatus == 0 && Keylock == false) {
+		if (KeyDebounce == Debounce && KeyStatus == 0 && Keylock == false) {
 			KeyStatus = 1;
 			if (PageNr == 9 && SEQrunStatus == false) {
 				if (SeqNoteBufStatus[SEQselectStepNo] == 1) {
@@ -5828,34 +5891,39 @@ FLASHMEM void checkSwitches(void) {
 				}
 			}
 		}
-		if (KeyDebounce == 5000 && KeyStatus == 1 && PageNr == 9 && SEQrunStatus == false) {  // init Sequencer
+		if (KeyDebounce == waitnext && KeyStatus == 1 && PageNr == 9 && SEQrunStatus == false) {  // init Sequencer
 			allNotesOff();
 			initPatternData();
 			SEQselectStepNo = 0;
 			SeqNotesAvailable = false;
 			renderCurrentPatchPage();
 		}
-		else if (KeyDebounce == 5000 && KeyStatus == 1 && PageNr !=9 && SEQrunStatus == false) {  // Panic all notes off
+		else if (KeyDebounce == waitnext && KeyStatus == 1 && PageNr !=9 && SEQrunStatus == false) {  // Panic all notes off
 			allNotesOff();
 		}
 	}
 	
 	// Key S5 "BOOST" -----------------------------------------------------
 	else if (value < (S5 + hysteresis) && value > (S5 - hysteresis)) {
+		
 		KeyDebounce++;
-		if (KeyDebounce == 50 && KeyStatus == 0) {
+		if (KeyDebounce == Debounce && KeyStatus == 0) {
 			KeyStatus = 1;
 			if (BassBoostStatus == 0) {
 				BassBoostStatus = 1;
 				myBoost = 1;
 				setLED(4, true);
 				digitalWrite(BassBoost,LOW);  // Boost on
+				Serial.print("Bass ON: ");
+				Serial.println(value);
 			}
 			else {
 				BassBoostStatus = 0;
 				myBoost = 0;
 				setLED(4, false);
 				digitalWrite(BassBoost,HIGH);  // Boost off
+				Serial.print("Bas OFF: ");
+				Serial.println(value);
 			}
 		}
 	}
@@ -5863,7 +5931,7 @@ FLASHMEM void checkSwitches(void) {
 	// Key S6 "SHIFT" -----------------------------------------------------
 	else if (value < (S6 + hysteresis) && value > (S6 - hysteresis)) {
 		KeyDebounce++;
-		if (KeyDebounce == 50 && KeyStatus == 0 && PageNr > 0) {
+		if (KeyDebounce == Debounce && KeyStatus == 0 && PageNr > 0) {
 			KeyStatus = 1;
 			if (Keylock == true) {
 				Keylock = false;
@@ -5885,7 +5953,7 @@ FLASHMEM void checkSwitches(void) {
 				renderCurrentPatchPage();
 			}
 		}
-		if (KeyDebounce == 50 && KeyStatus == 0 && PageNr == 0) {
+		if (KeyDebounce == Debounce && KeyStatus == 0 && PageNr == 0) {
 			PrgSelShift = true;
 		}
 	}
@@ -5893,7 +5961,7 @@ FLASHMEM void checkSwitches(void) {
 	// Key S7 "LOAD/SAVE" -------------------------------------------------
 	else if (value < (S7 + hysteresis)) {
 		KeyDebounce++;
-		if (KeyDebounce == 50 && KeyStatus == 0) {
+		if (KeyDebounce == Debounce && KeyStatus == 0) {
 			KeyStatus = 1;
 			//if (PageNr > 0 && S7KeyStatus == 0) {
 			if (S7KeyStatus == 0) {
@@ -5959,7 +6027,7 @@ FLASHMEM void checkSwitches(void) {
 		}
 		
 		// long press LOAD/SAVE Key ---------------------------------------
-		if (KeyDebounce == 2000 && KeyStatus == 1) {
+		if (KeyDebounce == waitnext && KeyStatus == 1) {
 			if (PageNr == 97) {
 				PageNr = 98;				// draw "Save Pattern" Menu
 				renderCurrentPatchPage();
@@ -6276,7 +6344,6 @@ FLASHMEM void printUnisonDetune(void)
 // CPU Monitor
 //*************************************************************************
 FLASHMEM void printCPUmon(void) {
-
 	tft.fillRoundRect(54,57,22,10,2,ST7735_BLUE);
 	tft.setCursor(56,59);
 	tft.setTextColor(ST7735_WHITE);
@@ -6366,8 +6433,6 @@ extern float tempmonGetTemp(void);
 
 FLASHMEM void printTemperature (void)
 {
-	// CPUdegree = tempmonGetTemp();
-	
 	if (PageNr == 10 ){
 		tft.fillRoundRect(54,38,22,10,2,ST7735_BLUE);
 		tft.setCursor(55,40);
@@ -6378,6 +6443,10 @@ FLASHMEM void printTemperature (void)
 		tft.setCursor(70,40);
 		tft.print("C");
 	}
+	
+	Serial.print(CPUdegree);
+	Serial.println(" C");
+	
 }
 
 //*************************************************************************
@@ -6422,7 +6491,6 @@ FLASHMEM void myMIDIClockStart() {
 FLASHMEM void myMIDIClockStop() {
 	
 	if (MidiSyncSwitch == true)	{
-		allNotesOff();
 		SEQrunStatus = false;
 		ARPSEQstatus = false;
 		SeqTranspose = 0;
@@ -6430,6 +6498,9 @@ FLASHMEM void myMIDIClockStop() {
 		TempoLEDchange = true;
 		PlayFlag = false;
 		MidiClkTiming_Flag = false;
+		MidiCLKcount = 0;
+		SEQselectStepNo = 0;
+		allNotesOff();
 	}
 }
 
@@ -6437,10 +6508,10 @@ FLASHMEM void myMIDIClockStop() {
 // receive Midi Clock
 //**********************************************************************
 FLASHMEM void myMIDIClock(void) {
-	
+		
 	if (MidiSyncSwitch == true)	{
 		// running Sequencer with Midi Clock -----------------------------------
-		if (SEQMidiClkSwitch == true) {
+		if (SEQMidiClkSwitch == true && SEQrunStatus == true) {
 			
 			MidiCLKcount++;
 			
@@ -6484,9 +6555,13 @@ FLASHMEM void myMIDIClock(void) {
 }
 
 //*************************************************************************
-// Sequencer Midi Clock
+// Sequencer extern Midi Clock
 //*************************************************************************
 FLASHMEM void Sequencer2 (boolean SEQNoteState) {
+	
+	if (SEQMidiClkSwitch == false || SEQrunStatus == false) {
+		return;
+	}
 
 	if (SEQNoteState == true) {
 		if (ARPSEQstatus == 0 && SEQrunStatus == true) {
@@ -6564,7 +6639,7 @@ FLASHMEM void Sequencer2 (boolean SEQNoteState) {
 }
 
 //*************************************************************************
-// Sequencer int Clk
+// Sequencer int Midi Clock
 //*************************************************************************
 FLASHMEM void Sequencer (void) {
 	
@@ -6762,34 +6837,46 @@ FLASHMEM void MidiClockTimer (void)
 	
 	// draw Sequencer Step frame -----------------------------------------
 	Sequencer();
+	
+	
 }
-
-
 
 //*************************************************************************
 // Main Loop
 //*************************************************************************
 FLASHMEM void loop(void) {
 	
-	myPrgChange();
-	checkEncoder();
 	checkPots();
-	checkSwitches();
-	displayThread();
+	myPrgChange();
 	
 	if (PageNr == 9 && SEQStepStatus == true) {
 		drawSEQStepFrame(SEQselectStepNo);
 		SEQStepStatus = false;
 	}
 	
-	// set Midi Clock LED ------------------------------------------------
+	// Enc query ----------------------------------------------------------
+	if ((millis() - timer_encquery) > 55){
+		checkEncoder();
+		timer_encquery = millis();
+	}
+	
+	// Key query ----------------------------------------------------------
+	if ((millis() - timer_keyquery) > 5){
+		checkSwitches();
+		timer_keyquery = millis();
+	}
+	
+	// refresh screen -----------------------------------------------------
+	displayThread();
+	
+	// set Midi Clock LED -------------------------------------------------
 	if (TempoLEDchange == true) {
 		setLED(3, TempoLEDstate);
 		TempoLEDchange = false;
 	}
 	
 	// read CPU Temp ------------------------------------------------------
-	if ((millis() - timer_Temperature) > 1250){
+	if ((millis() - timer_Temperature) > 1000){
 		static uint8_t count = 0;
 		CPUdegree_temp += tempmonGetTemp();
 		count++;
@@ -6800,14 +6887,14 @@ FLASHMEM void loop(void) {
 			count = 0;
 		}
 		timer_Temperature = millis();
-	}
+	}		
 	
 	// CPU Audio Memory ---------------------------------------------------
 	if ((millis() - timer_CPUmon) > 500){
 		if (PageNr == 10) {
-			CPUaudioMem = AudioMemoryUsageMax();
+			CPUaudioMem = AudioProcessorUsageMax(); //AudioMemoryUsageMax();
 			printCPUmon();
-			AudioMemoryUsageMaxReset();
+			AudioProcessorUsageMaxReset(); //AudioMemoryUsageMaxReset();
 		}
 		if (PageNr == 0) {
 			if (ampEnvelope1.isActive() == false &&
@@ -6821,7 +6908,7 @@ FLASHMEM void loop(void) {
 			EnvIdelFlag = false;
 			}
 		}
-		timer_CPUmon = millis();
+		
 		if (unison == 2) {
 			if (unisoFlashStatus == 0) {
 				unisoFlashStatus = 1;
@@ -6833,7 +6920,7 @@ FLASHMEM void loop(void) {
 				unisoFlashStatus = 0;
 			}
 		}
+		timer_CPUmon = millis();
 	}
 }
-
 
