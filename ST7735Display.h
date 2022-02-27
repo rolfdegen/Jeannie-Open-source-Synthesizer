@@ -2096,11 +2096,19 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 	int y1 = 45;
 	int y2 = 45;
 	uint16_t sample = 0;
+	uint8_t WaveBank = 0;
 	
 	tft.fillRect(82,17,75,33,ST7735_BLACK);		// clear Wave Screen
 	
-	// set Osc WaveBank
-	uint8_t WaveBank = 0;
+	// Osc off (Waveform No 0)
+	if (WaveNr == 0) {
+		tft.setTextColor(ST7735_WHITE);
+		tft.setFont(&Picopixel);
+		print_String(18,140,22);		// print "OFF"
+		tft.setFont(NULL);
+		return;
+	}
+	
 	if (PageNr == 1) {
 		WaveBank = Osc1WaveBank;
 	}
@@ -2108,17 +2116,8 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 		WaveBank = Osc2WaveBank;
 	}
 	
-	// Osc off (Waveform No 0)
-	if (WaveNr == 0) {
-		tft.setTextColor(ST7735_WHITE);
-		tft.setFont(&Picopixel);
-		tft.setCursor(140, 22);
-		tft.print("OFF");
-		tft.setFont(NULL);
-	}
-	
-	// Standard and Band Limited waveforms (Waveform No 1 - 13)
-	else if (WaveNr <= 12 && WaveBank == 0) {
+	// Band Limited waveforms (Waveform No 1 - 13)
+	if (WaveNr <= 12 && WaveBank == 0) {
 		for (int i = 0; i < 64; i++) {
 			int16_t phase_x = i * 4 + (256 * (WaveNr-1));
 			sample = pgm_read_byte(&(WAVEFORM_SYMBOLES_8Bit[phase_x])); // Load spezial Symboles
@@ -2141,23 +2140,15 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 				value = pwB;
 			}
 			draw_PWM_curve(value);
-			/*
-			tft.setFont(&Picopixel);
-			tft.setCursor(136, 22);
-			tft.print("PWM");
-			tft.setFont(NULL);
-			*/
 		}
 		else if (WaveNr == 8) {
 			tft.setFont(&Picopixel);
-			tft.setCursor(129, 22);
-			tft.print("TRI VAR");
+			print_String(162,129,22);	// print "TRI VAR"
 			tft.setFont(NULL);
 		}
 		else if (WaveNr >= 9 && WaveNr <= 11) {
 			tft.setFont(&Picopixel);
-			tft.setCursor(118, 22);
-			tft.print("BANDLIMIT");	// Bandlimidet
+			print_String(163,118,22);	// print "BANDLIMIT"
 			tft.setFont(NULL);
 		}
 		else if (WaveNr == 12) {
@@ -2169,21 +2160,15 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 				value = pwB;
 			}
 			draw_PWM_curve(value);
-			/*
-			tft.setFont(&Picopixel);
-			tft.setCursor(127, 22);
-			tft.print("PWM BL");	// Bandlimidet PWM
-			tft.setFont(NULL);
-			*/
 		}
+		return;
 	}
-	
 	
 	// waveforms Bank A (Waveform No 13 - 63)
-	else if (WaveNr >= 13 && WaveBank == 0) {
+	if (WaveNr >= 13 && WaveBank == 0) {
 		for (int i = 0; i < 64; i++) {
 			int16_t phase_x = i * 4 + (256 * (WaveNr-12));
-			sample = pgm_read_word(&(ArbBankA[phase_x]));
+			sample = pgm_read_word(&(ArbBank[phase_x]));
 			int16_t value = (int16_t)sample;
 			y2 = 35 - (value / 3000 );
 			if (i == 0) {
@@ -2194,234 +2179,15 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 			x2 = x1;
 			y1 = y2;
 		}
+		return;
 	}
 	
-	// waveforms Bank B (Waveform No 1 - 63)
-	else if (WaveBank == 1) {
+	// waveforms Bank B-O (Waveform No 1 - 63)
+	if (WaveBank >= 1) {
+		long WaveAddr = (16384 * WaveBank);
 		for (int i = 0; i < 64; i++) {
 			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankB[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank C (Waveform No 1 - 63)
-	else if (WaveBank == 2) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankC[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank D (Waveform No 1 - 63)
-	else if (WaveBank == 3) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankD[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank E (Waveform No 1 - 63)
-	else if (WaveBank == 4) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankE[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank F (Waveform No 1 - 63)
-	else if (WaveBank == 5) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankF[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank G (Waveform No 1 - 63)
-	else if (WaveBank == 6) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankG[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank H (Waveform No 1 - 63)
-	else if (WaveBank == 7) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankH[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank I (Waveform No 1 - 63)
-	else if (WaveBank == 8) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankI[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank J (Waveform No 1 - 63)
-	else if (WaveBank == 9) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankJ[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank K (Waveform No 1 - 63)
-	else if (WaveBank == 10) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankK[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank L (Waveform No 1 - 63)
-	else if (WaveBank == 11) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankL[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank M (Waveform No 1 - 63)
-	else if (WaveBank == 12) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankM[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank N (Waveform No 1 - 63)
-	else if (WaveBank == 13) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankN[phase_x]));
-			int16_t value = (int16_t)sample;
-			y2 = 35 - (value / 3000 );
-			if (i == 0) {
-				tft.drawLine(x1,y1,x2,y2, ST7735_BLACK);
-			}
-			else tft.drawLine(x1,y1,x2,y2, waveColor);
-			x1++;
-			x2 = x1;
-			y1 = y2;
-		}
-	}
-	
-	// waveforms Bank O (Waveform No 1 - 63)
-	else if (WaveBank == 14) {
-		for (int i = 0; i < 64; i++) {
-			int16_t phase_x = i * 4 + (256 * WaveNr);
-			sample = pgm_read_word(&(ArbBankO[phase_x]));
+			sample = pgm_read_word(&((ArbBank + WaveAddr)[phase_x]));
 			int16_t value = (int16_t)sample;
 			y2 = 35 - (value / 3000 );
 			if (i == 0) {
@@ -5307,7 +5073,7 @@ FLASHMEM void drawFilterPage (void)
 		}
 		
 		// calc Resonance
-		float Reso = ((filterRes -1.1f) / 3.8f);
+		float Reso = ((filterRes - 0.71f) / 14.29f);
 		for (int i = 0; i < 128; i++) {
 			float myresonance = LINEAR[i];
 			if ((myresonance - Reso) < 0.00001f) {
