@@ -27,5 +27,11 @@ https://www.tubeohm.com/
 
 Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
+Sound file 2: https://soundcloud.com/tubeohm-sounds/kontrabass-2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+
+Sound file 3: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+
+Sound file 4: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+
 
 
