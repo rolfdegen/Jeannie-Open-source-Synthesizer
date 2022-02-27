@@ -31,7 +31,11 @@ Sound file 2: https://soundcloud.com/tubeohm-sounds/kontrabass-2?utm_source=clip
 
 Sound file 3: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
-Sound file 4: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+Sound file 4: https://soundcloud.com/musikus/melancholique-part-one?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+
+Sound file 5: https://soundcloud.com/tubeohm-sounds/bad2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+
+Sound file 6: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
 
 
