@@ -1,15 +1,14 @@
-
 //*************************************************************************
 //  8 Voices DIY Synthsizer "Jeannie"
 //
 //  Rolf Degen, Andre Laska (tubeohm.com)
 //
-//  Software and Software by Rolf Degen / TSynt 
-//
-//  Build Version 1.32.X with State Variable Filter or Ladder Filter
+//  Free Software by Rolf Degen & http://electrotechnique.cc/
+// //
+//  Build Version 1.37.X with State Variable Filter or Ladder Filter
 //  Info: Filter type can be set by definition on the AudioPatching.h
 //
-//  Date: 20.02.2022
+//  Date: 26.02.2022
 //  Teensy 4.1 Development Board
 //  ARM Cortex-M7 CPU 600MHz 1024K RAM  8MB Flash 4K EEPROM
 //*************************************************************************
@@ -1249,40 +1248,6 @@ FLASHMEM int convertLFOWaveform(int value) {
 }
 
 //*************************************************************************
-// get Waveform String
-//*************************************************************************
-FLASHMEM String getWaveformStr(int value) {
-	switch (value) {
-		case WAVEFORM_SILENT:
-		return F("Off");
-		case WAVEFORM_SAMPLE_HOLD:
-		return F("Sample & Hold");
-		case WAVEFORM_SINE:
-		return F("Sine");
-		case WAVEFORM_BANDLIMIT_SQUARE:
-		case WAVEFORM_SQUARE:
-		return F("Square");
-		case WAVEFORM_TRIANGLE:
-		return F("Triangle");
-		case WAVEFORM_BANDLIMIT_SAWTOOTH:
-		case WAVEFORM_SAWTOOTH:
-		return F("Sawtooth");
-		case WAVEFORM_SAWTOOTH_REVERSE:
-		return F("Ramp");
-		case WAVEFORM_BANDLIMIT_PULSE:
-		return F("Var. Pulse");
-		case WAVEFORM_TRIANGLE_VARIABLE:
-		return F("Var. Triangle");
-		case WAVEFORM_PARABOLIC:
-		return F("Parabolic");
-		case WAVEFORM_HARMONIC:
-		return F("Harmonic");
-		default:
-		return F("ERR_WAVE");
-	}
-}
-
-//*************************************************************************
 // load arbitrary Waveforms
 //*************************************************************************
 FLASHMEM void loadArbWaveformA(const int16_t * wavedata) {
@@ -1314,60 +1279,6 @@ FLASHMEM float getLFOTempoRate(int value) {
 	lfoTempoValue = LFOTEMPO[value];
 	return lfoSyncFreq * LFOTEMPO[value];
 }
-
-//*************************************************************************
-// get WaveformA
-//*************************************************************************
-FLASHMEM int getWaveformA(int value) {
-	/*
-	if (value >= 0 && value < 7) {
-	//This will turn the osc off
-	return WAVEFORM_SILENT;
-	} else if (value >= 7 && value < 23) {
-	return WAVEFORM_TRIANGLE;
-	} else if (value >= 23 && value < 40) {
-	return WAVEFORM_BANDLIMIT_SQUARE;
-	} else if (value >= 40 && value < 60) {
-	return WAVEFORM_BANDLIMIT_SAWTOOTH;
-	} else if (value >= 60 && value < 80) {
-	return WAVEFORM_BANDLIMIT_PULSE;
-	} else if (value >= 80 && value < 100) {
-	return WAVEFORM_TRIANGLE_VARIABLE;
-	} else if (value >= 100 && value < 120) {
-	return WAVEFORM_PARABOLIC;
-	} else {
-	return WAVEFORM_HARMONIC;
-	}
-	*/
-}
-
-//*************************************************************************
-// get WaveformB
-//*************************************************************************
-FLASHMEM int getWaveformB(int value) {
-	/*
-	if (value >= 0 && value < 7)  {
-	//This will turn the osc off
-	return WAVEFORM_SILENT;
-	} else if (value >= 7 && value < 23) {
-	return WAVEFORM_SAMPLE_HOLD;
-	} else if (value >= 23 && value < 40) {
-	return WAVEFORM_BANDLIMIT_SQUARE;
-	} else if (value >= 40 && value < 60) {
-	return WAVEFORM_BANDLIMIT_SAWTOOTH;
-	} else if (value >= 60 && value < 80) {
-	return WAVEFORM_BANDLIMIT_PULSE;
-	} else if (value >= 80 && value < 100) {
-	return WAVEFORM_TRIANGLE_VARIABLE;
-	} else if (value >= 100 && value < 120) {
-	return WAVEFORM_PARABOLIC;
-	} else {
-	return WAVEFORM_HARMONIC;
-	}
-	*/
-}
-
-
 
 //*************************************************************************
 // get Pitch
@@ -1495,102 +1406,18 @@ FLASHMEM void updateGlide() {
 //*************************************************************************
 FLASHMEM void updateWaveformA(void) {
 	
-	int newWaveform = 0; //oscWaveformA;
-	if (oscWaveformA >= 1){
-		if (Osc1WaveBank == 0){
-			if (oscWaveformA <= 12) {
-				switch(oscWaveformA) {
-					case(1): newWaveform = WAVEFORM_SINE;
-					break;
-					case(2): newWaveform = WAVEFORM_TRIANGLE;
-					break;
-					case(3): newWaveform = WAVEFORM_SAWTOOTH;
-					break;
-					case(4): newWaveform = WAVEFORM_SQUARE;
-					break;
-					case(5): newWaveform = WAVEFORM_PULSE;
-					break;
-					case(6): newWaveform = WAVEFORM_SAMPLE_HOLD;
-					break;
-					case(7): newWaveform = WAVEFORM_SAWTOOTH_REVERSE;
-					break;
-					case(8): newWaveform = WAVEFORM_TRIANGLE_VARIABLE;
-					break;
-					case(9): newWaveform = WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE;
-					break;
-					case(10): newWaveform = WAVEFORM_BANDLIMIT_SAWTOOTH;
-					break;
-					case(11): newWaveform = WAVEFORM_BANDLIMIT_SQUARE;
-					break;
-					case(12): newWaveform = WAVEFORM_BANDLIMIT_PULSE;
-					break;
-				}
-			}
-			else {
-				loadArbWaveformA(ArbBankA+(256*(oscWaveformA - 12)));
-				newWaveform = WAVEFORM_ARBITRARY;
-			}
-			
-		}
-		else if (Osc1WaveBank == 1){
-			loadArbWaveformA(ArbBankB+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 2){
-			loadArbWaveformA(ArbBankC+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 3){
-			loadArbWaveformA(ArbBankD+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 4){
-			loadArbWaveformA(ArbBankE+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 5){
-			loadArbWaveformA(ArbBankF+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 6){
-			loadArbWaveformA(ArbBankG+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 7){
-			loadArbWaveformA(ArbBankH+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 8){
-			loadArbWaveformA(ArbBankI+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 9){
-			loadArbWaveformA(ArbBankJ+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 10){
-			loadArbWaveformA(ArbBankK+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 11){
-			loadArbWaveformA(ArbBankL+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 12){
-			loadArbWaveformA(ArbBankM+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 13){
-			loadArbWaveformA(ArbBankN+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc1WaveBank == 14){
-			loadArbWaveformA(ArbBankO+(256*oscWaveformA));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-	}
-	else newWaveform = WAVEFORM_SILENT;	// Osc off
+	int newWaveform;
 	
+	if (Osc1WaveBank == 0 && oscWaveformA <= 12 || oscWaveformA == 0){
+		newWaveform = waveform[oscWaveformA];
+	} else {
+		if (Osc1WaveBank == 0) {	// Bank A (waveform 1-12 calculated waveforms. Rest arbitrary waveforms)
+			loadArbWaveformA(ArbBank + (256 * (oscWaveformA - 12)));	
+		} else { // Bank B-O (arbitrary waveforms)
+			loadArbWaveformA(ArbBank + ((16384 * Osc1WaveBank) + (oscWaveformA * 256)));
+		}		
+		newWaveform = WAVEFORM_ARBITRARY;
+	}
 	waveformMod1a.begin(newWaveform);
 	waveformMod2a.begin(newWaveform);
 	waveformMod3a.begin(newWaveform);
@@ -1605,102 +1432,18 @@ FLASHMEM void updateWaveformA(void) {
 
 FLASHMEM void updateWaveformB() {
 	
-	int newWaveform = 0; //oscWaveformA;
-	if (oscWaveformB >= 1){
-		if (Osc2WaveBank == 0){
-			if (oscWaveformB <= 12) {
-				switch(oscWaveformB) {
-					case(1): newWaveform = WAVEFORM_SINE;
-					break;
-					case(2): newWaveform = WAVEFORM_TRIANGLE;
-					break;
-					case(3): newWaveform = WAVEFORM_SAWTOOTH;
-					break;
-					case(4): newWaveform = WAVEFORM_SQUARE;
-					break;
-					case(5): newWaveform = WAVEFORM_PULSE;
-					break;
-					case(6): newWaveform = WAVEFORM_SAMPLE_HOLD;
-					break;
-					case(7): newWaveform = WAVEFORM_SAWTOOTH_REVERSE;
-					break;
-					case(8): newWaveform = WAVEFORM_TRIANGLE_VARIABLE;
-					break;
-					case(9): newWaveform = WAVEFORM_BANDLIMIT_SAWTOOTH;
-					break;
-					case(10): newWaveform = WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE;
-					break;
-					case(11): newWaveform = WAVEFORM_BANDLIMIT_SQUARE;
-					break;
-					case(12): newWaveform = WAVEFORM_BANDLIMIT_PULSE;
-					break;
-				}
-			}
-			else {
-				loadArbWaveformB(ArbBankA+(256*(oscWaveformB - 12)));
-				newWaveform = WAVEFORM_ARBITRARY;
-			}
-			
+	int newWaveform;
+	
+	if (Osc2WaveBank == 0 && oscWaveformB <= 12 || oscWaveformB == 0){
+		newWaveform = waveform[oscWaveformB];
+		} else {
+		if (Osc2WaveBank == 0) {	// Bank A (waveform 1-12 calculated waveforms. Rest arbitrary waveforms)
+			loadArbWaveformB(ArbBank + (256 * (oscWaveformB - 12)));
+			} else { // Bank B-O (arbitrary waveforms)
+			loadArbWaveformB(ArbBank + ((16384 * Osc2WaveBank) + (oscWaveformB * 256)));
 		}
-		if (Osc2WaveBank == 1){
-			loadArbWaveformB(ArbBankB+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		if (Osc2WaveBank == 2){
-			loadArbWaveformB(ArbBankC+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		if (Osc2WaveBank == 3){
-			loadArbWaveformB(ArbBankD+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		if (Osc2WaveBank == 4){
-			loadArbWaveformB(ArbBankE+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		if (Osc2WaveBank == 5){
-			loadArbWaveformB(ArbBankF+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		if (Osc2WaveBank == 6){
-			loadArbWaveformB(ArbBankG+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		if (Osc2WaveBank == 7){
-			loadArbWaveformB(ArbBankH+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 8){
-			loadArbWaveformB(ArbBankI+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 9){
-			loadArbWaveformB(ArbBankJ+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 10){
-			loadArbWaveformB(ArbBankK+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 11){
-			loadArbWaveformB(ArbBankL+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 12){
-			loadArbWaveformB(ArbBankM+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 13){
-			loadArbWaveformB(ArbBankN+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
-		else if (Osc2WaveBank == 14){
-			loadArbWaveformB(ArbBankO+(256*oscWaveformB));
-			newWaveform = WAVEFORM_ARBITRARY;
-		}
+		newWaveform = WAVEFORM_ARBITRARY;
 	}
-	else newWaveform = WAVEFORM_SILENT;	// Osc off
-
 	waveformMod1b.begin(newWaveform);
 	waveformMod2b.begin(newWaveform);
 	waveformMod3b.begin(newWaveform);
@@ -2280,7 +2023,7 @@ FLASHMEM void updateFilterRes() {
 	float maxReso;
 	
 	if (myFilter == 1) {
-		maxReso = 4.9f;
+		maxReso = 15.0f;
 		if (filterRes >= maxReso) {
 			filterRes = maxReso;
 		}
@@ -3130,8 +2873,8 @@ FLASHMEM void myCCgroup2 (byte control, byte value)
 		if (myFilter == 1) {
 			if (control == CCfilterres) {   // Filter_variable
 				//Pick up
-				if (!pickUpActive && pickUp && (resonancePrevValue <  ((3.8 * LINEAR[value - TOLERANCE]) + 1.1f) || resonancePrevValue >  ((3.8f * LINEAR[value + TOLERANCE]) + 1.1f))) return; //PICK-UP
-				filterRes = (3.8f * LINEAR[value]) + 1.1f; //If <1.1 there is noise at high cutoff freq
+				if (!pickUpActive && pickUp && (resonancePrevValue <  ((14.29f * LINEAR[value - TOLERANCE]) + 0.71f) || resonancePrevValue >  ((14.29f * LINEAR[value + TOLERANCE]) + 0.71f))) return; //PICK-UP
+				filterRes = (14.29f * LINEAR[value]) + 0.71f; //If <1.1 there is noise at high cutoff freq
 				updateFilterRes();
 				resonancePrevValue = filterRes;//PICK-UP
 				FilterRes = value;
@@ -4346,7 +4089,6 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	unison = data[4].toInt();
 	oscFX = data[5].toInt();
 	detune = data[6].toFloat();
-	//oscDetuneSync = true;
 	lfoSyncFreq = data[7].toInt();
 	midiClkTimeInterval = data[8].toInt();
 	lfoTempoValue = data[9].toFloat();
@@ -4438,9 +4180,6 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	LFO1phase = data[68].toFloat();
 	LFO2phase = data[69].toFloat();
 	oscDetuneSync = data[107].toInt();
-	Serial.print("oscDetuneSync:" );
-	Serial.println(oscDetuneSync);
-	
 	oscTranspose = data[108].toInt();
 	if (oscTranspose > 12) {
 		oscTranspose = 0;
@@ -6440,13 +6179,8 @@ FLASHMEM void printTemperature (void)
 		tft.setTextSize(1);
 		tft.print(CPUdegree);
 		tft.drawPixel(68,40,ST7735_WHITE);
-		tft.setCursor(70,40);
-		tft.print("C");
-	}
-	
-	Serial.print(CPUdegree);
-	Serial.println(" C");
-	
+		print_String(161,70,40);			// print "C"
+	}	
 }
 
 //*************************************************************************
@@ -6456,12 +6190,10 @@ FLASHMEM void printError(uint8_t index) {
 	enableScope(false);
 	tft.fillScreen(ST7735_BLACK);
 	tft.fillRect(20,20,120,88,ST7735_RED);
-	tft.setCursor(30,50);
 	tft.setTextColor(ST7735_WHITE);
 	tft.setTextSize(0);
-	tft.println("SD card error !");
-	tft.setCursor(30,70);
-	tft.println("Press power switch.");
+	print_String(159,30,50);			// print "SD card error !"
+	print_String(160,30,70);			// "Press power switch."
 	tftUpdate = true;
 }
 
