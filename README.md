@@ -17,5 +17,11 @@ synthesizer functions.
 
 https://www.tubeohm.com/
 
+![Pic1](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
 
-![Jeannie 1](https://user-images.githubusercontent.com/16689445/152534814-87334fe1-94c6-498a-ba04-e4dca6247ee5.PNG)
+![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
+
+![Pic 3](https://user-images.githubusercontent.com/16689445/155886528-a2bef7d7-925e-4425-aae9-4ab8d6f1af34.png)
+
+![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
+
