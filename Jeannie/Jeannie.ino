@@ -4,11 +4,9 @@
 //  Rolf Degen, Andre Laska (tubeohm.com)
 //
 //  Free Software by Rolf Degen & http://electrotechnique.cc/
-// //
-//  Build Version 1.37.X with State Variable Filter or Ladder Filter
-//  Info: Filter type can be set by definition on the AudioPatching.h
+//  Build Version 1.37.X with State Variable Filter and Ladder Filter
 //
-//  Date: 26.02.2022
+//  Date: 28.02.2022
 //  Teensy 4.1 Development Board
 //  ARM Cortex-M7 CPU 600MHz 1024K RAM  8MB Flash 4K EEPROM
 //*************************************************************************
