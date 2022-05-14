@@ -69,5 +69,5 @@
 #include "analyze_peak.h"
 #include "effect_bitcrusher.h"
 #include "effect_waveshaper.h"
-#include "utility/dspinst.h"
+#include "dspinst.h"
 #endif

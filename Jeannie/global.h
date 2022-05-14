@@ -39,6 +39,5 @@ extern uint8_t currentPatchNameStatus;
 extern uint8_t myLFO1shapeNo;
 extern uint8_t myLFO2shapeNo;
 
-
 #endif
 

@@ -5,15 +5,16 @@
 */
 //Agileware CircularBuffer available in libraries manager
 
-#include <CircularBuffer.h>
 
+#include <CircularBuffer.h>
 
 #define TOTALCHARS 68
 
-const static char CHARACTERS[TOTALCHARS] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+const static char CHARACTERS[TOTALCHARS] PROGMEM = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
 	 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
 	  'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', '1', '2', '3', '4', '5', '6',
-	   '7', '8', '9', '0', '0', '0','0', '0', };
+	   '7', '8', '9', '0', '0', '0','0', '0', }; 
+
 uint32_t charIndex = 0;
 char currentCharacter = 0;
 String renamedPatch = "";
@@ -137,8 +138,7 @@ FLASHMEM void loadPatches(){
 }
 
 FLASHMEM void savePatch(const char *patchNo, String patchData){
-  //Serial.print("savePatch Patch No:");
-  //Serial.println(patchNo);
+  
   //Overwrite existing patch by deleting
   if (SD.exists(patchNo))
   {
@@ -147,18 +147,14 @@ FLASHMEM void savePatch(const char *patchNo, String patchData){
   File patchFile = SD.open(patchNo, FILE_WRITE);
   if (patchFile)
   {
-/*
-  Serial.print("Writing Patch No:");
-  Serial.println(patchNo);
-  Serial.println(patchData);
-  */
+
     patchFile.println(patchData);
     patchFile.close();
   }
   else
   {
-    Serial.print("Error writing Patch file:");
-    Serial.println(patchNo);
+    Serial.print(F("Error writing Patch file:"));
+    Serial.println(F(patchNo));
 	SDErrorFlag = 2;
   }
 }

@@ -131,7 +131,8 @@ public:
     if (release_count == 0) release_count = 1;
     updateExpRelease();
   }
-  FLASHMEM void releaseNoteOn(float milliseconds) {
+  //GL   FLASHMEM 
+  void releaseNoteOn(float milliseconds) {
     release_forced_count = milliseconds2count(milliseconds);
     updateExpReleaseNoteOn();
   }
@@ -164,8 +165,8 @@ private:
     decay_k=(uint32_t)(EXP_ENV_ONE*k);
     //decay_target=(1.0L-k)*sustain_target;
   }
-  
-  FLASHMEM void updateExpAttack() // This is needed in case env type changes.
+  //GL   FLASHMEM
+   void updateExpAttack() // This is needed in case env type changes.
   {
    double k1,k2; 
     if(env_type>8 || env_type<-8) return; // Anything outside this range is a linear envelope.

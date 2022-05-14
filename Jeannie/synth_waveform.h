@@ -34,10 +34,25 @@
 #include "AudioStream.h"
 #include "arm_math.h"
 
+
+
 // waveforms.c
 extern "C" {
 extern const int16_t AudioWaveformSine[257];
 }
+
+extern boolean lfo1oneShoot; 
+extern boolean lfo2oneShoot; 
+extern float LFO1phase;
+extern float LFO2phase;
+extern uint8_t lfo1ph;
+extern uint8_t lfo2ph;
+extern boolean LFO1randomFlag;
+extern boolean LFO2randomFlag;
+extern boolean LFO3randomFlag;
+extern uint32_t LFO1delayTime;
+extern uint32_t LFO2delayTime;
+extern uint32_t LFO3delayTime;
 
 /*
 #define WAVEFORM_SINE              0
@@ -70,6 +85,15 @@ extern const int16_t AudioWaveformSine[257];
 #define WAVEFORM_BANDLIMIT_PULSE				11
 #define WAVEFORM_ARBITRARY						12
 #define WAVEFORM_SILENT							19
+
+// LFO2
+#define WAVEFORM_SINE2							20
+#define WAVEFORM_TRIANGLE2						21
+#define WAVEFORM_SAWTOOTH2						22
+#define WAVEFORM_SQUARE2						23
+#define WAVEFORM_ARBITRARY2						24
+#define WAVEFORM_SAMPLE_HOLD2					25
+#define WAVEFORM_SAWTOOTH_REVERSE2				26
 
 
 
@@ -199,10 +223,11 @@ private:
   uint32_t pulse_width;
   const int16_t *arbdata;
   int16_t  sample; // for WAVEFORM_SAMPLE_HOLD
-  short    tone_type;
-  int16_t  tone_offset;
-    int16_t   syncFlag;
-        BandLimitedWaveform band_limit_waveform ;
+  int16_t  sample2; // for WAVEFORM_SAMPLE_HOLD and oneShot
+  short  tone_type;
+  int16_t tone_offset;
+  int16_t syncFlag;
+  BandLimitedWaveform band_limit_waveform ;
 };
 
 

@@ -112,9 +112,23 @@
 #define   myFilterEnvCurve 191
 #define   myAmpEnvCurve 192
 #define   myFilterSwitch 193
-
-
-
+#define   myLFO1mode 194
+#define   myLFO2mode 195
+#define   myLFO3mode 196
+#define   myFilterFM 197
+#define   myLFO2delay 198
+#define   myLFO3delay 199
+#define   myLFO1fade 200	// FADE-IN
+#define   myLFO2fade 201	// FADE-IN
+#define   myLFO3fade 202	// FADE-IN
+#define   myLFO1fadeOut 203
+#define   myLFO2fadeOut 204
+#define   myLFO3fadeOut 205
+#define   CCpwmRateA 206
+#define   CCpwmRateB 207
+#define   myOsc1ModAmt 208
+#define   myLFO1envCurve 209
+#define   myLFO2envCurve 210
 
 
 

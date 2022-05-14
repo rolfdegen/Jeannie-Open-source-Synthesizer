@@ -26,7 +26,7 @@
 
 #include <Arduino.h>
 #include "filter_variable.h"
-#include "utility/dspinst.h"
+#include "dspinst.h"
 
 // State Variable Filter (Chamberlin) with 2X oversampling
 // http://www.musicdsp.org/showArchiveComment.php?ArchiveID=92

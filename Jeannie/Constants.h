@@ -25,7 +25,7 @@ const static float UNISONVOICEMIXERLEVEL = 0.05f;
 const static float  OSCMODMIXERMAX = ONE;
 const static float  FILTERMODMIXERMAX = ONE;
 const static float  GLIDEFACTOR = 5000.0f;//Maximum glide time
-const static uint32_t NO_OF_PARAMS = 200;	 // parameters of Sound Patch + Seq.Pattern
+const static uint32_t NO_OF_PARAMS = 213;	 // parameters of Sound Patch + Seq.Pattern
 const static uint32_t NO_OF_SEQ_PARAMS = 118; // parameters of Seq.Pattern
 const static char* INITPATCHNAME = "            ";
 const static char* INITPATTERNNAME = "            ";
@@ -37,6 +37,8 @@ static const uint8_t S5 = 56;// 56;	// Resistor value Key "BOOST"
 static const uint8_t S6 = 81;	// Resistor value Key "SHIFT/ESC"
 static const uint8_t S7 = 101;	// Resistor value Key "SAVE"
 static const uint32_t myEEPROMinit = 1806104064;
+
+
 
 // Strings
 const char String_0[] PROGMEM = "OSC";
@@ -62,7 +64,7 @@ const char String_19[] PROGMEM = "XOR";
 const char String_20[] PROGMEM = "XMO";
 const char String_21[] PROGMEM = "MOD";
 const char String_22[] PROGMEM = "AND";
-const char String_23[] PROGMEM = "OR";
+const char String_23[] PROGMEM = "PHA";
 const char String_24[] PROGMEM = "FM";
 const char String_25[] PROGMEM = "P";
 const char String_26[] PROGMEM = "W";
@@ -154,7 +156,7 @@ const char String_111[] PROGMEM = "P2";
 const char String_112[] PROGMEM = "P3";
 const char String_113[] PROGMEM = "FlanMix";
 const char String_114[] PROGMEM = " ";
-const char String_115[] PROGMEM = "LFO1 (Osc)";
+const char String_115[] PROGMEM = "LFO";
 const char String_116[] PROGMEM = "SHAPE";
 const char String_117[] PROGMEM = "SEQ";
 const char String_118[] PROGMEM = "PAT:";
@@ -172,8 +174,7 @@ const char String_129[] PROGMEM = "MODE";
 const char String_130[] PROGMEM = "KEY";
 const char String_131[] PROGMEM = "TRP";
 const char String_132[] PROGMEM = "REC";
-// Firmware Version
-const char String_133[] PROGMEM = "System V1.37";
+const char String_133[] PROGMEM = "System V1.42f gl";	// Firmware Version
 const char String_134[] PROGMEM = " ";
 const char String_135[] PROGMEM = "CPU-MHz";
 const char String_136[] PROGMEM = "CPU-TEMP";
@@ -204,6 +205,35 @@ const char String_160[] PROGMEM = "Press power switch.";
 const char String_161[] PROGMEM = "C";
 const char String_162[] PROGMEM = "TRI VAR";
 const char String_163[] PROGMEM = "BANDLIMIT";
+const char String_164[] PROGMEM = " ";
+const char String_165[] PROGMEM = "RATE";
+const char String_166[] PROGMEM = "AMT";
+const char String_167[] PROGMEM = "SYN";
+const char String_168[] PROGMEM = "MODE";
+const char String_169[] PROGMEM = "F-OUT";
+const char String_170[] PROGMEM = "CONT";
+const char String_171[] PROGMEM = "ONE";
+const char String_172[] PROGMEM = "F-IN";
+const char String_173[] PROGMEM = "MODULATION";
+const char String_174[] PROGMEM = "SLOT";
+const char String_175[] PROGMEM = "SOURCE";
+const char String_176[] PROGMEM = "DESTINATION";
+const char String_177[] PROGMEM = "AMT";
+const char String_178[] PROGMEM = "DEST";
+const char String_179[] PROGMEM = "LFO1";
+const char String_180[] PROGMEM = "LFO2";
+const char String_181[] PROGMEM = "Pitch";
+const char String_182[] PROGMEM = "Cutoff";
+const char String_183[] PROGMEM = "LFO1*MW";
+const char String_184[] PROGMEM = "PWMA";
+const char String_185[] PROGMEM = "PWMB";
+const char String_186[] PROGMEM = "OSC1";
+const char String_187[] PROGMEM = "OSC2";
+const char String_188[] PROGMEM = "MODAMT";
+const char String_189[] PROGMEM = " ";
+
+
+
 
 
 
@@ -229,7 +259,10 @@ PGM_P const String_Tab[] PROGMEM = {
 	String_136, String_137, String_138, String_139, String_140, String_141, String_142, String_143,
 	String_144, String_145, String_146, String_147, String_148, String_149, String_150, String_151,
 	String_152, String_153, String_154, String_155, String_156, String_157, String_158, String_159,
-	String_160, String_161, String_162, String_163
+	String_160, String_161, String_162, String_163, String_164, String_165, String_166, String_167,
+	String_168, String_169, String_170, String_171, String_172, String_173, String_174, String_175,
+	String_176, String_177, String_178, String_179, String_180, String_181, String_182, String_183,
+	String_184, String_185, String_186, String_187, String_188, String_189
 };
 
 
@@ -336,7 +369,7 @@ const float FILTERFREQS256[256] PROGMEM = {
 	   6275,  6406,  6541,  6677,  6817,  6959,  7104,  7251,
 	   7402,  7555,  7711,  7871,  8033,  8198,  8367,  8538,
 	   8713,  8891,  9073,  9258,  9446,  9638,  9833, 10033,
-	   10235, 10442, 10652, 10867, 11085, 11308, 11534, 12000
+	   10235, 10442, 10652, 11067, 11385, 11808, 12000, 12000
 	   
 	   
 	/*
