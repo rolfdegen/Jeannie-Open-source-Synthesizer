@@ -29,7 +29,7 @@
 
 #include <Arduino.h>
 #include "effect_envelope.h"
-#include "utility/dspinst.h"
+#include "dspinst.h"
 
 
 #define RELEASE_BIAS 256 // based on a 1.31 fixed point integer. This is the level below zero that is the release target and causes the output to go to zero earlier. Otherwise it can take a relatively long time.

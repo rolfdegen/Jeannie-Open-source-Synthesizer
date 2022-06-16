@@ -1,4 +1,7 @@
-//Values below are just for initialising and will be changed when synth is initialised to current panel controls & EEPROM settings
+// Values below are just for initialising and will be changed when synth 
+// is initialised to current panel controls & EEPROM settings
+
+
 byte midiChannel = MIDI_CHANNEL_OMNI;//(EEPROM)
 byte midiOutCh = 0;//(EEPROM)
 String patchName = INITPATCHNAME;
@@ -15,7 +18,7 @@ float lfoSyncFreq = 1.0f;
 float midiClkTimeInterval = 0.0f;
 float lfoTempoValue = 1.0f;
 int pitchBendRange = 12;
-float modWheelDepth = 0.2f;
+float modWheelDepth = 1.0f;
 float keytrackingAmount = 0.5f;//Half - MIDI CC & settings option
 float keytrackingValue = 0;
 float glideSpeed = 0.0f;
@@ -35,6 +38,8 @@ int currentOsc2WaveBank = 0;
 float pwmAmtA = 1.0f;
 float pwmAmtB = 1.0f;
 float pwmRate = 0.5f;
+float pwmRateA = 0.5f;
+float pwmRateB = 0.5f;
 float pwA = 0.0f;
 float pwB = 0.0f;
 float mypwA = 0.0f;
@@ -62,7 +67,7 @@ int filterLfoRetrig = 0;
 int filterLFOMidiClkSync = 0;
 String filterLFOTimeDivStr = "";//For display
 float filterLfoAmt = 0.0f;
-int filterLfoWaveform = WAVEFORM_SINE;
+int filterLfoWaveform = WAVEFORM_SINE2;
 int myFilterLFORateValue = 0;
 
 float filterAttack = 100.0f;
@@ -198,3 +203,33 @@ const static uint8_t hysteresis = 6;		// Key query
 // 1 = 12dB State Variable (Chamberlin) Filter
 // 2 = 24dB LowPass Ladder Filter
 int myFilter = 1; 
+boolean lfo1oneShoot = false;
+boolean lfo2oneShoot = false;
+boolean lfo3oneShoot = false;
+uint8_t lfo1ph = 0;
+uint8_t lfo2ph = 0;
+uint8_t lfo3ph = 0;
+uint8_t LFO1mode = 0;
+uint8_t LFO2mode = 0;
+uint8_t LFO3mode = 0;
+boolean LFO1randomFlag = false;
+boolean LFO2randomFlag = false;
+boolean LFO3randomFlag = false;
+uint32_t LFO1delayTime = 0x02FFFF;
+uint32_t LFO2delayTime = 0x02FFFF;
+uint32_t LFO3delayTime = 0x02FFFF;
+uint32_t LFO1fadeTime = 0x02FFFF;
+uint32_t LFO2fadeTime = 0x02FFFF;
+uint32_t LFO3fadeTime = 0x02FFFF;
+uint32_t LFO1releaseTime = 0x02FFFF;
+uint32_t LFO2releaseTime = 0x02FFFF;
+uint32_t LFO3releaseTime = 0x02FFFF;
+float filterFM = 0.0f;
+float filterFM2 = 0.0f;
+float Osc1ModAmt = 0.5f;
+int8_t LFO1envCurve = +8; // exp. slow Attack
+int8_t LFO2envCurve = +8; // exp. slow Attack
+boolean encoderflag = false;
+int encValue = 0;
+int previousValue = 0;
+boolean sendSysExFlag = false;
