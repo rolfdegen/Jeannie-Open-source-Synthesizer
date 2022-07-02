@@ -6,10 +6,10 @@
 //
 //  Free Software by Rolf Degen & http://electrotechnique.cc/
 // //
-//  Build Version 1.42i with State Variable Filter and Ladder Filter
+//  Build Version 1.57 with State Variable Filter and Ladder Filter
 //  Info: Filter type can switch on the System menu
 //
-//  Date: 03.05.2022
+//  Date: 29.06.2022
 //  Teensy 4.1 Development Board
 //  ARM Cortex-M7 CPU 720MHz 1024K RAM  8MB Flash 4K EEPROM
 //*************************************************************************
