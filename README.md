@@ -1,41 +1,42 @@
-# Jeannie 8-voice polyphonic open source synthesizer with 24dB Ladder Filter and 12dB State Variable Multimode Filter
+# Jeannie - A DIY Polyphonic open-source synthesizer
 
-Jeannie is an 8-voice polyphonic open source synthesizer kit with digital sound synthesis and digital
-filters based on a fast ARM Cortex-M7 processor with 1MByte Ram. For sound generation, the user has
-a variety of classic and band-limited waveforms at his disposal. A pool of 15 waveform banks with 63
-different waveforms each offer plenty of space for sound experiments. A waveshaper with different
-characteristics provides for gentle to vicious sounding distortions.
-To tame the waveforms, there is a digital 12dB multimode filter with fade function from low-pass to highpass
-and a band-pass function. In addition, there is a 24dB LP ladder filter. A 24Bit DSP effect module with adjustable parameters rounds off the
-sound synthesis. An integrated polyphonic 16-step sequencer provides for the playfulness of the small
-synthesizer.
-A total of 2048 sound patchesfrom 15 banks can be loaded and stored via an integrated SD card. A
-color 1.8 inch TFT display allows a clear menu structure and easy operation of the synthesizer. The
-parameters are entered via four rotary knobs below the display and an encoder for selecting the sound
-programmes and switching to the menu functions. In addition, there are six buttons for operating special
-synthesizer functions.
+Jeannie is an open-source DIY synthesizer with 8 voices, which supports digital sound synthesis and filters while being powered by a [Teensy 4.1](https://www.pjrc.com/store/teensy41.html)
 
-https://www.tubeohm.com/
+The user has a variety of classic and band-limited waveforms at their disposal which can be selected from a pool of 15 waveform banks with 63 different waveforms each, offering plenty of space for sound experiments. The waveshaper provides from gentle to vicous sounding distortions, while also having different characteristics
 
-![Pic1](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
+To tame the waveforms, Jeannie has a digital 12dB multimode filter which also allows you to fade from low-pass to high-pass and a band-pass function. In addition, the 24dB LP ladder-filter version of the firmware can be flashed as well.
 
-![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
+A 24Bit DSP effect module with adjustable parameters allows rounding off the sound synthesis.
 
-![Pic 3](https://user-images.githubusercontent.com/16689445/155886528-a2bef7d7-925e-4425-aae9-4ab8d6f1af34.png)
+The integrated 16-step, polyphonic sequencer provides for the playfulness of this synthesizer.
 
-![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
+Not only is the user able to create their own sounds, but samples can also be loaded from a total of 2048 patches from 15 banks, stored on the MicroSD card.
 
-Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+A 1.8" TFT display creates the clear menu structure and allows for easy operation of the synth while five rotatable knobs and six buttons on the device are the input method to select sound programmes, switching between the menu functions and even enable special ones.
 
-Sound file 2: https://soundcloud.com/tubeohm-sounds/kontrabass-2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+The in- and outputs also include MIDI in and out, a headphone jack, a micro-usb port to update the synthesizer's firmware, a MicroSD port and a DC barrel jack for power.
 
-Sound file 3: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+Get your own Jeannie at [TubeOhm](https://www.tubeohm.com/)
 
-Sound file 4: https://soundcloud.com/musikus/melancholique-part-one?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+## Sound demo
 
-Sound file 5: https://soundcloud.com/tubeohm-sounds/bad2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+[I dream of Jeannie](https://soundcloud.com/ron-rapprich/i-dream-of-jeannie)
 
-Sound file 6: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+[Kontrabass - 2](https://soundcloud.com/tubeohm-sounds/kontrabass-2)
 
+[Demojeannie - 1](https://soundcloud.com/tubeohm-sounds/demojeannie-1)
 
+[Melancholique part one](https://soundcloud.com/musikus/melancholique-part-one)
+
+[Bad2](https://soundcloud.com/tubeohm-sounds/bad2)
+
+## Images
+
+![front](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
+
+![left](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
+
+![back top closeup](https://user-images.githubusercontent.com/16689445/155886528-a2bef7d7-925e-4425-aae9-4ab8d6f1af34.png)
+
+![back](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
 
