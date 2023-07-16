@@ -1,0 +1,493 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>7.0</ProjectVersion>
+    <ToolchainName>com.Atmel.ARMGCC.CPP</ToolchainName>
+    <ProjectGuid>{f0f972aa-aceb-4044-bab9-9a1b294c46e8}</ProjectGuid>
+    <avrdevice>ATSAM3X8E</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <OutputType>Executable</OutputType>
+    <Language>CPP</Language>
+    <OutputFileName>$(MSBuildProjectName)</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <AssemblyName>Jeannie</AssemblyName>
+    <Name>Jeannie</Name>
+    <RootNamespace>Jeannie</RootNamespace>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <CacheFlash>true</CacheFlash>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress />
+    <UncachedRange />
+    <preserveEEPROM>true</preserveEEPROM>
+    <OverrideVtorValue />
+    <BootSegment>2</BootSegment>
+    <eraseonlaunchrule>1</eraseonlaunchrule>
+    <AsfFrameworkConfig>
+      <framework-data>
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.44.1" />
+        </dependencies>
+      </framework-data>
+    </AsfFrameworkConfig>
+    <ResetRule>0</ResetRule>
+    <EraseKey />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainSettings>
+      <ArmGccCpp>
+  <armgcc.common.outputfiles.hex>True</armgcc.common.outputfiles.hex>
+  <armgcc.common.outputfiles.lss>True</armgcc.common.outputfiles.lss>
+  <armgcc.common.outputfiles.eep>True</armgcc.common.outputfiles.eep>
+  <armgcc.common.outputfiles.bin>True</armgcc.common.outputfiles.bin>
+  <armgcc.common.outputfiles.srec>True</armgcc.common.outputfiles.srec>
+  <armgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>__HARDWARE_IMxrt1062__</Value>
+      <Value>__HARDWARE_IMXRT1062__</Value>
+      <Value>ARDUINO=108019</Value>
+      <Value>ARDUINO_MAIN</Value>
+      <Value>printf=iprintf</Value>
+      <Value>__TEENSY4__</Value>
+      <Value>__IMXRT1062__</Value>
+      <Value>TEENSYDUINO=158</Value>
+      <Value>ARDUINO_TEENSY41</Value>
+      <Value>F_CPU=720000000</Value>
+      <Value>USB_MIDI_SERIAL</Value>
+      <Value>LAYOUT_US_ENGLISH</Value>
+    </ListValues>
+  </armgcc.compiler.symbols.DefSymbols>
+  <armgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../../../Jeannie</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/debug</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/util</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SD/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SdFat/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/MIDI/src</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Mcp3208/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM/utility</Value>
+      <Value>C://Users//rolfd//AppData//Local//Temp//VMBuilds//Jeannie//teensy41//Release/pch</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//teensyC://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//lib//gcc//arm-none-eabi//5.4.1//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//tr1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//bits</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//arm-none-eabi</Value>
+    </ListValues>
+  </armgcc.compiler.directories.IncludePaths>
+  <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
+  <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+  <armgcccpp.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>__HARDWARE_IMxrt1062__</Value>
+      <Value>__HARDWARE_IMXRT1062__</Value>
+      <Value>ARDUINO=108019</Value>
+      <Value>ARDUINO_MAIN</Value>
+      <Value>printf=iprintf</Value>
+      <Value>__TEENSY4__</Value>
+      <Value>__IMXRT1062__</Value>
+      <Value>TEENSYDUINO=158</Value>
+      <Value>ARDUINO_TEENSY41</Value>
+      <Value>F_CPU=720000000</Value>
+      <Value>USB_MIDI_SERIAL</Value>
+      <Value>LAYOUT_US_ENGLISH</Value>
+    </ListValues>
+  </armgcccpp.compiler.symbols.DefSymbols>
+  <armgcccpp.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../../../Jeannie</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/debug</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/util</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SD/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SdFat/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/MIDI/src</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Mcp3208/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM/utility</Value>
+      <Value>C://Users//rolfd//AppData//Local//Temp//VMBuilds//Jeannie//teensy41//Release/pch</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//teensyC://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//lib//gcc//arm-none-eabi//5.4.1//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//tr1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//bits</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//arm-none-eabi</Value>
+    </ListValues>
+  </armgcccpp.compiler.directories.IncludePaths>
+  <armgcccpp.compiler.optimization.level>Optimize for size (-Os)</armgcccpp.compiler.optimization.level>
+  <armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcccpp.compiler.warnings.AllWarnings>True</armgcccpp.compiler.warnings.AllWarnings>
+  <armgcccpp.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </armgcccpp.linker.libraries.Libraries>
+  <armgcccpp.linker.libraries.LibrarySearchPaths>
+    <ListValues>
+      <Value>../cmsis/linkerScripts</Value>
+      <Value>%24(ProjectDir)\Device_Startup</Value>
+    </ListValues>
+  </armgcccpp.linker.libraries.LibrarySearchPaths>
+  <armgcccpp.linker.optimization.GarbageCollectUnusedSections>True</armgcccpp.linker.optimization.GarbageCollectUnusedSections>
+  <armgcccpp.linker.miscellaneous.LinkerFlags>-Tsam3x8e_flash.ld</armgcccpp.linker.miscellaneous.LinkerFlags>
+  <armgcccpp.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3X_DFP\1.0.50\include</Value>
+    </ListValues>
+  </armgcccpp.assembler.general.IncludePaths>
+  <armgcccpp.preprocessingassembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL\samd21\include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\CMSIS\Include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL</Value>
+      <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3X_DFP\1.0.50\include</Value>
+    </ListValues>
+  </armgcccpp.preprocessingassembler.general.IncludePaths>
+</ArmGccCpp>
+    </ToolchainSettings>
+    <VMSETTING_IncludePaths>../../../Jeannie;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI;C:/Users/rolfd/Documents/Arduino/libraries/SD/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/MIDI/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy;C:/Users/rolfd/Documents/Arduino/libraries/Mcp3208/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/avr;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/debug;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/util;{vmresolved.compiler.path}arm/arm-none-eabi/include;{vmresolved.compiler.path}arm/lib/gcc/arm-none-eabi/5.4.1/include;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1/tr1;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1/bits;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1/arm-none-eabi;C:/Program Files (x86)/Arduino/hardware/teensy;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include;C:/Program Files (x86)/Arduino/hardware/tools/arm/lib/gcc/arm-none-eabi/5.4.1/include;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/tr1;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/bits;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/arm-none-eabi;C:/Users/rolfd/Documents/Arduino/libraries/SdFat/src;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO;C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder/utility;C:/Users/rolfd/DOCUME~1/Arduino/mySketch/JEANNI~2/Jeannie;{build.path}/pch;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SdFat/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SD/src;C://Program Files (x86)//Arduino//hardware//teensyC://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include;C://Program Files (x86)//Arduino//hardware//tools//arm//lib//gcc//arm-none-eabi//5.4.1//include;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//tr1;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//bits;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//arm-none-eabi;C://Users//rolfd//AppData//Local//Temp//VMBuilds//Jeannie//teensy41//Release/pch;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash/utility;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library/utility;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO/utility;C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM/utility;C://Users//rolfd//Documents//Arduino//mySketch//Jeannie102//Jeannie;C://Program Files (x86)//Arduino//hardware//teensy//avr//cores//teensy4;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Wire;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SPI;C://Users//rolfd//Documents//Arduino//libraries//SD//src;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SdFat//src;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//MIDI//src;C://Users//rolfd//Documents//Arduino//libraries//Mcp3208//src;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Entropy;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Audio;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_GFX_Library;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_BusIO;C://Users//rolfd//Documents//Arduino//libraries//CircularBuffer;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Encoder;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Bounce;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//EEPROM;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Wire//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SPI//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Entropy//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Audio//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SerialFlash;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SerialFlash//utility;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_GFX_Library//utility;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_BusIO//utility;C://Users//rolfd//Documents//Arduino//libraries//CircularBuffer//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Encoder//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Bounce//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//EEPROM//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SD//src;</VMSETTING_IncludePaths>
+    <VisualMicroSettings>
+      <VisualMicroSettings>
+        <ValidatedAS7>1</ValidatedAS7>
+        <custom_teensy41_speed>720</custom_teensy41_speed>
+        <custom_teensy41_opt>o3std</custom_teensy41_opt>
+        <arduino.upload.port>usb:0/140000/0/6</arduino.upload.port>
+      </VisualMicroSettings>
+    </VisualMicroSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainSettings>
+      <ArmGccCpp>
+  <armgcc.common.outputfiles.hex>True</armgcc.common.outputfiles.hex>
+  <armgcc.common.outputfiles.lss>True</armgcc.common.outputfiles.lss>
+  <armgcc.common.outputfiles.eep>True</armgcc.common.outputfiles.eep>
+  <armgcc.common.outputfiles.bin>True</armgcc.common.outputfiles.bin>
+  <armgcc.common.outputfiles.srec>True</armgcc.common.outputfiles.srec>
+  <armgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>__HARDWARE_IMxrt1062__</Value>
+      <Value>__HARDWARE_IMXRT1062__</Value>
+      <Value>ARDUINO=108019</Value>
+      <Value>ARDUINO_MAIN</Value>
+      <Value>printf=iprintf</Value>
+      <Value>__TEENSY4__</Value>
+      <Value>__IMXRT1062__</Value>
+      <Value>TEENSYDUINO=158</Value>
+      <Value>ARDUINO_TEENSY41</Value>
+      <Value>F_CPU=720000000</Value>
+      <Value>USB_MIDI_SERIAL</Value>
+      <Value>LAYOUT_US_ENGLISH</Value>
+    </ListValues>
+  </armgcc.compiler.symbols.DefSymbols>
+  <armgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../../../Jeannie</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/debug</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/util</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SD/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SdFat/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/MIDI/src</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Mcp3208/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM/utility</Value>
+      <Value>C://Users//rolfd//AppData//Local//Temp//VMBuilds//Jeannie//teensy41//Release/pch</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//teensyC://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//lib//gcc//arm-none-eabi//5.4.1//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//tr1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//bits</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//arm-none-eabi</Value>
+    </ListValues>
+  </armgcc.compiler.directories.IncludePaths>
+  <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
+  <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+  <armgcccpp.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>__HARDWARE_IMxrt1062__</Value>
+      <Value>__HARDWARE_IMXRT1062__</Value>
+      <Value>ARDUINO=108019</Value>
+      <Value>ARDUINO_MAIN</Value>
+      <Value>printf=iprintf</Value>
+      <Value>__TEENSY4__</Value>
+      <Value>__IMXRT1062__</Value>
+      <Value>TEENSYDUINO=158</Value>
+      <Value>ARDUINO_TEENSY41</Value>
+      <Value>F_CPU=720000000</Value>
+      <Value>USB_MIDI_SERIAL</Value>
+      <Value>LAYOUT_US_ENGLISH</Value>
+    </ListValues>
+  </armgcccpp.compiler.symbols.DefSymbols>
+  <armgcccpp.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../../../Jeannie</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/avr</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/debug</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/util</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SD/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SdFat/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/MIDI/src</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Mcp3208/src</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO/utility</Value>
+      <Value>C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce/utility</Value>
+      <Value>C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM/utility</Value>
+      <Value>C://Users//rolfd//AppData//Local//Temp//VMBuilds//Jeannie//teensy41//Release/pch</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//teensyC://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//lib//gcc//arm-none-eabi//5.4.1//include</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//tr1</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//bits</Value>
+      <Value>C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//arm-none-eabi</Value>
+    </ListValues>
+  </armgcccpp.compiler.directories.IncludePaths>
+  <armgcccpp.compiler.optimization.level>Optimize for size (-Os)</armgcccpp.compiler.optimization.level>
+  <armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcccpp.compiler.warnings.AllWarnings>True</armgcccpp.compiler.warnings.AllWarnings>
+  <armgcccpp.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </armgcccpp.linker.libraries.Libraries>
+  <armgcccpp.linker.libraries.LibrarySearchPaths>
+    <ListValues>
+      <Value>../cmsis/linkerScripts</Value>
+      <Value>%24(ProjectDir)\Device_Startup</Value>
+    </ListValues>
+  </armgcccpp.linker.libraries.LibrarySearchPaths>
+  <armgcccpp.linker.optimization.GarbageCollectUnusedSections>True</armgcccpp.linker.optimization.GarbageCollectUnusedSections>
+  <armgcccpp.linker.miscellaneous.LinkerFlags>-Tsam3x8e_flash.ld</armgcccpp.linker.miscellaneous.LinkerFlags>
+  <armgcccpp.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3X_DFP\1.0.50\include</Value>
+    </ListValues>
+  </armgcccpp.assembler.general.IncludePaths>
+  <armgcccpp.preprocessingassembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL\samd21\include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\CMSIS\Include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL</Value>
+      <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3X_DFP\1.0.50\include</Value>
+    </ListValues>
+  </armgcccpp.preprocessingassembler.general.IncludePaths>
+</ArmGccCpp>
+    </ToolchainSettings>
+    <VMSETTING_IncludePaths>../../../Jeannie;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Wire/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI;C:/Users/rolfd/Documents/Arduino/libraries/SD/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/MIDI/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy;C:/Users/rolfd/Documents/Arduino/libraries/Mcp3208/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Audio/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/avr;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/debug;C:/Program Files (x86)/Arduino/hardware/teensy/avr/cores/teensy4/util;{vmresolved.compiler.path}arm/arm-none-eabi/include;{vmresolved.compiler.path}arm/lib/gcc/arm-none-eabi/5.4.1/include;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1/tr1;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1/bits;{vmresolved.compiler.path}arm/arm-none-eabi/include/c++/5.4.1/arm-none-eabi;C:/Program Files (x86)/Arduino/hardware/teensy;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include;C:/Program Files (x86)/Arduino/hardware/tools/arm/lib/gcc/arm-none-eabi/5.4.1/include;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/tr1;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/bits;C:/Program Files (x86)/Arduino/hardware/tools/arm/arm-none-eabi/include/c++/5.4.1/arm-none-eabi;C:/Users/rolfd/Documents/Arduino/libraries/SdFat/src;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO;C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Encoder/utility;C:/Users/rolfd/DOCUME~1/Arduino/mySketch/JEANNI~2/Jeannie;{build.path}/pch;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SdFat/src;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SD/src;C://Program Files (x86)//Arduino//hardware//teensyC://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include;C://Program Files (x86)//Arduino//hardware//tools//arm//lib//gcc//arm-none-eabi//5.4.1//include;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//tr1;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//bits;C://Program Files (x86)//Arduino//hardware//tools//arm//arm-none-eabi//include//c++//5.4.1//arm-none-eabi;C://Users//rolfd//AppData//Local//Temp//VMBuilds//Jeannie//teensy41//Release/pch;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SPI/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Entropy/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/SerialFlash/utility;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_GFX_Library/utility;C:/Users/rolfd/Documents/Arduino/libraries/Adafruit_BusIO/utility;C:/Users/rolfd/Documents/Arduino/libraries/CircularBuffer/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/Bounce/utility;C:/Program Files (x86)/Arduino/hardware/teensy/avr/libraries/EEPROM/utility;C://Users//rolfd//Documents//Arduino//mySketch//Jeannie102//Jeannie;C://Program Files (x86)//Arduino//hardware//teensy//avr//cores//teensy4;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Wire;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SPI;C://Users//rolfd//Documents//Arduino//libraries//SD//src;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SdFat//src;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//MIDI//src;C://Users//rolfd//Documents//Arduino//libraries//Mcp3208//src;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Entropy;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Audio;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_GFX_Library;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_BusIO;C://Users//rolfd//Documents//Arduino//libraries//CircularBuffer;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Encoder;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Bounce;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//EEPROM;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Wire//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SPI//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Entropy//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Audio//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SerialFlash;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SerialFlash//utility;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_GFX_Library//utility;C://Users//rolfd//Documents//Arduino//libraries//Adafruit_BusIO//utility;C://Users//rolfd//Documents//Arduino//libraries//CircularBuffer//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Encoder//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//Bounce//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//EEPROM//utility;C://Program Files (x86)//Arduino//hardware//teensy//avr//libraries//SD//src;</VMSETTING_IncludePaths>
+    <VisualMicroSettings>
+      <VisualMicroSettings>
+        <ValidatedAS7>1</ValidatedAS7>
+        <custom_teensy41_speed>720</custom_teensy41_speed>
+        <custom_teensy41_opt>o3std</custom_teensy41_opt>
+        <arduino.upload.port>usb:0/140000/0/6</arduino.upload.port>
+      </VisualMicroSettings>
+    </VisualMicroSettings>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="Jeannie.ino">
+      <SubType>compile</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Audio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="AudioPatching.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Constants.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="data_bandlimit_step.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Detune.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EepromMgr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="effect_combine.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="effect_envelope.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="effect_envelope.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="filter_ladder.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="filter_variable.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="filter_variable.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="global.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HWControls.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="MidiCC.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="name.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Oscilloscope.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Parameters.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="PatchMgr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Sequencer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Settings.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ST7735Display.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ST7735_t3.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ST7735_t3.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="synth_waveform.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="synth_waveform.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="SysexDump.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Velocity.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Velocity.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Voice.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Yeysk16pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="__vm\.Jeannie.vsarduino.h">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="__vm\" />
+  </ItemGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
+</Project>
