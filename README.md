@@ -17,9 +17,6 @@ synthesizer functions.
 
 https://www.tubeohm.com/
 
-![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/aac2a395-66dd-4780-b126-d16485811a73)
-
-
 ![Pic1](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
 
 ![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
