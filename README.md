@@ -16,6 +16,7 @@ programmes and switching to the menu functions. In addition, there are six butto
 synthesizer functions.
 
 Specifications
+
      • DIY 8-voice polyphonic synthesizer
      • ARM Cortex-M7 processor 720MHz with 1MByte Ram
      • two digital oscillators per voice
