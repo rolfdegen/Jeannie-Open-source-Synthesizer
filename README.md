@@ -15,8 +15,7 @@ parameters are entered via four rotary knobs below the display and an encoder fo
 programmes and switching to the menu functions. In addition, there are six buttons for operating special
 synthesizer functions.
 
-specifications
-
+Specifications
      • DIY 8-voice polyphonic synthesizer
      • ARM Cortex-M7 processor 720MHz with 1MByte Ram
      • two digital oscillators per voice
