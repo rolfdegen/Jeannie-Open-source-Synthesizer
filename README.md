@@ -17,16 +17,17 @@ synthesizer functions.
 
 https://www.tubeohm.com/
 
+![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/17001e0d-c3e7-466d-85b5-c23be8273332)
+
+![20230518_194120](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/99fbdfcb-8710-4ebf-879d-d9b2da438e90)
+
+![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/0dcf3d3b-bb79-4bf8-b30c-daa2ec8867c0)
+
 ![Pic1](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
 
 ![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
 
 ![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
-
-![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/ec930924-8822-4b99-98b0-1d8c097f7206)
-
-![20230518_195819](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/0d65964e-614b-48cd-8950-fdf4cdbe21c7)
-
 
 Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
