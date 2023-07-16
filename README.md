@@ -21,9 +21,12 @@ https://www.tubeohm.com/
 
 ![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
 
-![Pic 3](https://user-images.githubusercontent.com/16689445/155886528-a2bef7d7-925e-4425-aae9-4ab8d6f1af34.png)
-
 ![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
+
+![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/ec930924-8822-4b99-98b0-1d8c097f7206)
+
+![20230518_195819](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/0d65964e-614b-48cd-8950-fdf4cdbe21c7)
+
 
 Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
