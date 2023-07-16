@@ -46,6 +46,7 @@ Specifications
      • Stereo audio output jack 6.3mm
      • USB 2.0 midi interface
      • Simple firmware update via USB
+     
 
 https://www.tubeohm.com/
 
