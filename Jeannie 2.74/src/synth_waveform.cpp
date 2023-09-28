@@ -46,7 +46,6 @@ void AudioSynthWaveformTS::update(void)
 	audio_block_t *block;
 	int16_t *bp, *end;
 	int32_t val1, val2;
-	int16_t val3;
 	int16_t magnitude15;
 	uint32_t i, ph, index, index2, scale;
 	const uint32_t inc = phase_increment;
@@ -233,7 +232,6 @@ void AudioSynthWaveformModulatedTS::update(void)
 	uint32_t ph_3;
 	uint32_t ph_4;
 	uint32_t ph_5;
-	int32_t Ssaw_value;
 	
 	moddata = receiveReadOnly(0);
 	shapedata = receiveReadOnly(1);
@@ -442,6 +440,7 @@ void AudioSynthWaveformModulatedTS::update(void)
 		
 		// WaveformModulated Sample & Hold --------------------------------
 		case WAVEFORM_SAMPLE_HOLD:
+		sample = 0;
 		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 			ph = phasedata[i];
 			if (ph < priorphase) { // does not work for phase modulation
@@ -558,6 +557,7 @@ void AudioSynthWaveformModulatedTS::update(void)
 		if (strike_) {
 			strike_ = false;
 			state_vow_consonant_frames = 160;
+			uint16_t index = 0;// (Random::GetSample() + 1) & 7;
 			for (size_t i = 0; i < 3; i++) {
 				state_vow_formant_increment[i] = static_cast<uint32_t>(consonant_data[index].formant_frequency[i]) *
 				0x1000 * formant_shift;
