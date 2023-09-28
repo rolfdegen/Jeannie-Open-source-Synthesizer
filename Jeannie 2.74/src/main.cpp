@@ -6,7 +6,7 @@ by Rolf Degen rolfdegen@hotmail.com
 DIY Hardware Andre Laska (tubeohm.com)
 
 Date: 20.08.2023
-Build Version 2.62
+Build Version 2.74
 
 MIT License
 Copyright (c) Rolf Degen (2021 - 2023)
