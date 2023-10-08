@@ -63,6 +63,9 @@ Pictures
 
 ![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65f39ec2-23c6-429a-9a14-6d3e71d9193c)
 
+![Screenshot 2023-10-08 192844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/82113774-1c11-4d4e-b995-6286131a5f38)
+
+
 Video and Audio
 
 https://youtu.be/dHu4UNJWN_M ""
