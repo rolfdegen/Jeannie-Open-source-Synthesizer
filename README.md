@@ -65,6 +65,11 @@ Pictures
 
 ![Screenshot 2023-10-08 192844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/82113774-1c11-4d4e-b995-6286131a5f38)
 
+Case from EricaSynths
+![Jeannie-DIY-01_keb9kWj](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/8a28820f-0706-4319-92ba-95b41fb6487f)
+
+Wood Side panels
+https://youtu.be/nQKnOZVThZc
 
 Video and Audio
 
