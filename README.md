@@ -65,13 +65,7 @@ Pictures
 
 Video and Audio
 
-https://youtu.be/dHu4UNJWN_M
-
-https://youtu.be/ZQ4xBk2VSVQ
-
-https://youtu.be/HZyj_MlfSJk
-
-https://youtu.be/k39YhrJgMqE
+https://youtu.be/dHu4UNJWN_M  https://youtu.be/ZQ4xBk2VSVQ  https://youtu.be/HZyj_MlfSJk  https://youtu.be/k39YhrJgMqE
 
 https://youtu.be/nQKnOZVThZc
 
