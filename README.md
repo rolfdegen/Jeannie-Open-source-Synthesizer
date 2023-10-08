@@ -61,8 +61,6 @@ Pictures
 
 ![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3b64f99f-8dd1-41cb-93d6-d4b6907a5fe9)
 
-![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65f39ec2-23c6-429a-9a14-6d3e71d9193c)
-
 ![Screenshot 2023-10-08 192844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/82113774-1c11-4d4e-b995-6286131a5f38)
 
 Alu case from Erica Synths
@@ -71,6 +69,8 @@ Alu case from Erica Synths
 my selmade Wood Side panels
 ![20230516_184036](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3e98b359-e1f8-4653-8185-cb1ef8823e7c)
 ![Wood](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65d9672b-a484-410e-bd2b-256f115a5f9e)
+![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65f39ec2-23c6-429a-9a14-6d3e71d9193c)
+
 
 Video and Audio
 
