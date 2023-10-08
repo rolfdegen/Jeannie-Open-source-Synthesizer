@@ -51,13 +51,15 @@ Specifications
 
 https://www.tubeohm.com/
 
+![Screenshot 2023-10-08 174844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/f51c62de-ff66-450e-b892-3052402c9139)
+
+![hinten04283](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/91088624-494c-4904-8c82-69291363d98d)
+
+![20211111_085558](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/2396a274-2f4c-4c56-a4c6-1174e4c848d1)
+
 ![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/63aa191a-22c8-4474-8833-db4c38d9ef41)
 
 ![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65f39ec2-23c6-429a-9a14-6d3e71d9193c)
-
-![Screenshot 2023-10-08 174844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/f51c62de-ff66-450e-b892-3052402c9139)
-
-![20211111_085558](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/2396a274-2f4c-4c56-a4c6-1174e4c848d1)
 
 
 
