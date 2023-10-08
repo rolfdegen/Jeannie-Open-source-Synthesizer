@@ -51,29 +51,7 @@ Specifications
 
 https://www.tubeohm.com/
 
-![20230518_194120](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/99fbdfcb-8710-4ebf-879d-d9b2da438e90)
 
-![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/0dcf3d3b-bb79-4bf8-b30c-daa2ec8867c0)
-
-![Pic1](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
-
-![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
-
-![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
-
-![20211111_085543](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/103e720b-bd8a-4f9a-b5e8-e662ae1b3e07)
-
-Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
-
-Sound file 2: https://soundcloud.com/tubeohm-sounds/kontrabass-2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
-
-Sound file 3: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
-
-Sound file 4: https://soundcloud.com/musikus/melancholique-part-one?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
-
-Sound file 5: https://soundcloud.com/tubeohm-sounds/bad2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
-
-Sound file 6: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
-
+![155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/e56e1262-6922-4abb-af6e-4f4e68263c8d)
 
 
