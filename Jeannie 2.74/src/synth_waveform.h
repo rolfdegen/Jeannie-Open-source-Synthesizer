@@ -22,9 +22,9 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- 
+
  ElectroTechnique 2020
- Added WAVEFORM_SILENT, sync()                           
+ Added WAVEFORM_SILENT, sync()
  */
 
 #ifndef synth_waveform_h_
@@ -34,44 +34,49 @@
 #include "AudioStream.h"
 #include "arm_math.h"
 
-
 // waveforms.c
-extern "C" {
-extern const int16_t AudioWaveformSine[257];
+extern "C"
+{
+  extern const int16_t AudioWaveformSine[257];
 }
 
-//extern int8_t Lfo3Modoutput;
-
+// extern int8_t Lfo3Modoutput;
 
 // Waveforms
-#define WAVEFORM_SINE							0
-#define WAVEFORM_TRIANGLE						1
-#define WAVEFORM_SAWTOOTH						3
-#define WAVEFORM_SQUARE							2
-#define WAVEFORM_PULSE							4
-#define WAVEFORM_SAWTOOTH_REVERSE				5
-#define WAVEFORM_SAMPLE_HOLD					6
-#define WAVEFORM_TRIANGLE_VARIABLE				7
-#define WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE		8
-#define WAVEFORM_BANDLIMIT_SAWTOOTH				9
-#define WAVEFORM_BANDLIMIT_SQUARE				10
-#define WAVEFORM_BANDLIMIT_PULSE				11
-#define WAVEFORM_ARBITRARY						12
-#define WAVEFORM_SAWTOOTH2						30
-#define WAVEFORM_SILENT							19
+#define WAVEFORM_SINE 0
+#define WAVEFORM_TRIANGLE 1
+#define WAVEFORM_SAWTOOTH 3
+#define WAVEFORM_SQUARE 2
+#define WAVEFORM_PULSE 4
+#define WAVEFORM_SAWTOOTH_REVERSE 5
+#define WAVEFORM_SAMPLE_HOLD 6
+#define WAVEFORM_TRIANGLE_VARIABLE 7
+#define WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE 8
+#define WAVEFORM_BANDLIMIT_SAWTOOTH 9
+#define WAVEFORM_BANDLIMIT_SQUARE 10
+#define WAVEFORM_BANDLIMIT_PULSE 11
+#define WAVEFORM_ARBITRARY 12
+#define WAVEFORM_SILENT 19
 
 // LFO and PWM waveforms
-#define LFO_WAVEFORM_ARBITRARY					20
-#define LFO_WAVEFORM_SAMPLE_HOLD				21
-#define PWM_WAVEFORM_SINE						26
-#define PWM_WAVEFORM_TRIANGLE					27
-#define PWM_WAVEFORM_SAWTOOTH					28
-#define PWM_WAVEFORM_SQUARE						29
+#define LFO_WAVEFORM_ARBITRARY 20
+#define LFO_WAVEFORM_SAMPLE_HOLD 21
+#define PWM_WAVEFORM_SINE 26
+#define PWM_WAVEFORM_TRIANGLE 27
+#define PWM_WAVEFORM_SAWTOOTH 28
+#define PWM_WAVEFORM_SQUARE 29
 
 // Special waveforms
-#define WAVEFORM_MULTISAW						30
-#define WAVEFORM_VOWEL							31
-#define WAVEFORM_SAWSWARM						32
+#define WAVEFORM_MULTISAW 30
+#define WAVEFORM_BRAIDS_VOWEL 31
+#define WAVEFORM_SHRUTHI_ZSAW 32
+#define WAVEFORM_SHRUTHI_ZSYNC 33
+#define WAVEFORM_SHRUTHI_ZTRI 34
+#define WAVEFORM_SHRUTHI_ZRESO 35
+#define WAVEFORM_SHRUTHI_ZPULSE 36
+#define WAVEFORM_SHRUTHI_CRUSHED_SINE 37
+
+
 
 /*
 const uint8_t wav_res_sine[] {
@@ -489,7 +494,6 @@ public:
 	 {
   }
   void frequency(float freq) {
-   //freq = freq / 2.0f;	// only for tone_type Vowel
     if (freq < 0.0) {
       freq = 0.0;
     } else if (freq > AUDIO_SAMPLE_RATE_EXACT / 2) {
@@ -595,8 +599,8 @@ private:
   uint16_t Osc_vw1_formant_amplitude[3];
   uint16_t Osc_vw1_formant_phase[3];
   uint32_t phaseOld_= 0;
-  uint16_t par_a_mod_ = 0;	// vowel parameter_A
-  uint16_t par_b_mod_ = 0;	// vowel parameter_B
+  int16_t par_a_mod_ = 0;	// vowel parameter_A
+  int16_t par_b_mod_ = 0;	// vowel parameter_B
 };
 
 #endif

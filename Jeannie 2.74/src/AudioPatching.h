@@ -8,7 +8,6 @@ AudioSynthWaveformDc     AtouchDc;       //xy=110,302
 AudioSynthWaveformDc     DC_FilterModCC; //xy=110,306
 AudioSynthWaveformDc     DC_FilterModwheel; //xy=110,306
 
-
 AudioSynthWaveformDc     FilterVelo1;    //xy=69.5,437
 AudioSynthWaveformDc     FilterVelo2;    //xy=69.5,437
 AudioSynthWaveformDc     FilterVelo3;    //xy=69.5,437
@@ -30,6 +29,7 @@ AudioSynthWaveformDc     keytracking7;    //xy=176,745
 AudioSynthWaveformDc     keytracking8;    //xy=196,745
 
 AudioSynthWaveformDc     LFO3ModMixer1Dc;    //xy=69.5,437
+AudioSynthWaveformDc     LFOoscPrmDC;
 
 AudioSynthWaveformModulatedTS waveformModa[8];  //xy=503,170  Osc1
 AudioSynthWaveformModulatedTS waveformModb[8];  //xy=507,114  Osc2
@@ -196,14 +196,18 @@ AudioMixer4              filterMixer8;   //xy=1144,825
 AudioMixer4              Lfo3Mixer;			//xy=1144,825
 AudioMixer4              LadderMixer1;
 
+// Modulation mixer Osc Parameter_A/B
+AudioMixer4              Osc_Prm_mixer_A[8];
+AudioMixer4				 Osc_Prm_mixer_B[8];
+AudioMixer4              Osc_Prm_mixer_C[8];
+AudioMixer4				 Osc_Prm_mixer_D[8];
+AudioMixer4				 LFO2oscParModmixer[8];
+AudioMixer4				 LFO3oscParModmixer;
+
 AudioAmplifier           WaveshaperAmp[8];		//xy=1145,825
 AudioAmplifier			 osc1aFMamp;			//xy=1145,833
-
 AudioEffectWaveshaper	 waveshaper[8];			//xy=638,301
-
 AudioEffectEnvelope      ampEnvelope[8];
-
-
 AudioAnalyzePeak		 peak;
 Oscilloscope             scope;
 AudioOutputI2S			 PCM5102A;
@@ -290,7 +294,6 @@ AudioConnection          patchCord92(filterModMixer_a[6], 0, filterModMixer7b, 0
 AudioConnection          patchCord93(filterModMixer_a[7], 0, filterModMixer8b, 0);	
 
 
-
 // AudioSynthWaveformModulatedTS ----------------------------------------
 AudioConnection          patchCord201(waveformModa[0], 0, waveformMixer1, 0);	// ok
 AudioConnection          patchCord202(waveformModa[1], 0, waveformMixer2, 0);	// ok
@@ -325,6 +328,193 @@ AudioConnection          patchCord263(waveformModb[4], 0, oscModMixer5a, 3);	// 
 AudioConnection          patchCord264(waveformModb[5], 0, oscModMixer6a, 3);	// ok
 AudioConnection          patchCord265(waveformModb[6], 0, oscModMixer7a, 3);	// ok
 AudioConnection          patchCord266(waveformModb[7], 0, oscModMixer8a, 3);	// ok
+
+// Mixer for two new Modulation parameters into waveformModa/b --------------------------------
+AudioConnection  LFO2oscPrmMod1[8] = {
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[0], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[1], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[2], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[3], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[4], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[5], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[6], 0},
+	{LFOoscPrmDC, 0, LFO2oscParModmixer[7], 0},
+};
+AudioConnection  LFO2oscPrmMod2[8] = {
+	{LFO2Envelope[0], 0, LFO2oscParModmixer[0], 1},
+	{LFO2Envelope[1], 0, LFO2oscParModmixer[1], 1},
+	{LFO2Envelope[2], 0, LFO2oscParModmixer[2], 1},
+	{LFO2Envelope[3], 0, LFO2oscParModmixer[3], 1},
+	{LFO2Envelope[4], 0, LFO2oscParModmixer[4], 1},
+	{LFO2Envelope[5], 0, LFO2oscParModmixer[5], 1},
+	{LFO2Envelope[6], 0, LFO2oscParModmixer[6], 1},
+	{LFO2Envelope[7], 0, LFO2oscParModmixer[7], 1},
+};
+AudioConnection Lfo2OscPrmMixerA[8] = {
+	{LFO2oscParModmixer[0], 0, Osc_Prm_mixer_A[0], 0},
+	{LFO2oscParModmixer[1], 0, Osc_Prm_mixer_A[1], 0},
+	{LFO2oscParModmixer[2], 0, Osc_Prm_mixer_A[2], 0},
+	{LFO2oscParModmixer[3], 0, Osc_Prm_mixer_A[3], 0},
+	{LFO2oscParModmixer[4], 0, Osc_Prm_mixer_A[4], 0},
+	{LFO2oscParModmixer[5], 0, Osc_Prm_mixer_A[5], 0},
+	{LFO2oscParModmixer[6], 0, Osc_Prm_mixer_A[6], 0},
+	{LFO2oscParModmixer[7], 0, Osc_Prm_mixer_A[7], 0},
+};
+AudioConnection Lfo2OscPrmMixerB[8] = {
+	{LFO2oscParModmixer[0], 0, Osc_Prm_mixer_B[0], 0},
+	{LFO2oscParModmixer[1], 0, Osc_Prm_mixer_B[1], 0},
+	{LFO2oscParModmixer[2], 0, Osc_Prm_mixer_B[2], 0},
+	{LFO2oscParModmixer[3], 0, Osc_Prm_mixer_B[3], 0},
+	{LFO2oscParModmixer[4], 0, Osc_Prm_mixer_B[4], 0},
+	{LFO2oscParModmixer[5], 0, Osc_Prm_mixer_B[5], 0},
+	{LFO2oscParModmixer[6], 0, Osc_Prm_mixer_B[6], 0},
+	{LFO2oscParModmixer[7], 0, Osc_Prm_mixer_B[7], 0},
+};
+AudioConnection Lfo2OscPrmMixerC[8] = {
+	{LFO2oscParModmixer[0], 0, Osc_Prm_mixer_C[0], 0},
+	{LFO2oscParModmixer[1], 0, Osc_Prm_mixer_C[1], 0},
+	{LFO2oscParModmixer[2], 0, Osc_Prm_mixer_C[2], 0},
+	{LFO2oscParModmixer[3], 0, Osc_Prm_mixer_C[3], 0},
+	{LFO2oscParModmixer[4], 0, Osc_Prm_mixer_C[4], 0},
+	{LFO2oscParModmixer[5], 0, Osc_Prm_mixer_C[5], 0},
+	{LFO2oscParModmixer[6], 0, Osc_Prm_mixer_C[6], 0},
+	{LFO2oscParModmixer[7], 0, Osc_Prm_mixer_C[7], 0},
+};
+AudioConnection Lfo2OscPrmMixerD[8] = {
+	{LFO2oscParModmixer[0], 0, Osc_Prm_mixer_D[0], 0},
+	{LFO2oscParModmixer[1], 0, Osc_Prm_mixer_D[1], 0},
+	{LFO2oscParModmixer[2], 0, Osc_Prm_mixer_D[2], 0},
+	{LFO2oscParModmixer[3], 0, Osc_Prm_mixer_D[3], 0},
+	{LFO2oscParModmixer[4], 0, Osc_Prm_mixer_D[4], 0},
+	{LFO2oscParModmixer[5], 0, Osc_Prm_mixer_D[5], 0},
+	{LFO2oscParModmixer[6], 0, Osc_Prm_mixer_D[6], 0},
+	{LFO2oscParModmixer[7], 0, Osc_Prm_mixer_D[7], 0},
+};
+
+AudioConnection  LFO3oscPrmMod1(LFOoscPrmDC, 0, LFO3oscParModmixer, 0);
+AudioConnection  LFO3oscPrmMod2(LFO3EnvelopeAmp, 0, LFO3oscParModmixer, 1);
+
+AudioConnection Lfo3OscPrmMixerA[8] = {
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[0], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[1], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[2], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[3], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[4], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[5], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[6], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_A[7], 1},
+};
+AudioConnection Lfo3OscPrmMixerB[8] = {
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[0], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[1], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[2], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[3], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[4], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[5], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[6], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_B[7], 1},
+};
+AudioConnection Lfo3OscPrmMixerC[8] = {
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[0], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[1], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[2], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[3], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[4], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[5], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[6], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_C[7], 1},
+};
+AudioConnection Lfo3OscPrmMixerD[8] = {
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[0], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[1], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[2], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[3], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[4], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[5], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[6], 1},
+	{LFO3oscParModmixer, 0, Osc_Prm_mixer_D[7], 1},
+};
+AudioConnection filterEnvelope_PrmMixerA[8] = {
+	{filterEnvelope[0], 0, Osc_Prm_mixer_A[0], 2},
+	{filterEnvelope[1], 0, Osc_Prm_mixer_A[1], 2},
+	{filterEnvelope[2], 0, Osc_Prm_mixer_A[2], 2},
+	{filterEnvelope[3], 0, Osc_Prm_mixer_A[3], 2},
+	{filterEnvelope[4], 0, Osc_Prm_mixer_A[4], 2},
+	{filterEnvelope[5], 0, Osc_Prm_mixer_A[5], 2},
+	{filterEnvelope[6], 0, Osc_Prm_mixer_A[6], 2},
+	{filterEnvelope[7], 0, Osc_Prm_mixer_A[7], 2},
+};
+AudioConnection filterEnvelope_PrmMixerB[8] = {
+	{filterEnvelope[0], 0, Osc_Prm_mixer_B[0], 2},
+	{filterEnvelope[1], 0, Osc_Prm_mixer_B[1], 2},
+	{filterEnvelope[2], 0, Osc_Prm_mixer_B[2], 2},
+	{filterEnvelope[3], 0, Osc_Prm_mixer_B[3], 2},
+	{filterEnvelope[4], 0, Osc_Prm_mixer_B[4], 2},
+	{filterEnvelope[5], 0, Osc_Prm_mixer_B[5], 2},
+	{filterEnvelope[6], 0, Osc_Prm_mixer_B[6], 2},
+	{filterEnvelope[7], 0, Osc_Prm_mixer_B[7], 2},
+};
+AudioConnection filterEnvelope_PrmMixerC[8] = {
+	{filterEnvelope[0], 0, Osc_Prm_mixer_C[0], 2},
+	{filterEnvelope[1], 0, Osc_Prm_mixer_C[1], 2},
+	{filterEnvelope[2], 0, Osc_Prm_mixer_C[2], 2},
+	{filterEnvelope[3], 0, Osc_Prm_mixer_C[3], 2},
+	{filterEnvelope[4], 0, Osc_Prm_mixer_C[4], 2},
+	{filterEnvelope[5], 0, Osc_Prm_mixer_C[5], 2},
+	{filterEnvelope[6], 0, Osc_Prm_mixer_C[6], 2},
+	{filterEnvelope[7], 0, Osc_Prm_mixer_C[7], 2},
+};
+AudioConnection filterEnvelope_PrmMixerD[8] = {
+	{filterEnvelope[0], 0, Osc_Prm_mixer_D[0], 2},
+	{filterEnvelope[1], 0, Osc_Prm_mixer_D[1], 2},
+	{filterEnvelope[2], 0, Osc_Prm_mixer_D[2], 2},
+	{filterEnvelope[3], 0, Osc_Prm_mixer_D[3], 2},
+	{filterEnvelope[4], 0, Osc_Prm_mixer_D[4], 2},
+	{filterEnvelope[5], 0, Osc_Prm_mixer_D[5], 2},
+	{filterEnvelope[6], 0, Osc_Prm_mixer_D[6], 2},
+	{filterEnvelope[7], 0, Osc_Prm_mixer_D[7], 2},
+};
+AudioConnection PrmMixerA_OscPrmA[8] = {
+	{Osc_Prm_mixer_A[0], 0, waveformModa[0], 2},
+	{Osc_Prm_mixer_A[1], 0, waveformModa[1], 2},
+	{Osc_Prm_mixer_A[2], 0, waveformModa[2], 2},
+	{Osc_Prm_mixer_A[3], 0, waveformModa[3], 2},
+	{Osc_Prm_mixer_A[4], 0, waveformModa[4], 2},
+	{Osc_Prm_mixer_A[5], 0, waveformModa[5], 2},
+	{Osc_Prm_mixer_A[6], 0, waveformModa[6], 2},
+	{Osc_Prm_mixer_A[7], 0, waveformModa[7], 2},
+};
+AudioConnection PrmMixerB_OscPrmB[8] = {
+	{Osc_Prm_mixer_B[0], 0, waveformModa[0], 3},
+	{Osc_Prm_mixer_B[1], 0, waveformModa[1], 3},
+	{Osc_Prm_mixer_B[2], 0, waveformModa[2], 3},
+	{Osc_Prm_mixer_B[3], 0, waveformModa[3], 3},
+	{Osc_Prm_mixer_B[4], 0, waveformModa[4], 3},
+	{Osc_Prm_mixer_B[5], 0, waveformModa[5], 3},
+	{Osc_Prm_mixer_B[6], 0, waveformModa[6], 3},
+	{Osc_Prm_mixer_B[7], 0, waveformModa[7], 3},
+};
+AudioConnection PrmMixerC_OscPrmA[8] = {
+	{Osc_Prm_mixer_C[0], 0, waveformModb[0], 2},
+	{Osc_Prm_mixer_C[1], 0, waveformModb[1], 2},
+	{Osc_Prm_mixer_C[2], 0, waveformModb[2], 2},
+	{Osc_Prm_mixer_C[3], 0, waveformModb[3], 2},
+	{Osc_Prm_mixer_C[4], 0, waveformModb[4], 2},
+	{Osc_Prm_mixer_C[5], 0, waveformModb[5], 2},
+	{Osc_Prm_mixer_C[6], 0, waveformModb[6], 2},
+	{Osc_Prm_mixer_C[7], 0, waveformModb[7], 2},
+};
+AudioConnection PrmMixerD_OscPrmb[8] = {
+	{Osc_Prm_mixer_D[0], 0, waveformModb[0], 3},
+	{Osc_Prm_mixer_D[1], 0, waveformModb[1], 3},
+	{Osc_Prm_mixer_D[2], 0, waveformModb[2], 3},
+	{Osc_Prm_mixer_D[3], 0, waveformModb[3], 3},
+	{Osc_Prm_mixer_D[4], 0, waveformModb[4], 3},
+	{Osc_Prm_mixer_D[5], 0, waveformModb[5], 3},
+	{Osc_Prm_mixer_D[6], 0, waveformModb[6], 3},
+	{Osc_Prm_mixer_D[7], 0, waveformModb[7], 3},
+};
+
 
 AudioConnection OscEffect_connections[32] = {
 	{waveformModa[0], 0, oscEffect[0], 0},
@@ -513,8 +703,6 @@ AudioConnection filterEnvelope_connections[40] = {
 	{filterEnvelope[7], 0, filterModMixer_a[7], 0}	
 };
 
-
-
 // AudioEffectDigitalCombine --------------------------------------------
 AudioConnection          patchCord651(oscEffect[0], 0, oscFxMix1, 0);	// ok
 AudioConnection          patchCord652(oscEffect[1], 0, oscFxMix2, 0);	// ok
@@ -686,7 +874,6 @@ AudioConnection          patchCord854(WaveshaperAmp[5], waveshaper[5]);		// ok
 AudioConnection          patchCord855(WaveshaperAmp[6], waveshaper[6]);		// ok
 AudioConnection          patchCord856(WaveshaperAmp[7], waveshaper[7]);		// ok
 
-
 AudioConnection waveshaper_connections[8] = {
 	{waveshaper[0], ampEnvelope[0]},
 	{waveshaper[1], ampEnvelope[1]},
@@ -695,7 +882,7 @@ AudioConnection waveshaper_connections[8] = {
 	{waveshaper[4], ampEnvelope[4]},
 	{waveshaper[5], ampEnvelope[5]},
 	{waveshaper[6], ampEnvelope[6]},
-	{waveshaper[7], ampEnvelope[7]}	
+	{waveshaper[7], ampEnvelope[7]}
 };
 
 AudioConnection          patchCord857(waveshaper[0], ampEnvelope[0]);		// ok
@@ -763,8 +950,6 @@ AudioConnection          patchCord1276(filterModMixAtCC6, 0, filterModMixer6b, 3
 AudioConnection          patchCord1277(filterModMixAtCC7, 0, filterModMixer7b, 3);	// ok
 AudioConnection          patchCord1278(filterModMixAtCC8, 0, filterModMixer8b, 3);	// ok
 
-
-
 AudioConnection          patchCord1300(AtouchFilter, 0, AtouchModAmp2, 0);	// ok
 AudioConnection          patchCord1301(AtouchModAmp2, 0, oscGlobalModMixer1, 3);	// ok
 AudioConnection          patchCord1302(AtouchModAmp2, 0, oscGlobalModMixer2, 3);	// ok
@@ -775,51 +960,10 @@ AudioConnection          patchCord1306(AtouchModAmp2, 0, oscGlobalModMixer6, 3);
 AudioConnection          patchCord1307(AtouchModAmp2, 0, oscGlobalModMixer7, 3);	// ok
 AudioConnection          patchCord1308(AtouchModAmp2, 0, oscGlobalModMixer8, 3);	// ok
 
-
-
 AudioConnection			 patchCord953(ModLfo3, 0, LFO3EnvelopeAmp, 0);
 AudioConnection			 patchCord954(LFO3EnvelopeAmp, 0, LFO3ModMixer1, 0);
 AudioConnection			 patchCord955(LFO3ModMixer1Dc, 0, LFO3ModMixer1, 1);
 AudioConnection			 patchCord956(ModLfo3, 0, LFO3ModMixer1, 2);
-AudioConnection			 patchCord957(LFO3ModMixer1, 0, multiply1, 1);
-AudioConnection			 patchCord958(LFO3ModMixer1, 0, multiply2, 1);
-
-// LFO3 mod Osc parameter_a
-AudioConnection LFO3_mod_connections[32] = {
-	{LFO3ModMixer1, 0, waveformModa[0], 2},
-	{LFO3ModMixer1, 0, waveformModa[1], 2},
-	{LFO3ModMixer1, 0, waveformModa[2], 2},
-	{LFO3ModMixer1, 0, waveformModa[3], 2},
-	{LFO3ModMixer1, 0, waveformModa[4], 2},
-	{LFO3ModMixer1, 0, waveformModa[5], 2},
-	{LFO3ModMixer1, 0, waveformModa[6], 2},
-	{LFO3ModMixer1, 0, waveformModa[7], 2},
-	{LFO3ModMixer1, 0, waveformModb[0], 2},
-	{LFO3ModMixer1, 0, waveformModb[1], 2},
-	{LFO3ModMixer1, 0, waveformModb[2], 2},
-	{LFO3ModMixer1, 0, waveformModb[3], 2},
-	{LFO3ModMixer1, 0, waveformModb[4], 2},
-	{LFO3ModMixer1, 0, waveformModb[5], 2},
-	{LFO3ModMixer1, 0, waveformModb[6], 2},
-	{LFO3ModMixer1, 0, waveformModb[7], 2},
-	{filterModMixer1b, 0, waveformModa[0], 3},
-	{filterModMixer1b, 0, waveformModa[1], 3},
-	{filterModMixer1b, 0, waveformModa[2], 3},
-	{filterModMixer1b, 0, waveformModa[3], 3},
-	{filterModMixer1b, 0, waveformModa[4], 3},
-	{filterModMixer1b, 0, waveformModa[5], 3},
-	{filterModMixer1b, 0, waveformModa[6], 3},
-	{filterModMixer1b, 0, waveformModa[7], 3},
-	{filterModMixer1b, 0, waveformModb[0], 3},
-	{filterModMixer1b, 0, waveformModb[1], 3},
-	{filterModMixer1b, 0, waveformModb[2], 3},
-	{filterModMixer1b, 0, waveformModb[3], 3},
-	{filterModMixer1b, 0, waveformModb[4], 3},
-	{filterModMixer1b, 0, waveformModb[5], 3},
-	{filterModMixer1b, 0, waveformModb[6], 3},
-	{filterModMixer1b, 0, waveformModb[7], 3},
-
-};
 
 AudioConnection ampEnvelope_connections[16] = {
 		{ampEnvelope[0], 0, voiceMixer1a, 0},
@@ -838,19 +982,18 @@ AudioConnection ampEnvelope_connections[16] = {
 		{ampEnvelope[5], 0, voiceMixer2b, 1},
 		{ampEnvelope[6], 0, voiceMixer2b, 2},
 		{ampEnvelope[7], 0, voiceMixer2b, 3},
-			
 };
 
+AudioConnection			 patchCord957(LFO3ModMixer1, 0, multiply1, 1);
+AudioConnection			 patchCord958(LFO3ModMixer1, 0, multiply2, 1);
 AudioConnection          patchCord1461(voiceMixer1a, 0, voiceMixerM1, 0);	// ok
 AudioConnection          patchCord1462(voiceMixer1b, 0, voiceMixerM1, 1);	// ok
 AudioConnection          patchCord1463(voiceMixer2a, 0, voiceMixerM2, 0);	// ok
 AudioConnection          patchCord1464(voiceMixer2b, 0, voiceMixerM2, 1);	// ok
 AudioConnection          patchCord1465(voiceMixerM1, 0, multiply1, 0);
 AudioConnection          patchCord1466(voiceMixerM2, 0, multiply2, 0);
-//AudioConnection			 patchCord1467(multiply1, 0, hpFilter1, 0);
-//AudioConnection			 patchCord1468(multiply2, 0, hpFilter2, 0);
-AudioConnection			 patchCord1467(voiceMixerM1, 0, hpFilter1, 0);
-AudioConnection			 patchCord1468(voiceMixerM1, 0, hpFilter2, 0);
+AudioConnection			 patchCord1467(multiply1, 0, hpFilter1, 0);
+AudioConnection			 patchCord1468(multiply2, 0, hpFilter2, 0);
 AudioConnection          patchCord1469(hpFilter1, 2, PCM5102A, 0);
 AudioConnection          patchCord1470(hpFilter2, 2, PCM5102A, 1);
 AudioConnection          patchCord1471(hpFilter1, 2, ScopePeakMixer, 0);
@@ -858,10 +1001,6 @@ AudioConnection          patchCord1472(hpFilter1, 2, ScopePeakMixer, 1);
 AudioConnection          patchCord1473(ScopePeakMixer, 0, scope, 0);
 AudioConnection          patchCord1474(ScopePeakMixer, 0, peak, 0);
 
-
-
-
-
-
+// Info
 // myConnection.disconnect();
 // myConnection.connect();

@@ -159,8 +159,20 @@ void printOscPitchEnv(uint8_t Value);
 int convert_pitchEnv(float pitch_Env);
 void printTemperature(void);
 void printCPUmon(void);
-void updateModWheelCutoff();
-void updateHPFFilterFreq();
+void updateModWheelCutoff(void);
+void updateHPFFilterFreq(void);
+void update_LFO2_Osc1_PRMA_mod (void);
+void update_LFO2_Osc1_PRMB_mod (void);
+void update_LFO2_Osc2_PRMA_mod (void);
+void update_LFO2_Osc2_PRMB_mod (void);
+void update_LFO3_Osc1_PRMA_mod (void);
+void update_LFO3_Osc1_PRMB_mod (void);
+void update_LFO3_Osc2_PRMA_mod (void);
+void update_LFO3_Osc2_PRMB_mod (void);
+void update_filterEnv_Osc1_PRMA_mod (void);
+void update_filterEnv_Osc1_PRMB_mod (void);
+void update_filterEnv_Osc2_PRMA_mod (void);
+void update_filterEnv_Osc2_PRMB_mod (void);
 
 //*************************************************************************
 // print const Text string from flash memory to xpos ypos on screen
@@ -1175,12 +1187,12 @@ FLASHMEM void printModParameter(uint8_t ParameterNo)
 	}
 	
 	tft.setTextColor(ST7735_GRAY);
+
 	if (ParameterNo < 4) {
 		print_String(179,19,(39 + (0 * 19)));	// print "LFO1"
 		print_String(180,19,(39 + (1 * 19)));	// print "LFO2"
 		print_String(183,19,(39 + (2 * 19)));	// print "LFO1*MW"
 		print_String(138,19,(39 + (3 * 19)));	// print "PBEND"
-		
 		print_String(181,103,(39 + (0 * 19)));	// print "Pitch"
 		print_String(182,103,(39 + (1 * 19)));	// print "CUTOFF"
 		print_String(181,103,(39 + (2 * 19)));	// print "Pitch"
@@ -1191,19 +1203,16 @@ FLASHMEM void printModParameter(uint8_t ParameterNo)
 		print_String(185,19,(39 + (1 * 19)));	// print "PWMB"
 		print_String(186,19,(39 + (2 * 19)));	// print "OSC1"
 		print_String(187,19,(39 + (3 * 19)));	// print "OSC2"
-		
 		print_String(186,103,(39 + (0 * 19)));	// print "OSC1"
 		print_String(187,103,(39 + (1 * 19)));	// print "OSC2"
 		print_String(182,103,(39 + (2 * 19)));	// print "Cutoff"
 		print_String(182,103,(39 + (3 * 19)));	// print "Cutoff"
-		
 	}
 	else if (ParameterNr < 12) {
 		print_String(215,24,(39 + (0 * 19)));	// print "LFO3"
 		print_String(215,24,(39 + (1 * 19)));	// print "LFO3"
 		print_String(215,24,(39 + (2 * 19)));	// print "LFO3"
 		print_String(215,24,(39 + (3 * 19)));	// print "LFO3"
-		
 		print_String(53,103,(39 + (0 * 19)));	// print "VCA"
 		print_String(205,103,(39 + (1 * 19)));	// print "FxP1"
 		print_String(206,103,(39 + (2 * 19)));	// print "FxP2"
@@ -1215,7 +1224,6 @@ FLASHMEM void printModParameter(uint8_t ParameterNo)
 		print_String(215,24,(39 + (1 * 19)));	// print "LFO3"
 		print_String(212,24,(39 + (2 * 19)));	// print "Atouch"
 		print_String(212,24,(39 + (3 * 19)));	// print "Atouch"
-		
 		print_String(182,103,(39 + (0 * 19)));	// print "CUTOFF"
 		print_String(210,103,(39 + (1 * 19)));	// print "FxMIX"
 		print_String(182,103,(39 + (2 * 19)));	// print "Cutoff"
@@ -1227,7 +1235,6 @@ FLASHMEM void printModParameter(uint8_t ParameterNo)
 		print_String(212,24,(39 + (1 * 19)));	// print "Atouch"
 		print_String(212,24,(39 + (2 * 19)));	// print "Atouch"
 		print_String(212,24,(39 + (3 * 19)));	// print "Atouch"
-		
 		print_String(217,103,(39 + (0 * 19)));	// print "LFO1 Amt"
 		print_String(218,103,(39 + (1 * 19)));	// print "LFO2 Amt"
 		print_String(205,103,(39 + (2 * 19)));	// print "FxP1"
@@ -1238,13 +1245,41 @@ FLASHMEM void printModParameter(uint8_t ParameterNo)
 		print_String(212,24,(39 + (0 * 19)));	// print "Atouch"
 		print_String(139,24,(39 + (1 * 19)));	// print "MWHEEL"
 		print_String(212,24,(39 + (2 * 19)));	// print "Atouch"
-		print_String(164,24,(39 + (3 * 19)));	// print "---"
-		
+		print_String(164,24,(39 + (3 * 19)));	// print " "
 		print_String(207,103,(39 + (0 * 19)));	// print "FxP3"
 		print_String(282,103,(39 + (1 * 19)));	// print "HPF"
 		print_String(210,103,(39 + (2 * 19)));	// print "FxMIX"
 		print_String(164,103,(39 + (3 * 19)));	// print " "
-		
+	}
+	else if (ParameterNr < 28) {
+		print_String(180,24,(39 + (0 * 19)));	// print "LFO2"
+		print_String(180,24,(39 + (1 * 19)));	// print "LFO2"
+		print_String(180,24,(39 + (2 * 19)));	// print "LFO2"
+		print_String(180,24,(39 + (3 * 19)));	// print "LFO2"
+		print_String(284,103,(39 + (0 * 19)));	// print "Os1 PRM_A"
+		print_String(285,103,(39 + (1 * 19)));	// print "Os1 PRM_B"
+		print_String(286,103,(39 + (2 * 19)));	// print "Os2 PRM_A"
+		print_String(287,103,(39 + (3 * 19)));	// print "Os2 PRM_B"
+	}
+	else if (ParameterNr < 32) {
+		print_String(215,24,(39 + (0 * 19)));	// print "LFO3"
+		print_String(215,24,(39 + (1 * 19)));	// print "LFO3"
+		print_String(215,24,(39 + (2 * 19)));	// print "LFO3"
+		print_String(215,24,(39 + (3 * 19)));	// print "LFO3"
+		print_String(284,103,(39 + (0 * 19)));	// print "Os1 PRM_A"
+		print_String(285,103,(39 + (1 * 19)));	// print "Os1 PRM_B"
+		print_String(286,103,(39 + (2 * 19)));	// print "Os2 PRM_A"
+		print_String(287,103,(39 + (3 * 19)));	// print "Os2 PRM_B"
+	}
+	else if (ParameterNr < 36) {
+		print_String(288,24,(39 + (0 * 19)));	// print "ENV1"
+		print_String(288,24,(39 + (1 * 19)));	// print "ENV1"
+		print_String(288,24,(39 + (2 * 19)));	// print "ENV1"
+		print_String(288,24,(39 + (3 * 19)));	// print "ENV1"
+		print_String(284,103,(39 + (0 * 19)));	// print "Os1 PRM_A"
+		print_String(285,103,(39 + (1 * 19)));	// print "Os1 PRM_B"
+		print_String(286,103,(39 + (2 * 19)));	// print "Os2 PRM_A"
+		print_String(287,103,(39 + (3 * 19)));	// print "Os2 PRM_B"
 	}
 }
 
@@ -2157,7 +2192,7 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 	}
 	
 	// waveforms Bank B-O (Waveform No 1 - 63)
-	if (WaveBank >= 1) {
+	if (WaveBank >= 1 && WaveBank <= 14) {
 		long WaveAddr = (16384 * WaveBank);
 		for (int i = 0; i < 64; i++) {
 			int16_t phase_x = i * 4 + (256 * WaveNr);
@@ -2172,6 +2207,43 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 			x2 = x1;
 			y1 = y2;
 		}
+		return;
+	}
+	
+	// Bank P (Mutable Instruments Braids)
+	if (WaveBank == 15) {
+		tft.setFont(NULL);
+		switch(WaveNr) {
+			case 1:
+				print_String(297,105,24);	// BRAIDS
+				print_String(283,109,38);	// VOWEL
+			break;
+			case 2:
+				print_String(298,101,24);	// SHRUTHI
+				print_String(291,109,38);	// ZSAW
+			break;
+			case 3:
+				print_String(298,101,24);	// SHRUTHI
+				print_String(292,105,38);	// ZSYNC
+			break;
+			case 4:
+				print_String(298,101,24);	// SHRUTHI
+				print_String(293,109,38);	// ZTRI
+			break;
+			case 5:
+				print_String(298,101,24);	// SHRUTHI
+				print_String(294,105,38);	// ZRESO
+			break;
+			case 6:
+				print_String(298,101,24);	// SHRUTHI
+				print_String(295,105,38);	// ZPULSE
+			break;
+			case 7:
+				print_String(298,101,24);	// SHRUTHI
+				print_String(296,92,38);	// CRUSHED SINE
+			break;		
+		}
+		
 	}
 }
 
@@ -2495,6 +2567,105 @@ FLASHMEM void drawSeqStep (uint8_t step_x, uint8_t step_y, uint16_t color)
 }
 
 //*************************************************************************
+// Update Osc PRM_A/B modulation
+//*************************************************************************
+FLASHMEM void update_LFO2_Osc1_PRMA_mod (void) {
+	float amount = Lfo2Osc1PrmAAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_A[i].gain(0, amount * 0.5f);
+	}
+}
+
+FLASHMEM void update_LFO2_Osc1_PRMB_mod (void) {
+	float amount = Lfo2Osc1PrmBAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_B[i].gain(0, amount);
+	}
+}
+
+FLASHMEM void update_LFO2_Osc2_PRMA_mod (void) {
+	float amount = Lfo2Osc2PrmAAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_C[i].gain(0, amount);
+	}
+}
+
+FLASHMEM void update_LFO2_Osc2_PRMB_mod (void) {
+	float amount = Lfo2Osc2PrmBAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_D[i].gain(0, amount);
+	}
+}
+
+FLASHMEM void update_LFO3_Osc1_PRMA_mod (void) {
+	float amount = Lfo3Osc1PrmAAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_A[i].gain(1, amount);
+	}
+}
+
+FLASHMEM void update_LFO3_Osc1_PRMB_mod (void) {
+	float amount = Lfo3Osc1PrmBAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_B[i].gain(1, amount);
+	}
+}
+
+FLASHMEM void update_LFO3_Osc2_PRMA_mod (void) {
+	float amount = Lfo3Osc2PrmAAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_C[i].gain(1, amount);
+	}
+}
+
+FLASHMEM void update_LFO3_Osc2_PRMB_mod (void) {
+	float amount = Lfo3Osc2PrmBAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_D[i].gain(1, amount);
+	}
+}
+
+FLASHMEM void update_filterEnv_Osc1_PRMA_mod (void) {
+	float amount = filterEnvOsc1PrmAAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_A[i].gain(2, (amount * 0.5f));
+	}
+}
+
+FLASHMEM void update_filterEnv_Osc1_PRMB_mod (void) {
+	float amount = filterEnvOsc1PrmBAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_B[i].gain(2, (amount * 0.5f));
+	}
+}
+
+FLASHMEM void update_filterEnv_Osc2_PRMA_mod (void) {
+	float amount = filterEnvOsc2PrmAAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_C[i].gain(2, (amount * 0.5f));
+	}
+}
+
+FLASHMEM void update_filterEnv_Osc2_PRMB_mod (void) {
+	float amount = filterEnvOsc2PrmBAmt * DIV127;
+	for (size_t i = 0; i < 8; i++)
+	{
+		Osc_Prm_mixer_D[i].gain(2, (amount * 0.5f));
+	}
+}
+
+//*************************************************************************
 // render ModMatrix Parameter
 //*************************************************************************
 FLASHMEM void renderModParameter(uint8_t ParameterNr, uint8_t value)
@@ -2652,7 +2823,58 @@ FLASHMEM void renderModParameter(uint8_t ParameterNr, uint8_t value)
 	}
 	else if (ParameterNr == 22) {	// Atouch > FxMix Amt
 		AtouchFxMixAmt = value;
-	}	
+	}
+	else if (ParameterNr == 23) {	// 
+		//  = value;
+	}
+	else if (ParameterNr == 24) {	// LFO2 > Osc1 PRM_A Amt
+		Lfo2Osc1PrmAAmt = value;
+		update_LFO2_Osc1_PRMA_mod();
+	}
+	else if (ParameterNr == 25) {	// LFO2 > Osc1 PRM_B Amt
+		Lfo2Osc1PrmBAmt = value;
+		update_LFO2_Osc1_PRMB_mod();
+	}
+	else if (ParameterNr == 26) {	// LFO2 > Osc2 PRM_A Amt
+		Lfo2Osc2PrmAAmt = value;
+		update_LFO2_Osc2_PRMA_mod();
+	}
+	else if (ParameterNr == 27) {	// LFO2 > Osc2 PRM_B Amt
+		Lfo2Osc2PrmBAmt = value;
+		update_LFO2_Osc2_PRMB_mod();
+	}
+	else if (ParameterNr == 28) {	// LFO3 > Osc1 PRM_A Amt
+		Lfo3Osc1PrmAAmt = value;
+		update_LFO3_Osc1_PRMA_mod();
+	}
+	else if (ParameterNr == 29) {	// LFO3 > Osc1 PRM_B Amt
+		Lfo3Osc1PrmBAmt = value;
+		update_LFO3_Osc1_PRMB_mod();
+	}
+	else if (ParameterNr == 30) {	// LFO3 > Osc2 PRM_A Amt
+		Lfo3Osc2PrmAAmt = value;
+		update_LFO3_Osc2_PRMA_mod();
+	}
+	else if (ParameterNr == 31) {	// LFO3 > Osc2 PRM_B Amt
+		Lfo3Osc2PrmBAmt = value;
+		update_LFO3_Osc2_PRMB_mod();
+	}
+	else if (ParameterNr == 32) {	// Filter Envelope > Osc1 PRM_A Amt
+		filterEnvOsc1PrmAAmt = value;
+		update_filterEnv_Osc1_PRMA_mod();
+	}
+	else if (ParameterNr == 33) {	// Filter Envelope > Osc1 PRM_B Amt
+		filterEnvOsc1PrmBAmt = value;
+		update_filterEnv_Osc1_PRMB_mod();
+	}
+	else if (ParameterNr == 34) {	// Filter Envelope > Osc2 PRM_A Amt
+		filterEnvOsc2PrmAAmt = value;
+		update_filterEnv_Osc2_PRMA_mod();
+	}
+	else if (ParameterNr == 35) {	// Filter Envelope > Osc2 PRM_B Amt
+		filterEnvOsc2PrmBAmt = value;
+		update_filterEnv_Osc2_PRMB_mod();
+	}										
 }
 
 //*************************************************************************
@@ -2775,8 +2997,56 @@ FLASHMEM uint8_t readModParameter(uint8_t ParameterNr)
 		value = AtouchFxMixAmt;
 		return value;
 	}
-	else if (ParameterNr == 23) {	//
+	else if (ParameterNr == 23) {	// 
 		value = 0;
+		return value;
+	}
+	else if (ParameterNr == 24) {	// LFO2 > Osc1 PRM_A
+		value = Lfo2Osc1PrmAAmt;
+		return value;
+	}
+	else if (ParameterNr == 25) {	// LFO2 > Osc1 PRM_B
+		value = Lfo2Osc1PrmBAmt;
+		return value;
+	}
+	else if (ParameterNr == 26) {	// LFO2 > Osc2 PRM_A
+		value = Lfo2Osc2PrmAAmt;
+		return value;
+	}
+	else if (ParameterNr == 27) {	// LFO2 > Osc2 PRM_B
+		value = Lfo2Osc2PrmBAmt;
+		return value;
+	}
+	else if (ParameterNr == 28) {	// LFO3 > Osc1 PRM_A
+		value = Lfo3Osc1PrmAAmt;
+		return value;
+	}
+	else if (ParameterNr == 29) {	// LFO3 > Osc1 PRM_B
+		value = Lfo3Osc1PrmBAmt;
+		return value;
+	}
+	else if (ParameterNr == 30) {	// LFO3 > Osc2 PRM_A
+		value = Lfo3Osc2PrmAAmt;
+		return value;
+	}
+	else if (ParameterNr == 31) {	// LFO3 > Osc2 PRM_B
+		value = Lfo3Osc2PrmBAmt;
+		return value;
+	}
+	else if (ParameterNr == 32) {	// filterEnvelope > Osc1 PRM_A
+		value = filterEnvOsc1PrmAAmt;
+		return value;
+	}
+	else if (ParameterNr == 33) {	// filterEnvelope > Osc1 PRM_B
+		value = filterEnvOsc1PrmBAmt;
+		return value;
+	}
+	else if (ParameterNr == 34) {	// filterEnvelope > Osc2 PRM_A
+		value = filterEnvOsc2PrmAAmt;
+		return value;
+	}
+	else if (ParameterNr == 35) {	// filterEnvelope > Osc2 PRM_B
+		value = filterEnvOsc2PrmBAmt;
 		return value;
 	}
 		
@@ -2818,7 +3088,7 @@ FLASHMEM void renderCurrentParameter(uint8_t Page,uint16_t ParameterNr, uint8_t 
 				value = value >> 3;
 				if (value < 1 ) {
 					oscDetuneSync = 0;
-					print_String(18,56,59);		// ptint "OFF"
+					print_String(18,56,59);		// print "OFF"
 					} else {
 					oscDetuneSync = 1;
 					print_String(33,59,59);		// print "ON"
@@ -5629,7 +5899,7 @@ FLASHMEM void print_quadsaw_pwamt(void)
 	tft.fillRect(85,77,36,9,ST7735_BLACK);
 	tft.setTextColor(ST7735_GRAY);
 	tft.setFont(NULL);
-	if (PageNr == 1 && Osc1WaveBank == 0 && oscWaveformA == 3) {
+	if (PageNr == 1 && (Osc1WaveBank == 0 && oscWaveformA == 3)) {
 		print_String(231,85,59);	// print "SPREAD"
 		print_String(232,85,78);	// print "SAWMIX"
 		tft.fillRoundRect(133,57,22,10,2,ST7735_BLUE);
@@ -5641,7 +5911,7 @@ FLASHMEM void print_quadsaw_pwamt(void)
 		tft.print(SupersawMixA);
 			
 	}
-	else if (PageNr == 2 && Osc2WaveBank == 0 && oscWaveformB == 3) {
+	else if (PageNr == 2 && (Osc2WaveBank == 0 && oscWaveformB == 3)) {
 		print_String(231,85,59);	// print "SPREAD"
 		print_String(232,85,78);	// print "SAWMIX"
 		tft.fillRoundRect(133,57,22,10,2,ST7735_BLUE);
@@ -5691,13 +5961,36 @@ FLASHMEM void print_quadsaw_pwamt(void)
 		tft.setCursor(135,78);
 		printPWMrate(pwmRateB);
 	}
-	else {
+	else if (PageNr == 1 && (Osc1WaveBank == 15 && oscWaveformA >= 1)) {
+		print_String(289,85,59);	// print "PRM_A"
+		print_String(290,85,78);	// print "PRM_A"
+		tft.fillRoundRect(133,57,22,10,2,ST7735_BLUE);
+		tft.fillRoundRect(133,76,22,10,2,ST7735_BLUE);
+		tft.setTextColor(ST7735_WHITE);
+		tft.setCursor(135,59);
+		tft.print(SupersawSpreadA);
+		tft.setCursor(135,78);
+		tft.print(SupersawMixA);
+			
+	}
+	else if (PageNr == 2 && (Osc2WaveBank == 15 && oscWaveformB >= 1)) {
+		print_String(289,85,59);	// print "PRM_A"
+		print_String(290,85,78);	// print "PRM_A"
+		tft.fillRoundRect(133,57,22,10,2,ST7735_BLUE);
+		tft.fillRoundRect(133,76,22,10,2,ST7735_BLUE);
+		tft.setTextColor(ST7735_WHITE);
+		tft.setCursor(135,59);
+		tft.print(SupersawSpreadB);
+		tft.setCursor(135,78);
+		tft.print(SupersawMixB);
+			
+	}
+	else {		
 		print_String(6,85,59);		// print "PWAMT"
 		print_String(7,85,78);		// print "PWMOD"
 		tft.fillRoundRect(133,57,22,10,2,ST7735_GRAY);
 		tft.fillRoundRect(133,76,22,10,2,ST7735_GRAY);
 	}
-
 }
 
 //*************************************************************************
@@ -6023,14 +6316,19 @@ FLASHMEM void drawOsc1Page (void)
 		print_String(3,5,59);			// print "P.ENV"
 		print_String(4,5,78);			// print "GLIDE"
 		print_String(5,5,97);			// print "LEVEL"
-		if (oscWaveformA == 3 && Osc1WaveBank == 0) {
+		if (Osc1WaveBank == 0 && oscWaveformA == 3) {
 			print_String(231,85,59);	// print "SPREAD"
 			print_String(232,85,78);	// print "SAWMIX"
-		} else {
+		}
+		else if (Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12)){
 			print_String(6,85,59);		// print "PWAMT"
 			print_String(7,85,78);		// print "PWMOD"
 		}
-		print_String(8,85,97);			// print "OSCMIX"
+		else if (Osc1WaveBank == 15 && oscWaveformA >= 1) {
+			print_String(289,85,59);	// print "PRM_A"
+			print_String(290,85,78);	// print "PRM_B"
+		}
+		print_String(8,85,97);			// print "OSCMIX" 
 		tft.setTextColor(ST7735_WHITE);
 		print_String(29,5,115);			// print "SELECT"
 		print_String(30,50,115);		// print "VALUE"
@@ -7790,7 +8088,7 @@ FLASHMEM void drawSystemPar1 (void)
 	tft.setTextColor(ST7735_GRAY);
 	print_String(140,85,21);	// print "MIDICHA"
 	print_String(141,85,40);	// print "VELCURV"
-	print_String(201,85,59);	// print "PICKUP"
+	print_String(114,85,59);	// print " "
 	print_String(114,85,78);	// print " "
 	print_String(144,85,97);	// print "PCHANGE"
 	
@@ -7813,19 +8111,21 @@ FLASHMEM void drawSystemPar1 (void)
 	tft.setCursor(137, 40);
 	tft.print(velocitySens + 1);
 	
-	// PICKUP
+	
+	// Free
+	/*
 	if (pickupFlag == true) {
-		print_String(33,138,59);	// print "ON"
+		print_String(114,138,59);	// print " "
 	}
-	else {
-		print_String(18,136,59);	// print "OFF"
-	}
+	*/
 	
 	
 	// free
+	/*
 	if (MidiSyncSwitch == true) {
 		print_String(114,136,78);	// print " "
 	}
+	*/
 	
 	// PRGchange
 	if (PrgChangeSW == false) {

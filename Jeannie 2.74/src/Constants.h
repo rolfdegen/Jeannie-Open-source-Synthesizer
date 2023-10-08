@@ -5,8 +5,7 @@
 #define RE_READ -9
 #define PWMWAVEFORMA PWM_WAVEFORM_SINE
 #define PWMWAVEFORMB PWM_WAVEFORM_SINE
-
-
+#define max_waveform_BankP 7
 
 // float Calc
 const float  DIV8192 = 1.0f / 8192.0f;	// For pitchbend
@@ -33,9 +32,9 @@ const float UNISONVOICEMIXERLEVEL = 0.05f;
 const float  OSCMODMIXERMAX = ONE;
 const float  FILTERMODMIXERMAX = ONE;
 const float  GLIDEFACTOR = 5000.0f;		// Maximum glide time
-const uint32_t NO_OF_PARAMS = 252;		// parameters of Sound Patch + Seq.Pattern
+const uint32_t NO_OF_PARAMS = 264;		// parameters of Sound Patch + Seq.Pattern
 const uint32_t NO_OF_SEQ_PARAMS = 118;	// parameters of Seq.Pattern
-const int NO_OF_SysEx_Data = 411;		// parameters of sysex data
+const int NO_OF_SysEx_Data = 423;		// parameters of sysex data
 const char* INITPATCHNAME = "            ";
 const char* INITPATTERNNAME = "            ";
 const uint32_t PATCHES_LIMIT = 1024;
@@ -184,7 +183,7 @@ const char String_129[] PROGMEM = "MODE";
 const char String_130[] PROGMEM = "KEY";
 const char String_131[] PROGMEM = "TRP";
 const char String_132[] PROGMEM = "REC";
-const char String_133[] PROGMEM = "VER.    2.74";	// Firmware Version
+const char String_133[] PROGMEM = "VER.    2.78";	// Firmware Version
 const char String_134[] PROGMEM = "MEM";
 const char String_135[] PROGMEM = "CPU      MHz";
 const char String_136[] PROGMEM = "TEMP";
@@ -282,8 +281,8 @@ const char String_227[] PROGMEM = "LF3";
 const char String_228[] PROGMEM = "FRQ";
 const char String_229[] PROGMEM = "HP Filter  20Hz-2000Hz";
 const char String_230[] PROGMEM = "FLT";
-const char String_231[] PROGMEM = "PARAM_A";
-const char String_232[] PROGMEM = "PARAM_B";
+const char String_231[] PROGMEM = "SPREAD";
+const char String_232[] PROGMEM = "SAWMIX";
 const char String_233[] PROGMEM = "MULTISAW";
 const char String_234[] PROGMEM = "VOICE-M";
 const char String_235[] PROGMEM = "POLY";
@@ -334,6 +333,24 @@ const char String_279[] PROGMEM = "TRI";
 const char String_280[] PROGMEM = "SAW";
 const char String_281[] PROGMEM = "SQR";
 const char String_282[] PROGMEM = "HPF";
+const char String_283[] PROGMEM = "VOWEL";
+const char String_284[] PROGMEM = "Os1 PRM_A";
+const char String_285[] PROGMEM = "Os1 PRM_B";
+const char String_286[] PROGMEM = "Os2 PRM_A";
+const char String_287[] PROGMEM = "Os2 PRM_B";
+const char String_288[] PROGMEM = "ENV1";
+const char String_289[] PROGMEM = "PRM_A";
+const char String_290[] PROGMEM = "PRM_B";
+const char String_291[] PROGMEM = "ZSAW";
+const char String_292[] PROGMEM = "ZSYNC";
+const char String_293[] PROGMEM = "ZTRI";
+const char String_294[] PROGMEM = "ZRESO";
+const char String_295[] PROGMEM = "ZPULSE";
+const char String_296[] PROGMEM = "CHRUS_SINE";
+const char String_297[] PROGMEM = "BRAIDS";
+const char String_298[] PROGMEM = "SHRUTHI";
+
+
 
 
 
@@ -373,7 +390,9 @@ PGM_P const String_Tab[] PROGMEM = {
 	String_256, String_257, String_258, String_259, String_260, String_261, String_262, String_263,
 	String_264, String_265, String_266, String_267, String_268, String_269, String_270, String_271,
 	String_272, String_273, String_274, String_275, String_276, String_277, String_278, String_279,
-	String_280, String_281, String_282
+	String_280, String_281, String_282, String_283, String_284, String_285, String_286, String_287,
+	String_288, String_289, String_290, String_291, String_292, String_293, String_294, String_295,
+	String_296, String_297, String_298
 };
 
 // Character map for patch name
@@ -455,13 +474,11 @@ const char* BankNo[16] = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N
 const uint8_t xposBankNo[16] = {46,46,45,46,46,47,45,45,50,47,46,47,44,45,45,47}; // Text Xpos
 
 // Waveforms
-const uint8_t waveform[13] PROGMEM = {WAVEFORM_SILENT, WAVEFORM_SINE, WAVEFORM_TRIANGLE, WAVEFORM_MULTISAW,
-	WAVEFORM_SQUARE, WAVEFORM_PULSE, WAVEFORM_SAMPLE_HOLD, WAVEFORM_SAWTOOTH_REVERSE, WAVEFORM_TRIANGLE_VARIABLE,
-WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE, WAVEFORM_BANDLIMIT_SAWTOOTH, WAVEFORM_BANDLIMIT_SQUARE, WAVEFORM_BANDLIMIT_PULSE};
-
-const uint8_t waveform_B[13] PROGMEM = {WAVEFORM_SILENT, WAVEFORM_SINE, WAVEFORM_TRIANGLE, WAVEFORM_MULTISAW,
-	WAVEFORM_SQUARE, WAVEFORM_PULSE, WAVEFORM_SAMPLE_HOLD, WAVEFORM_SAWTOOTH_REVERSE, WAVEFORM_TRIANGLE_VARIABLE,
-WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE, WAVEFORM_BANDLIMIT_SAWTOOTH, WAVEFORM_BANDLIMIT_SQUARE, WAVEFORM_BANDLIMIT_PULSE};
+const uint8_t waveform[20] PROGMEM = {WAVEFORM_SILENT, WAVEFORM_SINE, WAVEFORM_TRIANGLE, WAVEFORM_MULTISAW,
+WAVEFORM_SQUARE, WAVEFORM_PULSE, WAVEFORM_SAMPLE_HOLD, WAVEFORM_SAWTOOTH_REVERSE, WAVEFORM_TRIANGLE_VARIABLE,
+WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE, WAVEFORM_BANDLIMIT_SAWTOOTH, WAVEFORM_BANDLIMIT_SQUARE, WAVEFORM_BANDLIMIT_PULSE,
+WAVEFORM_BRAIDS_VOWEL, WAVEFORM_SHRUTHI_ZSAW, WAVEFORM_SHRUTHI_ZSYNC, WAVEFORM_SHRUTHI_ZTRI, WAVEFORM_SHRUTHI_ZRESO,
+WAVEFORM_SHRUTHI_ZPULSE, WAVEFORM_SHRUTHI_CRUSHED_SINE};
 
 // Filter Frequency 18Hz - 18KHz
 const float FILTERFREQS256[256] PROGMEM = {

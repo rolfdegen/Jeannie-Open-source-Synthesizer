@@ -290,12 +290,11 @@ FLASHMEM void setProgressbar(boolean enabled, uint8_t style, uint8_t count, uint
 
 //*************************************************************************
 // usbMIDI receive SystemExclusive Dump
-// Patch Dump is 401 Byte
-// Bank Dump is 51.328 Byte
-// NO_OF_SysEx_Data: 401 Byte
+// Patch Dump is 423 Byte
+// Bank Dump is 54.144 Byte
+// NO_OF_SysEx_Data: 264
 //*************************************************************************
 FLASHMEM uint16_t readDoubleSysex(uint16_t index){ //!!!!!!!!!!!!!!!FB
-	// readDoubleSysex(count);	count+=2; 
 	uint16_t result = Syx_Buf[index] << 7 | Syx_Buf[index];
 	return (result);
 }
@@ -326,7 +325,7 @@ FLASHMEM void get_SysEx_Dump(void) {
 	pwA = sysex2Byte_to_string(Syx_Buf, count, 2).toFloat();				// (20) pwA (-1.00 - +1.00)
 	pwB = sysex2Byte_to_string(Syx_Buf, count, 2).toFloat();				// (21) pwB (-1.00 - +1.00)
 	filterRes = sysexString_to_float(Syx_Buf, count, 4).toFloat();			// (22) filterRes (0 - 15.0)
-	filterFreq = readDoubleSysex(count);	count+=2;				// (23) filterFreq (18 - 12000)
+	filterFreq = readDoubleSysex(count);	count+=2;						// (23) filterFreq (18 - 12000)
 	filterMix = sysexString_to_float(Syx_Buf, count, 4).toFloat();			// (24) filterMix (0 - -99.0)
 	filterEnv = sysex2Byte_to_string(Syx_Buf, count, 2).toFloat();			// (25) filterEnv (-1.00 - +1.00)
 	oscLfoAmt = sysex5Byte_to_string(Syx_Buf, count, 5).toFloat();			// (26) oscLfoAmt (0 - 1.00000)
@@ -341,14 +340,14 @@ FLASHMEM void get_SysEx_Dump(void) {
 	// (33) (not available)
 	filterLfoAmt = sysex5Byte_to_string(Syx_Buf, count, 2).toFloat();		// (34) filterLfoAmt (0 - 1.00000)
 	filterLfoWaveform = Syx_Buf[count++];									// (35) filterLfoWaveform (0 - 127)
-	filterAttack = readDoubleSysex(count);	count+=2;			// (36) filterAttack (0 - 11880)
-	filterDecay = readDoubleSysex(count);	count+=2;				// (37) filterDecay (0 - 11880)
+	filterAttack = readDoubleSysex(count);	count+=2;						// (36) filterAttack (0 - 11880)
+	filterDecay = readDoubleSysex(count);	count+=2;						// (37) filterDecay (0 - 11880)
 	filterSustain = sysex1Byte_to_string(Syx_Buf, count, 2).toFloat();		// (38) filterSustain (0 - 1.00)
-	filterRelease = readDoubleSysex(count);	count+=2;			// (39) filterRelease (0 - 11880)
-	ampAttack = readDoubleSysex(count);	count+=2;				// (40) ampAttack (0 - 11880)
-	ampDecay = readDoubleSysex(count);	count+=2;				// (41) ampDecay (0 - 11880)
+	filterRelease = readDoubleSysex(count);	count+=2;						// (39) filterRelease (0 - 11880)
+	ampAttack = readDoubleSysex(count);	count+=2;							// (40) ampAttack (0 - 11880)
+	ampDecay = readDoubleSysex(count);	count+=2;							// (41) ampDecay (0 - 11880)
 	ampSustain = sysex1Byte_to_string(Syx_Buf, count, 2).toFloat();			// (42) ampSustain (0 - 1.00)
-	ampRelease = readDoubleSysex(count);	count+=2;				// (43) ampRelease (0 - 11880)
+	ampRelease = readDoubleSysex(count);	count+=2;						// (43) ampRelease (0 - 11880)
 	// (44) (not available)
 	// (45) (not available)
 	// (46) (not available)
@@ -373,15 +372,15 @@ FLASHMEM void get_SysEx_Dump(void) {
 	// (65) (not available)
 	WShaperNo = Syx_Buf[count++];											// (66) WShaperNo (0-14)
 	WShaperDrive = sysex5Byte_to_string(Syx_Buf, count, 3).toFloat();		// (67) WShaperDrive (0.10 - 5.00)
-	LFO1phase = readDoubleSysex(count);	count+=2;				// (68) LFO1phase (0 - 180.0)
-	LFO2phase = readDoubleSysex(count);	count+=2;				// (69) LFO2phase (0 - 180.0)
+	LFO1phase = readDoubleSysex(count);	count+=2;							// (68) LFO1phase (0 - 180.0)
+	LFO2phase = readDoubleSysex(count);	count+=2;							// (69) LFO2phase (0 - 180.0)
 	for (uint8_t i = 0; i < 16; i++) {										// (70-85) SeqNote1Buf (0 - 127)
 		SeqNote1Buf[i] = Syx_Buf[count++];
 	}
 	for (uint8_t i = 0; i < 16; i++) {										// (86-101) SeqNoteBufStatus (0 - 1)
 		SeqNoteBufStatus[i] = Syx_Buf[count++];
 	}
-	SEQbpmValue = readDoubleSysex(count);	count+=2;				// (102) SEQbpmValue (101 - 462)
+	SEQbpmValue = readDoubleSysex(count);	count+=2;						// (102) SEQbpmValue (101 - 462)
 	SEQdivValue = sysex5Byte_to_string(Syx_Buf, count, 6).toFloat();		// (103) SEQdivValue (float)
 	SEQstepNumbers = Syx_Buf[count++];										// (104) SEQstepNumbers (0 - 15)
 	SEQGateTime = sysex5Byte_to_string(Syx_Buf, count, 6).toFloat();		// (105) SEQGateTime (float)
@@ -410,12 +409,12 @@ FLASHMEM void get_SysEx_Dump(void) {
 	myFilter = Syx_Buf[count++];											// (199) myFilter (1 - 2)
 	pwmRateA = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();			// (200) pwmRateA (-10.00 - + 10.00)
 	pwmRateB = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();			// (201) pwmRateB (-10.00 - + 10.00)
-	LFO1fadeTime = readDoubleSysex(count);	count+=2;			// (202) LFO1fadeIn Time (0 - 12000)
-	LFO1releaseTime = readDoubleSysex(count);	count+=2;			// (203) LFO1releaseTime (0 - 12000)
+	LFO1fadeTime = readDoubleSysex(count);	count+=2;						// (202) LFO1fadeIn Time (0 - 12000)
+	LFO1releaseTime = readDoubleSysex(count);	count+=2;					// (203) LFO1releaseTime (0 - 12000)
 	filterFM = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();			// (204) filterFM Osc1 (0.00000 - 1.00000)
 	filterFM2 = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();			// (205) filterFM2 Osc2 (0.00000 - 1.00000)
-	LFO2fadeTime = readDoubleSysex(count);	count+=2;			// (206) LFO2fadeIn Time (0 - 12000)
-	LFO2releaseTime = readDoubleSysex(count);	count+=2;			// (207) LFO2releaseTime Fade out (0 - 12000)
+	LFO2fadeTime = readDoubleSysex(count);	count+=2;						// (206) LFO2fadeIn Time (0 - 12000)
+	LFO2releaseTime = readDoubleSysex(count);	count+=2;					// (207) LFO2releaseTime Fade out (0 - 12000)
 	Osc1ModAmt = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();			// (208) Osc1ModAmt (0.00000 - 1.00000)
 	LFO1envCurve = sysex2Byte_to_int8(Syx_Buf, count).toFloat();			// (209) LFO1envCurve (-8 - +8)
 	LFO2envCurve = sysex2Byte_to_int8(Syx_Buf, count).toFloat();			// (210) LFO2envCurve (-8 - +8)
@@ -426,15 +425,15 @@ FLASHMEM void get_SysEx_Dump(void) {
 	LFO3envCurve = sysex2Byte_to_int8(Syx_Buf, count).toFloat();			// (213) LFO3envCurve (-8 - +8)
 	LFO3mode = Syx_Buf[count++]; 											// (214) LFO3mode (0 - 1)
 	lfo3oneShoot = LFO3mode;
-	LFO3fadeTime = readDoubleSysex(count);	count+=2;			// (215) LFO3fadeIn Time (0 - 12000)
-	LFO3releaseTime = readDoubleSysex(count);	count+=2;			// (216) LFO3releaseTime Fade out (0 - 12000)
+	LFO3fadeTime = readDoubleSysex(count);	count+=2;						// (215) LFO3fadeIn Time (0 - 12000)
+	LFO3releaseTime = readDoubleSysex(count);	count+=2;					// (216) LFO3releaseTime Fade out (0 - 12000)
 	Lfo3amt = sysex5Byte_to_string(Syx_Buf, count, 5).toFloat();			// (217) Lfo3amt (0 - 1.00000)
 	AtouchAmt = Syx_Buf[count++];											// (218) AtouchAmt (0 - 127)
 	AtouchPitchAmt = Syx_Buf[count++];										// (219) AtouchPitchAmt (0 - 127)
 	Lfo3Waveform = Syx_Buf[count++];										// (220) Lfo3Waveform (0 - 127)
 	myLFO3RateValue = Syx_Buf[count++];										// (221) myLFO3RateValue (0 - 127)
 	Lfo3Rate = LFOMAXRATE2 * POWER[myLFO3RateValue];
-	LFO3phase = readDoubleSysex(count);	count+=2;				// (222) LFO3phase (0 - 180)
+	LFO3phase = readDoubleSysex(count);	count+=2;							// (222) LFO3phase (0 - 180)
 	AtouchLFO1Amt = Syx_Buf[count++];										// (223) AtouchLFO1Amt (0 - 127)
 	AtouchLFO2Amt = Syx_Buf[count++];										// (224) AtouchLFO2Amt (0 - 127)
 	AtouchLFO3Amt = Syx_Buf[count++];										// (225) AtouchLFO3Amt (0 - 127)
@@ -464,4 +463,16 @@ FLASHMEM void get_SysEx_Dump(void) {
 	pan_value = Syx_Buf[count++];											// (249) VCA PAN (0...127)
 	ModWheelCutoffAmt = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();	// (250) ModWheelCutoffAmt (float)
 	ModWheelHPFamt = sysex5Byte_to_string(Syx_Buf, count, 4).toFloat();		// (251) ModWheelHPFamt (float)
+	Lfo2Osc1PrmAAmt = Syx_Buf[count++];										// (252) Lfo2Osc1PrmAAmt (0...127)
+	Lfo2Osc1PrmBAmt = Syx_Buf[count++];										// (253) Lfo2Osc1PrmBAmt (0...127)
+	Lfo2Osc2PrmAAmt = Syx_Buf[count++];										// (254) Lfo2Osc2PrmAAmt (0...127)
+	Lfo2Osc2PrmBAmt = Syx_Buf[count++];										// (255) Lfo2Osc2PrmBAmt (0...127)
+	Lfo3Osc1PrmAAmt = Syx_Buf[count++];										// (256) Lfo3Osc1PrmAAmt (0...127)
+	Lfo3Osc1PrmBAmt = Syx_Buf[count++];										// (257) Lfo3Osc1PrmBAmt (0...127)
+	Lfo3Osc2PrmAAmt = Syx_Buf[count++];										// (258) Lfo3Osc2PrmAAmt (0...127)
+	Lfo3Osc2PrmBAmt = Syx_Buf[count++];										// (259) Lfo3Osc2PrmBAmt (0...127)
+	filterEnvOsc1PrmAAmt = Syx_Buf[count++];								// (260) filterEnvOsc1PrmAAmt (0...127)
+	filterEnvOsc1PrmBAmt = Syx_Buf[count++];								// (261) filterEnvOsc1PrmBAmt (0...127)
+	filterEnvOsc2PrmAAmt = Syx_Buf[count++];								// (262) filterEnvOsc2PrmAAmt (0...127)
+	filterEnvOsc2PrmBAmt = Syx_Buf[count++];								// (263) filterEnvOsc2PrmBAmt (0...127)
 }

@@ -585,33 +585,48 @@ FLASHMEM int getVoiceNo(int note) {
 }
 
 //*************************************************************************
-// update Voices
+// update Voices Pitch
 //*************************************************************************
-FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note) {
+FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note)
+{
 
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
 	int pitchNoteb = oscPitchB + oscTranspose + SeqTranspose;
-	
+
 	// Poly mode
-	if (unison == 0) {
-		waveformModa[voice_no].frequency(NOTEFREQS[voices[voice_no].note + pitchNotea] * oscMasterTune);
-		waveformModb[voice_no].frequency((NOTEFREQS[voices[voice_no].note + pitchNoteb] * detune) * oscMasterTune);
+	if (unison == 0)
+	{
+		if (Osc1WaveBank >= 15) // original Braids vowel -12 semitons
+		{
+			waveformModa[voice_no].frequency(NOTEFREQS[voices[voice_no].note + pitchNotea] * oscMasterTune * 0.5f);
+		}
+		else
+			waveformModa[voice_no].frequency(NOTEFREQS[voices[voice_no].note + pitchNotea] * oscMasterTune);
+
+		if (Osc2WaveBank >= 15)
+		{
+			waveformModb[voice_no].frequency((NOTEFREQS[voices[voice_no].note + pitchNoteb] * detune) * oscMasterTune * 0.5f);
+		}
+		else
+			waveformModb[voice_no].frequency((NOTEFREQS[voices[voice_no].note + pitchNoteb] * detune) * oscMasterTune);
 	}
-	
+
 	// Unison/Mono mode
-	else if (unison == 1 && Voice_mode <= 4) {
-		switch (notesOn) {
-			case 1:
+	else if (unison == 1 && Voice_mode <= 4)
+	{
+		switch (notesOn)
+		{
+		case 1:
 			waveformModa[0].frequency(NOTEFREQS[note + pitchNotea] * oscMasterTune);
 			waveformModb[0].frequency((NOTEFREQS[note + pitchNoteb] * (detune + ((1 - detune) * 0.04f))) * oscMasterTune);
 			break;
-			case 2:
+		case 2:
 			waveformModa[0].frequency((NOTEFREQS[note + pitchNotea] * (detune + ((1 - detune) * 0.09f))) * oscMasterTune);
 			waveformModb[0].frequency((NOTEFREQS[note + pitchNoteb] * (detune + ((1 - detune) * 0.14f))) * oscMasterTune);
 			waveformModa[1].frequency((NOTEFREQS[note + pitchNotea] * (1 + (1 - (detune + ((1 - detune) * 0.09f))))) * oscMasterTune);
 			waveformModb[1].frequency((NOTEFREQS[note + pitchNoteb] * (1 + (1 - (detune + ((1 - detune) * 0.14f))))) * oscMasterTune);
 			break;
-			case 3:
+		case 3:
 			waveformModa[0].frequency(NOTEFREQS[note + pitchNotea] * oscMasterTune);
 			waveformModb[0].frequency((NOTEFREQS[note + pitchNoteb] * (detune + ((1 - detune) * 0.04f))) * oscMasterTune);
 			waveformModa[1].frequency((NOTEFREQS[note + pitchNotea] * (1 + (1 - (detune + ((1 - detune) * 0.09f))))) * oscMasterTune);
@@ -619,7 +634,7 @@ FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note) {
 			waveformModa[2].frequency((NOTEFREQS[note + pitchNotea] * (detune + ((1 - detune) * 0.09f))) * oscMasterTune);
 			waveformModb[2].frequency((NOTEFREQS[note + pitchNoteb] * (detune + ((1 - detune) * 0.14f))) * oscMasterTune);
 			break;
-			case 4:
+		case 4:
 			waveformModa[0].frequency((NOTEFREQS[note + pitchNotea] * (detune + ((1 - detune) * 0.09f))) * oscMasterTune);
 			waveformModb[0].frequency((NOTEFREQS[note + pitchNoteb] * (detune + ((1 - detune) * 0.14f))) * oscMasterTune);
 			waveformModa[1].frequency((NOTEFREQS[note + pitchNotea] * (detune + ((1 - detune) * 0.70f))) * oscMasterTune);
@@ -629,7 +644,7 @@ FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note) {
 			waveformModa[3].frequency((NOTEFREQS[note + pitchNotea] * (1 + (1 - (detune + ((1 - detune) * 0.70f))))) * oscMasterTune);
 			waveformModb[3].frequency((NOTEFREQS[note + pitchNoteb] * (1 + (1 - (detune + ((1 - detune) * 0.74f))))) * oscMasterTune);
 			break;
-			case 6:
+		case 6:
 			waveformModa[0].frequency((NOTEFREQS[note + pitchNotea] * (detune + ((1 - detune) * 0.019f))) * oscMasterTune);
 			waveformModb[0].frequency((NOTEFREQS[note + pitchNoteb] * (detune + ((1 - detune) * 0.024f))) * oscMasterTune);
 			waveformModa[1].frequency((NOTEFREQS[note + pitchNotea] * (detune + ((1 - detune) * 0.41f))) * oscMasterTune);
@@ -645,12 +660,23 @@ FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note) {
 			break;
 		}
 	}
-	
+
 	// Chord mode
-	else if (unison == 1 && Voice_mode == 5) {
-		for (uint8_t i = 0; i < 8; i++) {
-			waveformModa[i].frequency((NOTEFREQS[note + pitchNotea + CHORD_DETUNE[i][chordDetune]]) * oscMasterTune);
-			waveformModb[i].frequency((NOTEFREQS[note + pitchNoteb + CHORD_DETUNE[i][chordDetune]] * CDT_DETUNE) * oscMasterTune);
+	else if (unison == 1 && Voice_mode == 5)
+	{
+		for (size_t i = 0; i < 8; i++)
+		{
+			if (Osc1WaveBank >= 15) // original Braids vowel -12 semitons
+			{
+				waveformModa[i].frequency((NOTEFREQS[note + pitchNotea + CHORD_DETUNE[i][chordDetune]]) * oscMasterTune * 0.5f);
+			}
+			else waveformModa[i].frequency((NOTEFREQS[note + pitchNotea + CHORD_DETUNE[i][chordDetune]]) * oscMasterTune);
+			
+			if (Osc2WaveBank >= 15)
+			{
+				waveformModb[i].frequency((NOTEFREQS[note + pitchNoteb + CHORD_DETUNE[i][chordDetune]] * CDT_DETUNE) * oscMasterTune * 0.5f);
+			}
+			else waveformModb[i].frequency((NOTEFREQS[note + pitchNoteb + CHORD_DETUNE[i][chordDetune]] * CDT_DETUNE) * oscMasterTune);
 		}
 	}
 }
@@ -676,7 +702,6 @@ FLASHMEM void get_play_voice(byte note, byte velocity) {
 		set_LFO_sync();
 	}
 	else {
-		// float gain = 1.0f;
 		uint8_t voice_no = 0; // (getVoiceNo(-1)) - 1; // Voice-No: 0 - 7
 		if (oscDetuneSync == true) {
 			waveformModa[voice_no].sync();
@@ -685,13 +710,10 @@ FLASHMEM void get_play_voice(byte note, byte velocity) {
 		voices[voice_no].note = note;
 		voices[voice_no].timeOn = millis();
 		voices[voice_no].voiceOn = 1;
-		//play_voices(voice_no, note, velocity, gain);
 		updateVoice(voice_no, 0, note);
 		prevNote = note;
 		set_LFO_sync();
 	}
-	
-	
 }
 
 //*************************************************************************
@@ -707,10 +729,8 @@ FLASHMEM void allNotesOn(byte note, byte velocity) {
 			waveformModb[i].sync();
 		}
 	}
-
 	voices[0].note = note;
 	voices[0].timeOn = millis();
-	
 	// set all voices and lamps
 	for (uint8_t i = 0; i < 8; i++) {
 		play_voices(i, note, velocity, gain);
@@ -730,17 +750,14 @@ FLASHMEM void monoNotesOn(byte note, byte velocity, byte notesOn) {
 			waveformModb[i].sync();
 		}
 	}
-	
 	voices[0].note = note;
 	voices[0].timeOn = millis();
-	
 	// set panorama in mono mode	
 	float gain;
 	int channel = 0;
 	float pan_a;
 	float pan_b;
 	float pan;
-		
 	// set voices and lamps
 	for (uint8_t i = 0; i < notesOn; i++) {
 		pan = pan_value * pan_data[notesOn-1][i];
@@ -761,20 +778,6 @@ FLASHMEM void monoNotesOn(byte note, byte velocity, byte notesOn) {
 }
 
 //*************************************************************************
-// inc NotesON
-//*************************************************************************
-FLASHMEM void incNotesOn(void) {
-	//if (notesOn < MAXUNISON)notesOn++;
-}
-
-//*************************************************************************
-//  NotesON
-//*************************************************************************
-FLASHMEM void decNotesOn() {
-	//if (notesOn > 0)notesOn--;
-}
-
-//*************************************************************************
 //  Update all voices
 //*************************************************************************
 FLASHMEM void updatesAllVoices() {
@@ -788,8 +791,6 @@ FLASHMEM void updatesAllVoices() {
 		updateVoice(0, Voice_mode + 1, voices[0].note);
 	}
 }
-
-
 
 //*************************************************************************
 // update panorama value
