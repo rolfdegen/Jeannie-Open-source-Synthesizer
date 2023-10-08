@@ -22,6 +22,7 @@ Specifications
      • two digital oscillators per voice
      • 15 waveform banks with a total of 945 waveforms and MultiSaw
      • 12 standard waveforms, some of which are band-limited
+     * Built-in Mutable instruments oscillators from Braids and Shruthi
      • Noise generator (white and pink noise)
      • Oscillator Modulation (XOR, XMOD, MOD, AND, PHA, FM)
      • Waveshaper with different curve shapes
@@ -63,7 +64,6 @@ https://www.tubeohm.com/
 ![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
 
 ![20211111_085543](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/103e720b-bd8a-4f9a-b5e8-e662ae1b3e07)
-
 
 Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
