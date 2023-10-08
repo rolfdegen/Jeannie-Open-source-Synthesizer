@@ -57,7 +57,7 @@ https://www.tubeohm.com/
 
 ![20211111_085558](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/2396a274-2f4c-4c56-a4c6-1174e4c848d1)
 
-![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/63aa191a-22c8-4474-8833-db4c38d9ef41)
+![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/4a449722-57a0-42a2-83a8-910a3fe1556b)
 
 ![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65f39ec2-23c6-429a-9a14-6d3e71d9193c)
 
