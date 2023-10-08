@@ -51,7 +51,7 @@ Specifications
 
 https://www.tubeohm.com/
 
+![Screenshot 2023-10-08 174844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/53bd6505-ae64-46eb-a4c0-df9396cb67d1)
 
-![155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/e56e1262-6922-4abb-af6e-4f4e68263c8d)
 
 
