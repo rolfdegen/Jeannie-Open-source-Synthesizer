@@ -65,11 +65,12 @@ Pictures
 
 ![Screenshot 2023-10-08 192844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/82113774-1c11-4d4e-b995-6286131a5f38)
 
-Case from EricaSynths
-![Jeannie-DIY-01_keb9kWj](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/8a28820f-0706-4319-92ba-95b41fb6487f)
+Alu case from Erica Synths
+![Jeannie-DIY-01_keb9kWj](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/fac7d7cf-1c02-45a7-836b-46df0af9afd1)
 
-Wood Side panels
-https://youtu.be/nQKnOZVThZc
+my selmade Wood Side panels
+![20230516_184036](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3e98b359-e1f8-4653-8185-cb1ef8823e7c)
+![Wood](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65d9672b-a484-410e-bd2b-256f115a5f9e)
 
 Video and Audio
 
