@@ -249,7 +249,7 @@ void AudioSynthWaveformTS::update(void)
 void AudioSynthWaveformModulatedTS::update(void)
 {
 	audio_block_t *block, *moddata, *shapedata, *par_A, *par_B;
-	//audio_block_t *block, *moddata, *shapedata;
+	// audio_block_t *block, *moddata, *shapedata;
 	int16_t *bp, *end, *par_A_mod, *par_B_mod;
 	int32_t val1, val2;
 	int16_t magnitude15;
@@ -257,36 +257,40 @@ void AudioSynthWaveformModulatedTS::update(void)
 	const uint32_t inc = phase_increment;
 	uint32_t phase_spread;
 	uint32_t saw_phase_increment;
-	uint32_t increments[4];
+	uint32_t increments[5];
 	uint32_t ph_1;
 	uint32_t ph_2;
 	uint32_t ph_3;
 	uint32_t ph_4;
 	uint32_t ph_5;
-	
+	uint32_t mod_increment;
+
 	moddata = receiveReadOnly(0);
 	shapedata = receiveReadOnly(1);
-	par_A = receiveReadOnly(2);			// new modulation input for osc parameter_a
-	par_B = receiveReadOnly(3);			// new modulation input for osc parameter_b
+	par_A = receiveReadOnly(2); // new modulation input for osc parameter_a
+	par_B = receiveReadOnly(3); // new modulation input for osc parameter_b
 
-	if(syncFlag==1){
+	if (syncFlag == 1)
+	{
 		phase_accumulator = 0;
 		syncFlag = 0;
 	}
 
 	// Pre-compute the phase angle for every output sample of this update
 	ph = phase_accumulator;
-	priorphase = phasedata[AUDIO_BLOCK_SAMPLES-1];
-	if (moddata && modulation_type == 0) {
-		
+	priorphase = phasedata[AUDIO_BLOCK_SAMPLES - 1];
+	if (moddata && modulation_type == 0)
+	{
+
 		// Frequency Modulation
 		bp = moddata->data;
-		
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			int32_t n = (*bp++) * modulation_factor; // n is # of octaves to mod
-			int32_t ipart = n >> 27; // 4 integer bits
-			n &= 0x7FFFFFF;          // 27 fractional bits
-			#ifdef IMPROVE_EXPONENTIAL_ACCURACY
+			int32_t ipart = n >> 27;				 // 4 integer bits
+			n &= 0x7FFFFFF;							 // 27 fractional bits
+#ifdef IMPROVE_EXPONENTIAL_ACCURACY
 			// exp2 polynomial suggested by Stefan Stenzel on "music-dsp"
 			// mail list, Wed, 3 Sep 2014 10:08:55 +0200
 			int32_t x = n << 3;
@@ -294,46 +298,55 @@ void AudioSynthWaveformModulatedTS::update(void)
 			int32_t sq = multiply_32x32_rshift32_rounded(x, x);
 			n = multiply_accumulate_32x32_rshift32_rounded(n, sq, 1934101615);
 			n = n + (multiply_32x32_rshift32_rounded(sq,
-			multiply_32x32_rshift32_rounded(x, 1358044250)) << 1);
+													 multiply_32x32_rshift32_rounded(x, 1358044250))
+					 << 1);
 			n = n << 1;
-			#else
+#else
 			// exp2 algorithm by Laurent de Soras
 			// https://www.musicdsp.org/en/latest/Other/106-fast-exp2-approximation.html
 			n = (n + 134217728) << 3;
 			n = multiply_32x32_rshift32_rounded(n, n);
 			n = multiply_32x32_rshift32_rounded(n, 715827883) << 3;
 			n = n + 715827882;
-			#endif
+#endif
 			uint32_t scale = n >> (14 - ipart);
+			mod_increment = n;
 			uint64_t phstep = (uint64_t)inc * scale;
 			uint32_t phstep_msw = phstep >> 32;
-			if (phstep_msw < 0x7FFE) {
+			if (phstep_msw < 0x7FFE)
+			{
 				ph += phstep >> 16;
-				} else {
+			}
+			else
+			{
 				ph += 0x7FFE0000;
 			}
 			phasedata[i] = ph;
 		}
 		release(moddata);
-		
-		} else if (moddata) {
+	}
+	else if (moddata)
+	{
 		// Phase Modulation
 		bp = moddata->data;
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			// more than +/- 180 deg shift by 32 bit overflow of "n"
 			uint32_t n = (uint16_t)(*bp++) * modulation_factor;
 			phasedata[i] = ph + n;
 			ph += inc;
 		}
 		release(moddata);
-		} else {
+	}
+	else
+	{
 		// No Modulation Input
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			phasedata[i] = ph;
 			ph += inc;
 		}
 	}
-
 	phase_accumulator = ph;
 
 	// Read two new Modulation inputs from AudioConnection into AudioPatching.h
@@ -352,27 +365,34 @@ void AudioSynthWaveformModulatedTS::update(void)
 		release(par_B);
 	}
 
-	//Amplitude is always 1 on when oscillator is sounding
-	//magnitude must be set to zero, otherwise digital noise comes through
-	if(tone_type == WAVEFORM_SILENT){
-		magnitude  = 0;
-		}else{
+	// Amplitude is always 1 on when oscillator is sounding
+	// magnitude must be set to zero, otherwise digital noise comes through
+	if (tone_type == WAVEFORM_SILENT)
+	{
+		magnitude = 0;
+	}
+	else
+	{
 		magnitude = 65536.0;
 	}
 	// If the amplitude is zero, no output, but phase still increments properly
-	if (magnitude == 0) {
-		if (shapedata) release(shapedata);
+	if (magnitude == 0)
+	{
+		if (shapedata)
+			release(shapedata);
 		return;
 	}
 	block = allocate();
-	if (!block) {
-		if (shapedata) release(shapedata);
+	if (!block)
+	{
+		if (shapedata)
+			release(shapedata);
 		return;
 	}
 	bp = block->data;
 
 	// Now generate the output samples using the pre-computed phase angles
-	
+
 	switch (tone_type)
 	{
 
@@ -418,9 +438,8 @@ void AudioSynthWaveformModulatedTS::update(void)
 
 		phase_spread = (phase_increment >> 14) * parameter_a;
 		++phase_spread;
-		saw_phase_increment = (phase_increment & 0x0000F9F3);
-
-		for (uint8_t i = 0; i < 4; ++i)
+		saw_phase_increment = phase_increment & random(0xFFFF);
+		for (uint8_t i = 0; i < 5; ++i)
 		{
 			saw_phase_increment += phase_spread;
 			increments[i] = saw_phase_increment;
@@ -609,16 +628,16 @@ void AudioSynthWaveformModulatedTS::update(void)
 
 	// WaveformModulated Braids VOWEL ---------------------------------
 	case WAVEFORM_BRAIDS_VOWEL:
-		int32_t parameter_[2];
+	{
 		uint16_t balance;
 		uint16_t balance_;
 		uint8_t vowel_index;
 		uint16_t formant_shift;
 
+		// parameter + modulation value
 		parameter_[0] = (osc_par_a << 8) + par_a_mod_;
-
 		parameter_[1] = (osc_par_b << 8) + par_b_mod_;
-
+		// limit max. value
 		if (parameter_[0] >= 32768)
 		{
 			parameter_[0] = 32768;
@@ -638,7 +657,7 @@ void AudioSynthWaveformModulatedTS::update(void)
 		{
 			strike_ = false;
 			state_vow_consonant_frames = 160;
-			uint16_t index = 0; // (Random::GetSample() + 1) & 7;
+			uint16_t index = 0;// (Random::GetSample() + 1) & 7;
 			for (size_t i = 0; i < 3; i++)
 			{
 				state_vow_formant_increment[i] = static_cast<uint32_t>(consonant_data[index].formant_frequency[i]) *
@@ -659,7 +678,7 @@ void AudioSynthWaveformModulatedTS::update(void)
 												  vowels_data[vowel_index + 1].formant_frequency[i] * balance) *
 												 formant_shift;
 				state_vow_formant_amplitude[i] = (vowels_data[vowel_index].formant_amplitude[i] *
-													  (balance_) +
+													  balance_ +
 												  vowels_data[vowel_index + 1].formant_amplitude[i] * balance) >>
 												 12;
 			}
@@ -701,19 +720,22 @@ void AudioSynthWaveformModulatedTS::update(void)
 			sample = sample_f * 32768;
 			*bp++ = ~(int16_t)((sample * magnitude) >> 16);
 		}
-		break;
+	}
+	break;
 
 	// WaveformModulated Shruthi ZSAW ---------------------------------
 	case WAVEFORM_SHRUTHI_ZSAW:
-			uint16_t parameter;
-		parameter = osc_par_a << 1;	// parameter_a
+	{
+		uint16_t parameter;
+		parameter = osc_par_a << 1; // parameter_a
 		parameter = parameter + (par_a_mod_ >> 6);
 		if (parameter >= 255)
 		{
 			parameter = 255;
 		}
-		
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			ph = phasedata[i] << 1;
 			uint8_t phi = ph >> 24;
 			uint8_t clipped_phi = phi < 0x20 ? phi << 3 : 0xff;
@@ -723,10 +745,12 @@ void AudioSynthWaveformModulatedTS::update(void)
 			int16_t sample = (wav_res_sine16[sum >> 8]) + 32768;
 			*bp++ = sample;
 		}
-		break;
+	}
+	break;
 
 	// WaveformModulated Shruthi ZSYNC ---------------------------------
 	case WAVEFORM_SHRUTHI_ZSYNC:
+	{
 		uint16_t parameter_zs;
 		uint16_t phase_2_zs;
 		uint16_t phase_integral_zs;
@@ -740,10 +764,12 @@ void AudioSynthWaveformModulatedTS::update(void)
 		phase_integral_zs = phase_increment >> 15;
 		increment_zs = phase_integral_zs + (phase_integral_zs * uint32_t(parameter_zs) >> 3);
 		phase_2_zs = OscData_sec_phase;
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			ph = phasedata[i] << 1;
 			phase_integral_zs = ph >> 16;
-			if (ph < phaseOld_) {
+			if (ph < phaseOld_)
+			{
 				phase_2_zs = 0;
 			}
 			phaseOld_ = ph;
@@ -753,11 +779,13 @@ void AudioSynthWaveformModulatedTS::update(void)
 			*bp++ = sample;
 		}
 		// update secondary phase
-		OscData_sec_phase = phase_2_zs;	
-		break;
+		OscData_sec_phase = phase_2_zs;
+	}
+	break;
 
 	// WaveformModulated Shruthi ZTRI ---------------------------------
 	case WAVEFORM_SHRUTHI_ZTRI:
+	{
 		uint16_t parameter_zt;
 		uint16_t phase_2_zt;
 		uint16_t phase_integral_zt;
@@ -771,28 +799,30 @@ void AudioSynthWaveformModulatedTS::update(void)
 		phase_integral_zt = phase_increment >> 15;
 		increment_zt = phase_integral_zt + (phase_integral_zt * uint32_t(parameter_zt) >> 3);
 		phase_2_zt = OscData_sec_phase;
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			ph = phasedata[i] << 1;
 			uint16_t phase_integral_zt = ph >> 16;
-			if (ph < phaseOld_) {		// phase.carry
+			if (ph < phaseOld_)
+			{ // phase.carry
 				phase_2_zt = 0;
 			}
 			phaseOld_ = ph;
 			phase_2_zt += increment_zt;
 			uint16_t carrier = (wav_res_sine16[phase_2_zt >> 8]);
 			uint8_t window = 0;
-			window = (phase_integral_zt & 0x8000) ?
-			~(uint8_t)(phase_integral_zt >> 7) :
-			phase_integral_zt >> 7;
+			window = (phase_integral_zt & 0x8000) ? ~(uint8_t)(phase_integral_zt >> 7) : phase_integral_zt >> 7;
 			int16_t sample = ((carrier * window) >> 8) + 32768;
 			*bp++ = sample;
 		}
 		// update secondary phase
 		OscData_sec_phase = phase_2_zt;
+	}
 	break;
 
 	// WaveformModulated Shruthi ZRESO ---------------------------------
 	case WAVEFORM_SHRUTHI_ZRESO:
+	{
 		uint16_t parameter_zr;
 		uint16_t phase_2_zr;
 		uint16_t phase_integral_zr;
@@ -806,11 +836,13 @@ void AudioSynthWaveformModulatedTS::update(void)
 		phase_integral_zr = phase_increment >> 15;
 		increment_zr = phase_integral_zr + (phase_integral_zr * uint32_t(parameter_zr) >> 3);
 		phase_2_zr = OscData_sec_phase;
-		
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			ph = phasedata[i] << 1;
 			phase_integral_zr = ph >> 16;
-			if (ph < phaseOld_) {	// phase.carry
+			if (ph < phaseOld_)
+			{ // phase.carry
 				phase_2_zr = 0;
 			}
 			phaseOld_ = ph;
@@ -824,10 +856,12 @@ void AudioSynthWaveformModulatedTS::update(void)
 		}
 		// update secondary phase
 		OscData_sec_phase = phase_2_zr;
+	}
 	break;
 
 	// WaveformModulated Shruthi ZPULS ---------------------------------
 	case WAVEFORM_SHRUTHI_ZPULSE:
+	{
 		uint16_t parameter_zp;
 		uint16_t phase_2_zp;
 		uint16_t phase_integral_zp;
@@ -841,12 +875,14 @@ void AudioSynthWaveformModulatedTS::update(void)
 		phase_integral_zp = phase_increment >> 15;
 		increment_zp = (phase_integral_zp + ((phase_integral_zp * uint32_t(parameter_zp) >> 3))) << 1;
 		phase_2_zp = OscData_sec_phase;
-		
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			ph = phasedata[i] << 1;
 			uint16_t phase_integral_zp = ph >> 16;
-			if (ph < phaseOld_) {	// phase.carry
-				phase_2_zp = 32768;	// 0 = brighter sound
+			if (ph < phaseOld_)
+			{						// phase.carry
+				phase_2_zp = 32768; // 0 = brighter sound
 			}
 			phaseOld_ = ph;
 			phase_2_zp += increment_zp;
@@ -854,23 +890,30 @@ void AudioSynthWaveformModulatedTS::update(void)
 			result = (wav_res_sine16[phase_2_zp >> 8]);
 			result >>= 1;
 			result += 32768;
-			if (phase_integral_zp < 0x4000) {
+			if (phase_integral_zp < 0x4000)
+			{
 				int16_t sample = result + 32768;
 				*bp++ = sample;
-				} else if (phase_integral_zp < 0x8000) {
+			}
+			else if (phase_integral_zp < 0x8000)
+			{
 				uint8_t phase_integral_zp_ = ~(phase_integral_zp - 0x4000) >> 6;
 				int16_t sample = ((result * phase_integral_zp_) >> 8) + 32768;
 				*bp++ = sample;
-				} else {
+			}
+			else
+			{
 				*bp++ = -32767;
 			}
 		}
 		// update secondary phase
 		OscData_sec_phase = phase_2_zp;
+	}
 	break;
 
 	// WaveformModulated Shruthi CHRUSHED_SINE -------------------------
 	case WAVEFORM_SHRUTHI_CRUSHED_SINE:
+	{
 		uint16_t parameter_cs;
 		uint8_t decimate_cs;
 		int16_t held_sample_cs;
@@ -883,13 +926,16 @@ void AudioSynthWaveformModulatedTS::update(void)
 		}
 		decimate_cs = Osc_data_cr_decimate;
 		held_sample_cs = Osc_data_cr_state;
-		
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
+
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
 			ph = phasedata[i] << 1;
 			index_cs = ph >> 24;
-			decimate_cs++;			
-			if (parameter_cs <= 63) {
-				if (decimate_cs >= parameter_cs + 1) {
+			decimate_cs++;
+			if (parameter_cs <= 63)
+			{
+				if (decimate_cs >= parameter_cs + 1)
+				{
 					decimate_cs = 0;
 					val1 = AudioWaveformSine[index_cs];
 					val2 = AudioWaveformSine[index_cs + 1];
@@ -899,7 +945,8 @@ void AudioSynthWaveformModulatedTS::update(void)
 					held_sample_cs = (multiply_32x32_rshift32(val1 + val2, magnitude));
 				}
 			}
-			else if (decimate_cs >= 128 - parameter_cs) {
+			else if (decimate_cs >= 128 - parameter_cs)
+			{
 				decimate_cs = 0;
 				val1 = AudioWaveformSine[index_cs];
 				val2 = AudioWaveformSine[index_cs + 1];
@@ -912,10 +959,335 @@ void AudioSynthWaveformModulatedTS::update(void)
 		}
 		Osc_data_cr_decimate = decimate_cs;
 		Osc_data_cr_state = held_sample_cs;
+	}
+	break;
+
+	// WaveformModulated BRAIDS_CSAW -------------------------
+	case WAVEFORM_BRAIDS_CSAW:
+		/*
+			int32_t parameter_A_cs;
+			int32_t parameter_B_cs;
+			parameter_A_cs = ((osc_par_a << 8) + (par_a_mod_ << 1));
+			parameter_B_cs = ((osc_par_b << 8) + (par_b_mod_ << 1));
+			if (parameter_A_cs >= 32768)
+			{
+				parameter_A_cs = 32768;
+			}
+			if (parameter_B_cs >= 32768)
+			{
+				parameter_B_cs = 32768;
+			}
+			parameter_A_cs = 32768 - parameter_A_cs;
+
+			//int16_t shift_A_cs = (parameter_A_cs - 32767);
+
+
+			for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+			{
+				int32_t s = 0; // *bp + (signed_multiply_32x16t(magnitude, phasedata[i])) + shift_A_cs;
+				*bp++ = (s * 13) >> 4;
+			}
+			*/
+	break;
+
+	// WaveformModulated BRAIDS_VOSIM -------------------------
+	case WAVEFORM_BRAIDS_VOSIM:
+	
+		parameter_[0] = (osc_par_a << 8) + par_a_mod_;
+		parameter_[1] = (osc_par_b << 8) + par_b_mod_;
+
+		if (parameter_[0] >= 32768)
+		{
+			parameter_[0] = 32768;
+		}
+		if (parameter_[1] >= 32768)
+		{
+			parameter_[1] = 32768;
+		}
+
+		for (i = 0; i < 2; ++i)
+		{
+			state_vow_formant_increment[i] = ComputePhaseIncrement(parameter_[i] >> 1);
+		}
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
+			phase_x = phasedata[i];
+			int32_t sample = 16384 + 8192;
+			state_vow_formant_phase[0] += state_vow_formant_increment[0];
+			sample += Interpolate824(wav_sine, state_vow_formant_phase[0]) >> 1;
+
+			state_vow_formant_phase[1] += state_vow_formant_increment[1];
+			sample += Interpolate824(wav_sine, state_vow_formant_phase[1]) >> 2;
+
+			sample = sample * Interpolate824ut(lut_bell, phase_x) >> 15;
+
+			if (phase_x < phaseOld_)
+			{
+				state_vow_formant_phase[0] = 0;
+				state_vow_formant_phase[1] = 0;
+				sample = 0;
+			}
+			phaseOld_ = phase_x;
+			sample -= 16384 + 8192;
+			*bp++ = sample;
+		}
+	break;
+
+	// WaveformModulated BRAIDS_TOY -------------------------
+	case WAVEFORM_BRAIDS_TOY:
+	{
+		parameter_[0] = 16384 + (osc_par_a << 7) + par_a_mod_; // 16384 Parameter offset value
+		parameter_[1] = (osc_par_b << 8) + par_b_mod_;
+
+		if (parameter_[0] >= 32768)
+		{
+			parameter_[0] = 32768;
+		}
+		if (parameter_[1] >= 32768)
+		{
+			parameter_[1] = 32768;
+		}
+
+		// 4 times oversampling.
+		// uint32_t phase_increment_ = phase_increment >> 2;
+		// ph = phasedata[0];
+
+		uint16_t decimation_counter = state_toy_decimation_counter;
+		uint16_t decimation_count = 512 - (parameter_[0] >> 6);
+
+		uint8_t held_sample_toy = state_toy_held_sample;
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
+			int32_t filtered_sample = 0;
+
+			for (size_t tap = 0; tap < 4; ++tap)
+			{
+				// ph += phase_increment_;  // causes pitch distortion
+				ph = phasedata[i];
+				if (decimation_counter >= decimation_count)
+				{
+					uint8_t x = parameter_[1] >> 8;
+					held_sample_toy = (((ph >> 24) ^ (x << 1)) & (~x)) + (x >> 1);
+					decimation_counter = 0;
+				}
+				filtered_sample += kFIR4Coefficients[tap] * held_sample_toy;
+				++decimation_counter;
+			}
+			*bp++ = ~((filtered_sample >> 8) - kFIR4DcOffset);
+		}
+		state_toy_held_sample = held_sample_toy;
+		state_toy_decimation_counter = decimation_counter;
+	}
+	break;
+
+	// WaveformModulated BRAIDS_SAWSWARM -------------------------
+	case WAVEFORM_BRAIDS_SAWSWARM:
+	{
+		parameter_[0] = (osc_par_a << 8) + par_a_mod_; // + par_a_mod_;
+		parameter_[1] = (osc_par_b << 8) + par_b_mod_; // + par_b_mod_;
+
+		if (parameter_[0] >= 32768)
+		{
+			parameter_[0] = 32768;
+		}
+		if (parameter_[1] >= 32768)
+		{
+			parameter_[1] = 32768;
+		}
+
+		int32_t detune = parameter_[0];
+		detune = (detune * detune) >> 9;
+		uint32_t increments[7];
+		pitch_ = phase_increment;
+
+		for (int16_t i = 0; i < 7; ++i)
+		{
+			int32_t saw_detune = detune * (i - 3);
+			int32_t detune_integral = saw_detune >> 16;
+			int32_t detune_fractional = saw_detune & 0xffff;
+			int32_t increment_a = (pitch_ * detune_integral) >> 11;
+			int32_t increment_b = (pitch_ * detune_integral + 1) >> 11;
+			increments[i] = increment_a + (((increment_b - increment_a) * detune_fractional) >> 16);
+		}
+
+		if (strike_)
+		{
+			for (size_t i = 0; i < 6; ++i)
+			{
+				state_saw_phase[i] = random();
+			}
+			strike_ = false;
+		}
+
+		int32_t hp_cutoff = 8192;
+
+		if (parameter_[1] < 10922)
+		{
+			hp_cutoff += ((parameter_[1] - 10922) * 24) >> 5;
+		}
+		else
+		{
+			hp_cutoff += ((parameter_[1] - 10922) * 12) >> 5;
+		}
+		if (hp_cutoff < 0)
+		{
+			hp_cutoff = 0;
+		}
+		else if (hp_cutoff > 32768)
+		{
+			hp_cutoff = 32768;
+		}
+
+		int32_t f = Interpolate824ut(lut_svf_cutoff, hp_cutoff << 17);
+		int32_t damp = lut_svf_damp[0];
+		int32_t bap = state_saw_bp;
+		int32_t lp = state_saw_lp;
+
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
+			int32_t notch, hp, sample;
+
+			// phase incremnts
+			phase_x = phasedata[i];
+			phase_x += increments[0];
+			state_saw_phase[0] += increments[1];
+			state_saw_phase[1] += increments[2];
+			state_saw_phase[2] += increments[3];
+			state_saw_phase[3] += increments[4];
+			state_saw_phase[4] += increments[5];
+			state_saw_phase[5] += increments[6];
+
+			// compute a sample.
+			sample = -28672;
+			sample += phase_x >> 19;
+			sample += (phase_x + state_saw_phase[0]) >> 19;
+			sample += (phase_x + state_saw_phase[1]) >> 19;
+			sample += (phase_x + state_saw_phase[2]) >> 19;
+			sample += (phase_x + state_saw_phase[3]) >> 19;
+			sample += (phase_x + state_saw_phase[4]) >> 19;
+			sample += (phase_x + state_saw_phase[5]) >> 19;
+
+			sample = Interpolate88(ws_moderate_overdrive, sample + 32768);
+
+			notch = sample - (bap * damp >> 15);
+			lp += f * bap >> 15;
+			lp = CLIP(lp);
+			hp = notch - lp;
+			bap += f * hp >> 15;
+			int32_t result = hp;
+			result = CLIP(result);
+			*bp++ = result;
+		}
+		state_saw_lp = lp;
+		state_saw_bp = bap;
+	}
+	break;
+
+	// WaveformModulated BRAIDS_Digital_Filter -------------------------
+	case WAVEFORM_BRAIDS_ZLPF:
+	case WAVEFORM_BRAIDS_ZPKF:
+	case WAVEFORM_BRAIDS_ZBPF:
+	case WAVEFORM_BRAIDS_ZHPF:
+
+		parameter_[0] = 8192 + (osc_par_a << 8) + par_a_mod_; // + par_a_mod_;
+		parameter_[1] = (osc_par_b << 8) + par_b_mod_;		  // + par_b_mod_;
+
+		if (parameter_[0] >= 32768)
+		{
+			parameter_[0] = 32768;
+		}
+		if (parameter_[1] >= 32768)
+		{
+			parameter_[1] = 32768;
+		}
+
+		//pitch_ = (pitch_note + 1) * 128;
+		pitch_ = (mod_increment >> 20);
+		Serial.println(pitch_);
+		
+		int16_t shifted_pitch = pitch_ + ((parameter_[0] - 2048) >> 1);
+		if (shifted_pitch > 16383)
+		{
+			shifted_pitch = 16383;
+		}
+
+		size_t size = 128;
+		uint32_t modulator_phase = state_res_modulator_phase;
+		uint32_t square_modulator_phase = state_res_square_modulator_phase;
+		int32_t square_integrator = state_res_integrator;
+
+		uint8_t filter_type = shape_digital_filter_; // Filter typ 0-3
+
+		uint32_t modulator_phase_increment = state_res_modulator_phase_increment;
+		uint32_t target_increment = ComputePhaseIncrement(shifted_pitch);
+		uint32_t modulator_phase_increment_increment =
+			modulator_phase_increment < target_increment
+				? (target_increment - modulator_phase_increment) / size
+				: ~((modulator_phase_increment - target_increment) / size);
+
+		
+		for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
+			phase_x = phasedata[i];
+			modulator_phase_increment += modulator_phase_increment_increment;
+			modulator_phase += modulator_phase_increment;
+			uint16_t integrator_gain = (modulator_phase_increment >> 14);
+
+			square_modulator_phase += modulator_phase_increment;
+			if (phase_x < phaseOld_)
+			{
+				modulator_phase = kPhaseReset[filter_type];
+			}
+			if ((phase_x << 1) < (phaseOld_ << 1))
+			{
+				state_res_polarity = !state_res_polarity;
+				square_modulator_phase = kPhaseReset[(filter_type & 1) + 2];
+			}
+			phaseOld_ = phase_x;
+
+			int32_t carrier = Interpolate824(wav_sine, modulator_phase);
+			int32_t square_carrier = Interpolate824(wav_sine, square_modulator_phase);
+
+			uint16_t saw = ~(phase_x >> 16);
+			uint16_t double_saw = ~(phase_x >> 15);
+			uint16_t triangle = (phase_x >> 15) ^ (phase_x & 0x80000000 ? 0xffff : 0x0000);
+			uint16_t window = parameter_[1] < 16384 ? saw : triangle;
+
+			int32_t pulse = (square_carrier * double_saw) >> 16;
+			if (state_res_polarity)
+			{
+				pulse = -pulse;
+			}
+			square_integrator += (pulse * integrator_gain) >> 16;
+			square_integrator = CLIP(square_integrator);
+
+			int16_t saw_tri_signal;
+			int16_t square_signal;
+
+			if (filter_type & 2)
+			{
+				saw_tri_signal = (carrier * window) >> 16;
+				square_signal = pulse;
+			}
+			else
+			{
+				saw_tri_signal = (window * (carrier + 32768) >> 16) - 32768;
+				square_signal = square_integrator;
+				if (filter_type == 1)
+				{
+					square_signal = (pulse + square_integrator) >> 1;
+				}
+			}
+			uint16_t balance = (parameter_[1] < 16384 ? parameter_[1] : ~parameter_[1]) << 2;			
+			*bp++ = ~Mix(saw_tri_signal, square_signal, balance);
+		}
+		state_res_modulator_phase = modulator_phase;
+		state_res_square_modulator_phase = square_modulator_phase;
+		state_res_integrator = square_integrator;
+		state_res_modulator_phase_increment = modulator_phase_increment;
 	break;
 
 	}
-
 
 	if (tone_offset)
 	{

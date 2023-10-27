@@ -40,8 +40,8 @@ String newPatternName = "            ";
 int newPatternNo = 1;
 //int newPatchBank = 0;
 uint8_t CharPosPatchName = 0;
-char * currentSettingsOption = "";
-char * currentSettingsValue = "";
+//char * currentSettingsOption = "";
+//char * currentSettingsValue = "";
 //uint32_t currentSettingsPart = SETTINGS;
 //uint32_t paramType = PARAMETER;
 uint32_t currentSettingsPart = 0;
@@ -2212,6 +2212,11 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 	
 	// Bank P (Mutable Instruments Braids)
 	if (WaveBank == 15) {
+		if (WaveNr >= 15)
+		{
+			WaveNr = 15;
+		}
+		
 		tft.setFont(NULL);
 		switch(WaveNr) {
 			case 1:
@@ -2241,7 +2246,39 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 			case 7:
 				print_String(298,101,24);	// SHRUTHI
 				print_String(296,92,38);	// CRUSHED SINE
-			break;		
+			break;
+			case 8:
+				print_String(297,101,24);	// BRAIDS
+				print_String(299,107,38);	// CSAW
+			break;	
+			case 9:
+				print_String(297,101,24);	// BRAIDS
+				print_String(300,103,38);	// VOSIM
+			break;	
+			case 10:
+				print_String(297,101,24);	// BRAIDS
+				print_String(301,109,38);	// TOY
+			break;	
+			case 11:
+				print_String(297,101,24);	// BRAIDS
+				print_String(302,95,38);	// SAWSWARM
+			break;	
+			case 12:
+				print_String(297,101,24);	// BRAIDS
+				print_String(303,107,38);	// ZLPF
+			break;
+			case 13:
+				print_String(297,101,24);	// BRAIDS
+				print_String(304,107,38);	// ZPKF
+			break;	
+			case 14:
+				print_String(297,101,24);	// BRAIDS
+				print_String(305,107,38);	// ZBPF
+			break;	
+			case 15:
+				print_String(297,101,24);	// BRAIDS
+				print_String(306,107,38);	// ZHPF
+			break;				
 		}
 		
 	}

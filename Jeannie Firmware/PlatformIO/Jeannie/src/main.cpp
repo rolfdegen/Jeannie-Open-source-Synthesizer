@@ -941,6 +941,14 @@ FLASHMEM void updateWaveformA(void)
 			newWaveform = waveform[0];
 		}
 		else newWaveform = waveform[oscWaveformA + 12];
+
+		if (oscWaveformA >= 12 && oscWaveformA <= 15)
+		{
+			for (size_t i = 0; i < 8; i++)
+			{
+				waveformModa[i].ShapeDigitalFilter(oscWaveformA - 15);
+			}
+		}
 	}
 	else
 	{
@@ -978,7 +986,7 @@ FLASHMEM void updateWaveformB()
 	// Bank P (Mutable instruments Braids waveforms)
 	if (Osc2WaveBank == 15)
 	{
-		if (oscWaveformB >= max_waveform_BankP)
+		if (oscWaveformB > max_waveform_BankP)
 		{
 			newWaveform = waveform[max_waveform_BankP + 12];
 		}
@@ -987,6 +995,14 @@ FLASHMEM void updateWaveformB()
 			newWaveform = waveform[0];
 		}
 		else newWaveform = waveform[oscWaveformB + 12];
+
+		if (oscWaveformB >= 12 && oscWaveformB <= 15)
+		{
+			for (size_t i = 0; i < 8; i++)
+			{
+				waveformModb[i].ShapeDigitalFilter(oscWaveformB - 15);
+			}
+		}
 	}
 	else
 	{
@@ -1680,10 +1696,35 @@ FLASHMEM void updateHPFFilterRes() {
 	hpFilter2.resonance(HPFRes);
 }
 
+FLASHMEM void update_hp_filter_connect()
+{
+	// hp_filter on
+	if (HPF_filterFreq_value >0)
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			hp_filter_off[i].disconnect();
+		}
+		for (size_t i = 0; i < 6; i++)
+		{
+			hp_filter_on[i].connect();
+		}
+	} // hp_filter off
+	else
+	{
+		for (size_t i = 0; i < 6; i++)
+		{
+			hp_filter_on[i].disconnect();
+		}
+		for (size_t i = 0; i < 4; i++)
+		{
+			hp_filter_off[i].connect();
+		}
+	}
+}
+
 FLASHMEM void updateFilterRes() {
-	
 	float maxReso;
-	
 	if (myFilter == 1) {
 		maxReso = 15.0f;
 		if (filterRes >= maxReso) {
@@ -2597,9 +2638,9 @@ FLASHMEM void myCCgroup1 (byte control, byte value)
 	else if (control == CCoscwaveformA) {
 		oscWaveformA = value;
 		// only Vowel in Bank P
-		if (Osc1WaveBank == 15 && oscWaveformA >= 7)
+		if (Osc1WaveBank == 15 && oscWaveformA >= max_waveform_BankP)
 		{
-			oscWaveformA = 7;
+			oscWaveformA = max_waveform_BankP;
 		}
 		if (currentWaveformA != oscWaveformA) {			
 			updateWaveformA();
@@ -2624,9 +2665,9 @@ FLASHMEM void myCCgroup1 (byte control, byte value)
 	else if (control == CCoscwaveformB) {
 		oscWaveformB = value;
 		// only Vowel in Bank P
-		if (Osc2WaveBank == 15 && oscWaveformB >= 7)
+		if (Osc2WaveBank == 15 && oscWaveformB > max_waveform_BankP)
 		{
-			oscWaveformB = 7;
+			oscWaveformB = max_waveform_BankP - 1;
 		}
 		if (currentWaveformB != oscWaveformB) {
 			updateWaveformB();
@@ -2812,21 +2853,39 @@ FLASHMEM void myCCgroup2 (byte control, byte value)
 		updateFilterLfoRate();
 		filterLfoRatePrevValue = filterLfoRate;//PICK-UP
 	}
-	
+
 	// CC control No: 62
-	else if (control == CCHPFfilter) {
-		//HPF_filterFreq = HPF_FILTERFREQS256[value];
-		HPF_filterFreq_value = value;
-		updateHPFFilterFreq();
-		if (PageNr == 3 && myPageShiftStatus[3] == 2) {
-			value = value >> 1;
-			draw_HPF_filter_curves(value, HPF_Res_value);
-			printDataValue (0, value);
-			printRedMarker (0, value);
-			usbMIDI.sendControlChange(62, value, channel);
+	else if (control == CCHPFfilter)
+	{
+		// HPF_filterFreq = HPF_FILTERFREQS256[value];
+		if (HPF_filterFreq_value != value)
+		{
+			if ((HPF_filterFreq_value == 0 && value > 0) || 
+			(HPF_filterFreq_value > 0 && value == 0))
+			{
+				HPF_filterFreq_value = value;
+				update_hp_filter_connect(); // set hp_filter on/off				
+			}
+			HPF_filterFreq_value = value;
+			updateHPFFilterFreq();
+			if (PageNr == 3 && myPageShiftStatus[3] == 2)
+			{
+				value = value >> 1;
+				draw_HPF_filter_curves(value, HPF_Res_value);
+				printDataValue(0, value);
+				printRedMarker(0, value);
+				if (HPF_filterFreq_value == 0)
+				{
+					tft.fillRoundRect(69,43,24,12,2, ST7735_RED);
+					tft.setFont(NULL);
+					tft.setTextColor(ST7735_WHITE);
+					print_String(18,73,45); // print "OFF"
+				}
+				usbMIDI.sendControlChange(62, value, channel);
+			}
 		}
 	}
-	
+
 	// CC control No: 63
 	else if (control == CCHPFres) {
 		//HPFRes = (14.29f * LINEAR[value]) + 0.71f; //If <1.1 there is noise at high cutoff freq
@@ -4205,6 +4264,7 @@ FLASHMEM void set_initPatchData(void)
 		ModWheelCutoffAmt = 0.0f;
 		ModWheelHPFamt = 0.0f;
 		last_modwheel_value = 0;
+		hp_filter_sw = false;	// HP-Filter on
 
 		// Update Parameter -------------------------------
 		updateUnison();
@@ -4327,6 +4387,7 @@ FLASHMEM void set_initPatchData(void)
 		update_filterEnv_Osc1_PRMB_mod();
 		update_filterEnv_Osc2_PRMA_mod();
 		update_filterEnv_Osc2_PRMB_mod();
+		update_hp_filter_connect();
 	}
 }
 
@@ -4772,6 +4833,9 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	filterEnvOsc1PrmBAmt = data[261].toInt();
 	filterEnvOsc2PrmAAmt = data[262].toInt();
 	filterEnvOsc2PrmBAmt = data[263].toInt();
+	hp_filter_sw = data[264].toInt(); // hp_filter off = true
+
+
 	
 	for (uint8_t i = 0; i < 8; i++) {
 		waveformModa[i].parameter_a(SupersawSpreadA);
@@ -4869,6 +4933,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateFilterMixer();
 	updateHPFFilterFreq();
 	updateHPFFilterRes();
+	
 	updateKeyTracking();
 	updateOscLFOAmt();
 	updatePitchLFORate();
@@ -4894,7 +4959,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateLFO2release();	// LFO1 FADE-OUT
 	updateLFO2fade ();		// LFO2 FADE-IN
 	updateLFO1release();	// LFO2 FADE-OUT
-
+	update_hp_filter_connect();
 	updateLFO1EnvelopeType();
 	updateLFO2EnvelopeType();
 	updateLfo3Rate();
@@ -4929,6 +4994,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	update_filterEnv_Osc2_PRMA_mod();
 	update_filterEnv_Osc2_PRMB_mod();
 	update_MODWHEEL_value(0);
+	
 	
 	
 	// send Prg.Data to USB
@@ -5014,7 +5080,7 @@ FLASHMEM String getCurrentPatchData() {
 	+ "," + String(ModWheelHPFamt,6) + "," + String(Lfo2Osc1PrmAAmt) + "," + String(Lfo2Osc1PrmBAmt) + "," + String(Lfo2Osc2PrmAAmt)
 	+ "," + String(Lfo2Osc2PrmBAmt) + "," + String(Lfo3Osc1PrmAAmt) + "," + String(Lfo3Osc1PrmBAmt) + "," + String(Lfo3Osc2PrmAAmt)
 	+ "," + String(Lfo3Osc2PrmBAmt) + "," + String(filterEnvOsc1PrmAAmt) + "," + String(filterEnvOsc1PrmBAmt) + "," + String(filterEnvOsc2PrmAAmt)
-	+ "," + String(filterEnvOsc2PrmBAmt);
+	+ "," + String(filterEnvOsc2PrmBAmt) + "," + String(hp_filter_sw);
 }
 //************************************************************************
 // load Sequencer Patch data
@@ -5569,7 +5635,7 @@ FLASHMEM void set_menu_parameter (uint8_t index, int value)
 					value = value >> 1;
 					if (Osc1WaveBank == 15)
 					{
-						value = value >> 2;
+						value = value >> 1;
 					}
 				}
 				myControlChange(midiChannel,(selecdParameter(PageNr, ParameterNr)), (value >> 5));
@@ -7653,7 +7719,7 @@ FLASHMEM void setup() {
 	setFxPrg(0);
 	
 	// init Audio buffer --------------------------------------------------
-	AudioMemory(256);	// Sample Blocks
+	AudioMemory(255);	// Sample Blocks
 	
 	// init Waveforms and more --------------------------------------------
 	constant1Dc.amplitude(ONE);

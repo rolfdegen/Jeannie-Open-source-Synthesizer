@@ -501,4 +501,5 @@ uint8_t last_modwheel_value = 0;
 
 boolean calc_flag = false;
 uint32_t rng_value32 = 109;
+boolean hp_filter_sw = false; // 
 
