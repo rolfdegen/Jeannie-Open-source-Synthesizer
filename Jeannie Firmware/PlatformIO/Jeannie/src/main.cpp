@@ -1,8 +1,8 @@
 /*
 8 Voices DIY Synthsizer "Jeannie"
 Software by Rolf Degen rolfdegen@hotmail.com & Hardware Andre Laska (tubeohm.com)
-Build Date: 28.09.2023
-Build Version 2.76
+Build Date: 29.10.2023
+Build Version 2.79
 
 MIT License
 Copyright (c) Rolf Degen (2021 - 2023)
@@ -2147,9 +2147,16 @@ FLASHMEM void updateFilterLFOWaveform() {
 }
 
 FLASHMEM void updatePitchLFORetrig() {
+	pitchLfo.LFO_mode(LFO1mode);
+	pitchLfo.LFO_oneShoot(lfo1oneShoot);
 }
-
 FLASHMEM void updateFilterLFORetrig() {
+	filterLfo.LFO_mode(LFO2mode);
+	filterLfo.LFO_oneShoot(lfo2oneShoot);
+}
+FLASHMEM void updateModLFORetrig() {
+	ModLfo3.LFO_mode(LFO3mode);
+	ModLfo3.LFO_oneShoot(lfo3oneShoot);
 }
 
 FLASHMEM void updateFilterLFOMidiClkSync() {
@@ -4938,6 +4945,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateOscLFOAmt();
 	updatePitchLFORate();
 	updatePitchLFOWaveform();
+	updatePitchLFORetrig();
 	updateFilterLFOWaveform();
 	updatePitchLFOMidiClkSync();
 	updateFilterLfoRate();
@@ -4974,6 +4982,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateLFO2waveform();
 	ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * Lfo3Waveform), AWFREQ); // half sine
 	updateLFO3waveform();
+	updateModLFORetrig();
 	update_PWM_LFO();
 	updateAtouchCutoff();
 	updateModWheelCutoff();
