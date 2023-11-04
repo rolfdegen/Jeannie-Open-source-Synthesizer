@@ -23,7 +23,7 @@ Specifications
      • 15 waveform banks with a total of 945 waveforms and MultiSaw
      • 12 standard waveforms, some of which are band-limited
      * Some Mutable instruments Shruthi and Braids synthesis
-       Vowel, SuperSaw, Csaw, Vosim and many more...
+     Vowel, SuperSaw, Csaw, Vosim and many more...
      • Noise generator (white and pink noise)
      • Oscillator Modulation (XOR, XMOD, MOD, AND, PHA, FM)
      • Waveshaper with different curve shapes
