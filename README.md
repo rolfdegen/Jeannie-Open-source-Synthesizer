@@ -20,7 +20,7 @@ Specifications
      • DIY 8-voice polyphonic synthesizer
      • ARM Cortex-M7 processor 720MHz with 1MByte Ram
      • two digital oscillators per voice
-     • 15 waveform banks with a total of 945 waveforms and MultiSaw
+     • 15 waveform banks with a total of 945 waveforms
      • 12 standard waveforms, some of which are band-limited
      * Some Mutable instruments Shruthi and Braids synthesis
        Vowel, SuperSaw, Csaw, Vosim and many more...
