@@ -22,7 +22,7 @@ Specifications
      • two digital oscillators per voice
      • 15 waveform banks with a total of 945 waveforms and MultiSaw
      • 12 standard waveforms, some of which are band-limited
-     * Some Mutable instruments oscillators from Braids and Shruthi
+     * Some Mutable instruments Shruthi and Braids synthesis
      • Noise generator (white and pink noise)
      • Oscillator Modulation (XOR, XMOD, MOD, AND, PHA, FM)
      • Waveshaper with different curve shapes
