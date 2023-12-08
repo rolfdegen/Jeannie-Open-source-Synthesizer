@@ -20,8 +20,10 @@ Specifications
      • DIY 8-voice polyphonic synthesizer
      • ARM Cortex-M7 processor 720MHz with 1MByte Ram
      • two digital oscillators per voice
-     • 15 waveform banks with a total of 945 waveforms and MultiSaw
+     • 15 waveform banks with a total of 945 waveforms
      • 12 standard waveforms, some of which are band-limited
+     * Some Mutable instruments Shruthi and Braids synthesis
+       Vowel, SuperSaw, Csaw, Vosim and many more...
      • Noise generator (white and pink noise)
      • Oscillator Modulation (XOR, XMOD, MOD, AND, PHA, FM)
      • Waveshaper with different curve shapes
@@ -50,32 +52,48 @@ Specifications
 
 https://www.tubeohm.com/
 
-![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/17001e0d-c3e7-466d-85b5-c23be8273332)
+Pictures
 
-![20230518_194120](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/99fbdfcb-8710-4ebf-879d-d9b2da438e90)
+![Screenshot 2023-10-08 174844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/f51c62de-ff66-450e-b892-3052402c9139)
 
-![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/0dcf3d3b-bb79-4bf8-b30c-daa2ec8867c0)
+![hinten04283](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/a46b4db3-212a-4baa-bd91-be278c90c8f0)
 
-![Pic1](https://user-images.githubusercontent.com/16689445/155886519-6487f244-0d26-4bb1-a49f-27a8bb392fcf.png)
+![20211111_085558](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/2396a274-2f4c-4c56-a4c6-1174e4c848d1)
 
-![Pic 2](https://user-images.githubusercontent.com/16689445/155886525-f779591a-6bcb-4492-a7fb-afd06165b7c4.png)
+![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3b64f99f-8dd1-41cb-93d6-d4b6907a5fe9)
 
-![Pic 4](https://user-images.githubusercontent.com/16689445/155886532-33c55341-f179-4a1a-aa54-1c0e27544c61.png)
+![Screenshot 2023-10-08 192844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/82113774-1c11-4d4e-b995-6286131a5f38)
 
-![20211111_085543](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/103e720b-bd8a-4f9a-b5e8-e662ae1b3e07)
+Alu case from Erica Synths
+![Jeannie-DIY-01_keb9kWj](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/fac7d7cf-1c02-45a7-836b-46df0af9afd1)
+
+my selfmade Wood Side panels
+![20230516_184036](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3e98b359-e1f8-4653-8185-cb1ef8823e7c)
+![Wood](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65d9672b-a484-410e-bd2b-256f115a5f9e)
+![20230519_081902](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/65f39ec2-23c6-429a-9a14-6d3e71d9193c)
 
 
-Sound file 1: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+Video and Audio
 
-Sound file 2: https://soundcloud.com/tubeohm-sounds/kontrabass-2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+https://youtu.be/rIK02G-8oj4 ""
+https://youtu.be/dHu4UNJWN_M ""
+https://youtu.be/UXj7gzIWnjs ""
+https://youtu.be/ZQ4xBk2VSVQ ""
+https://youtu.be/HZyj_MlfSJk ""
+https://youtu.be/k39YhrJgMqE ""
+https://youtu.be/nQKnOZVThZc ""
+https://youtu.be/75-9MeFV5rk ""
+https://youtu.be/uICXC1lDDIE ""
+https://youtu.be/nQKnOZVThZc ""
 
-Sound file 3: https://soundcloud.com/tubeohm-sounds/demojeannie-1?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
-Sound file 4: https://soundcloud.com/musikus/melancholique-part-one?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
-Sound file 5: https://soundcloud.com/tubeohm-sounds/bad2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
 
-Sound file 6: https://soundcloud.com/ron-rapprich/i-dream-of-jeannie?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+
+
+
+
+
 
 
 
