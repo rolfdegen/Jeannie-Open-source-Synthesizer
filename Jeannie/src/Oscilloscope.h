@@ -19,6 +19,7 @@ uint8_t pixel_x = 0;
 int16_t pixel_y = 0;
 int16_t prev_pixel_y = 0;
 boolean MainShift = false;
+boolean render_Scope = false;
 
 class Oscilloscope : public AudioStream {
 	public:
@@ -41,35 +42,50 @@ void Oscilloscope::ScreenSetup(ST7735_t3 *screen) {
 	display = screen;
 }
 
-void Oscilloscope::Display() {
-	if (MainShift == false) {
+void Oscilloscope::Display()
+{
+	// draw large waveform when screen not in shift mode
+	if (MainShift == false)
+	{
 		pixel_x = 0;
 		prev_pixel_y = map(buffer[0], 32767, -32768, -110, 110) + 93;
-		if (prev_pixel_y < 65) prev_pixel_y = 65;
-		if (prev_pixel_y > 121)prev_pixel_y = 121;
+		if (prev_pixel_y < 65)
+			prev_pixel_y = 65;
+		if (prev_pixel_y > 121)
+			prev_pixel_y = 121;
 
-		for (uint8_t i = 0; i < AUDIO_BLOCK_SAMPLES - 1; i++) {
+		for (uint8_t i = 0; i < AUDIO_BLOCK_SAMPLES - 1; i++)
+		{
 			pixel_y = map(buffer[i], 32767, -32768, -110, 110) + 93;
-			if (pixel_y < 65) pixel_y = 65;
-			if (pixel_y > 121)pixel_y = 121;
+			if (pixel_y < 65)
+				pixel_y = 65;
+			if (pixel_y > 121)
+				pixel_y = 121;
 			display->drawLine(pixel_x + 15, prev_pixel_y, pixel_x + 16, pixel_y, 0x07B0);
 			prev_pixel_y = pixel_y;
-			pixel_x++;
+			pixel_x += 2;
 		}
 	}
-	else {
+	// draw small waveform when screen in shift mode
+	else
+	{
 		pixel_x = 0;
 		prev_pixel_y = map(buffer[0], 32767, -32768, -60, 60) + 83;
-		if (prev_pixel_y < 65) prev_pixel_y = 65;
-		if (prev_pixel_y > 101)prev_pixel_y = 101;
+		if (prev_pixel_y < 65)
+			prev_pixel_y = 65;
+		if (prev_pixel_y > 101)
+			prev_pixel_y = 101;
 
-		for (uint8_t i = 0; i < AUDIO_BLOCK_SAMPLES - 1; i++) {
+		for (uint8_t i = 0; i < AUDIO_BLOCK_SAMPLES - 1; i++)
+		{
 			pixel_y = map(buffer[i], 32767, -32768, -60, 60) + 83;
-			if (pixel_y < 65) pixel_y = 65;
-			if (pixel_y > 100)pixel_y = 101;
+			if (pixel_y < 65)
+				pixel_y = 65;
+			if (pixel_y > 100)
+				pixel_y = 101;
 			display->drawLine(pixel_x + 15, prev_pixel_y, pixel_x + 16, pixel_y, 0x07B0);
 			prev_pixel_y = pixel_y;
-			pixel_x++;
+			pixel_x += 2;
 		}
 	}
 }
@@ -83,7 +99,7 @@ void Oscilloscope::AddtoBuffer(int16_t *audio) {
 		}
 	}
 	else {
-		for (uint16_t i = 0; i < 32; i++) {
+		for (uint16_t i = 0; i < 16; i++) {
 			buffer[bufcount++] = 65536 - *audio;
 			audio += 4;
 		}
@@ -102,8 +118,9 @@ void Oscilloscope::update(void) {
 		AddtoBuffer(block->data);
 		release(block);
 		if (bufferBlock == 0) {
-			if (EnvIdelFlag == true) {
+			if (EnvIdelFlag == true && render_Scope == true) {		
 				Display();
+				render_Scope = false;
 			}
 		}
 	}

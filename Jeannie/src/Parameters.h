@@ -347,13 +347,13 @@ uint8_t UserPot4 = 3;
 long Poll_counter = 0;
 boolean voiceLEDflag = false;
 uint8_t Voice_LED_State[8] = {0,0,0,0,0,0,0,0};
-uint8_t blinkiTime = 250;
+uint16_t blinkiTime = 250;
 boolean blink = false;
 
-uint8_t SupersawSpreadA = 0;
-uint8_t SupersawSpreadB = 0;
-uint8_t SupersawMixA = 63;
-uint8_t SupersawMixB = 63;
+uint16_t SupersawSpreadA = 0;
+uint16_t SupersawSpreadB = 0;
+uint16_t SupersawMixA = 63;
+uint16_t SupersawMixB = 63;
 /*
 float Supersaw_gain1A = 0.300f;
 float Supersaw_gain2A = 0.175f;
@@ -484,15 +484,15 @@ boolean unisoFlashStatus = 0;
 float oscGainLevel = 1.0;
 const static uint32_t  WAVEFORM_PARABOLIC = 103;
 const static uint32_t WAVEFORM_HARMONIC = 104;
-unsigned long timer = 0;
-unsigned long timer1 = 0;
+unsigned long Disp_Timer1 = 0;
+unsigned long Blinki_Timer = 0;
 unsigned long timer2 = 0;
 unsigned long timer3 = 0;
-unsigned long timer4 = 0;
 unsigned long timer5 = 0;
 unsigned long timer6 = 0;
 unsigned long timer7 = 0;	// refresh menu header (VU, Midi note and voice lamps)
 unsigned long timer8 = 0;	// turns off sound when switching patches
+unsigned long timer9 = 0;	// clear scope line if envelope stoped
 boolean mute_sound = true;
 int sysex_buf_pointer = 0;
 uint8_t Syx_Buf[512];
@@ -502,4 +502,10 @@ uint8_t last_modwheel_value = 0;
 boolean calc_flag = false;
 uint32_t rng_value32 = 109;
 boolean hp_filter_sw = false; // 
+//long timer_Enc = 100;
+//uint8_t old_value = 0;
+boolean Midi_hold_flag = false;
+uint8_t loopCount = 0;
+uint16_t my_frame_buffer[160*128];
+boolean renderPageFlag = false;
 

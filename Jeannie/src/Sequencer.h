@@ -168,7 +168,7 @@ FLASHMEM void Rec_mode (uint8_t note, uint8_t velocity) {
 //*************************************************************************
 // Recording notes into sequencer
 //*************************************************************************
-FLASHMEM void SequencerRecNotes (uint8_t note, uint8_t velo) {
+void SequencerRecNotes (uint8_t note, uint8_t velo) {
 	
 	if (PageNr == 11 && SEQmode == 2 && SEQrunStatus == false && SeqRecNoteCount <= 4) {
 		

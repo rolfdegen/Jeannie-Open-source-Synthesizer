@@ -38,10 +38,10 @@ void SequencerRecNotes (uint8_t note, uint8_t velo);
 //*************************************************************************
 // NoteOn from serial Midi
 //*************************************************************************
-FLASHMEM void myNoteOn(byte channel, byte note, byte velocity) {
+void myNoteOn(byte channel, byte note, byte velocity) {
 	
 	current_velocity = velocity;	// velocity need into VCA Pan function
-	
+
 	// Prevent notes hanger -----------------------------------------------
 	for (int i = 0; i < NO_OF_VOICES; i++) {
 		if (voices[i].note == note && voices[i].voiceOn == 1) {
@@ -71,7 +71,7 @@ FLASHMEM void myNoteOn(byte channel, byte note, byte velocity) {
 		handlePolyphonicNoteOn(note, velocity);
 		return;
 	}
-		
+	
 	// if Mono Mode -------------------------------------------------------
 	if (unison == 1 && Voice_mode <= 4) {
 		if (SEQrunStatus == true) {
@@ -94,7 +94,13 @@ FLASHMEM void myNoteOn(byte channel, byte note, byte velocity) {
 //*************************************************************************
 // NoteOff from serial Midi
 //*************************************************************************
-FLASHMEM void myNoteOff(byte channel, byte note, byte velocity) {
+void myNoteOff(byte channel, byte note, byte velocity) {
+
+	// Hold mode ----------------------------------------------------------
+	if (Midi_hold_flag == true)
+	{
+		return;
+	}
 	
 	// Poly Mode ----------------------------------------------------------
 	if (unison == 0) {
@@ -102,7 +108,7 @@ FLASHMEM void myNoteOff(byte channel, byte note, byte velocity) {
 		handlePolyphonicNoteOff(note, velocity);
 		return;
 	}
-	
+
 	// Mono Mode ----------------------------------------------------------
 	if (unison == 1 && (Voice_mode <= 4)) {
 		// all notes off
@@ -125,7 +131,7 @@ FLASHMEM void myNoteOff(byte channel, byte note, byte velocity) {
 //*************************************************************************
 // get KeyTracking
 //*************************************************************************
-FLASHMEM void get_Keytraking(int note, int voice) {
+void get_Keytraking(int note, int voice) {
 	note = note + SeqTranspose;
 	if (note >= 127) {
 		note = 127;
@@ -140,14 +146,14 @@ FLASHMEM void get_Keytraking(int note, int voice) {
 //*************************************************************************
 
 // Poly mode NoteOn handle ------------------------------------------------
-FLASHMEM void handlePolyphonicNoteOn (uint8_t note, uint8_t velocity) {
+void handlePolyphonicNoteOn (uint8_t note, uint8_t velocity) {
 	
 	// Play Midi note
 	get_play_voice(note, velocity);
 }
 
 // Mono mode NoteOn handle ------------------------------------------------
-FLASHMEM void handleMonophonicNoteOn (uint8_t note, uint8_t velocity) {
+void handleMonophonicNoteOn (uint8_t note, uint8_t velocity) {
 	
 	if (NoteStack_ptr < NoteStack_size || NoteStack_ptr == 255) {
 		NoteStack_pool[NoteStack_ptr] = note;
@@ -226,7 +232,7 @@ FLASHMEM void handleChordNoteOn (uint8_t note, uint8_t velocity) {
 //*************************************************************************
 
 // Poly mode NoteOff handle -----------------------------------------------
-FLASHMEM void handlePolyphonicNoteOff (uint8_t note, uint8_t velocity) {
+void handlePolyphonicNoteOff (uint8_t note, uint8_t velocity) {
 
 	endVoice(getVoiceNo(note));
 	
@@ -397,7 +403,7 @@ FLASHMEM void set_LFO_sync () {
 //*************************************************************************
 // endVoice
 //*************************************************************************
-FLASHMEM void endVoice(int voice) {
+void endVoice(int voice) {
 	
 	// more than 8 notes ?
 	if (voice < 1) {
@@ -484,7 +490,7 @@ FLASHMEM void allNotesOff() {
 //*************************************************************************
 // Play poly voices
 //*************************************************************************
-FLASHMEM void play_voices(int voice, byte note, byte velocity, float level) {
+void play_voices(int voice, byte note, byte velocity, float level) {
 	get_Keytraking(note, voice);
 	float velo = VELOCITY[velocitySens][velocity];
 	float amp = ((0.5 - myAmpVelocity) + (velo * myAmpVelocity)) * level;
@@ -535,7 +541,7 @@ FLASHMEM void play_monoVoices(int voice, byte note, byte velocity, float level, 
 //*************************************************************************
 // set Osc glide 
 //*************************************************************************
-FLASHMEM void get_glideSpeed(int note, int voice) {
+void get_glideSpeed(int note, int voice) {
 	if (glideSpeed > 0 && note != prevNote) {
 		glide[voice].amplitude((prevNote - note) * DIV24);   // Set glide to previous note frequency (limited to 1 octave max)
 		glide[voice].amplitude(0, glideSpeed * GLIDEFACTOR); // Glide to current note
@@ -545,7 +551,7 @@ FLASHMEM void get_glideSpeed(int note, int voice) {
 //*************************************************************************
 // get VoiceNo
 //*************************************************************************
-FLASHMEM int getVoiceNo(int note) {
+int getVoiceNo(int note) {
 
 	voiceToReturn = -1;      //Initialise
 	earliestTime = millis(); //Initialise to now
@@ -587,7 +593,7 @@ FLASHMEM int getVoiceNo(int note) {
 //*************************************************************************
 // update Voices Pitch
 //*************************************************************************
-FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note)
+void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note)
 {
 
 	int pitchNotea = oscPitchA + oscTranspose + SeqTranspose;
@@ -688,7 +694,7 @@ FLASHMEM void updateVoice(uint8_t voice_no, uint8_t notesOn, uint8_t note)
 //*************************************************************************
 // get Voice into poly mode
 //*************************************************************************
-FLASHMEM void get_play_voice(byte note, byte velocity) {
+void get_play_voice(byte note, byte velocity) {
 	
 	if (unison == 0) {
 		float gain = 1.0f;
@@ -784,7 +790,7 @@ FLASHMEM void monoNotesOn(byte note, byte velocity, byte notesOn) {
 //*************************************************************************
 //  Update all voices
 //*************************************************************************
-FLASHMEM void updatesAllVoices() {
+void updatesAllVoices() {
 	
 	if (unison == 0) {
 		for (uint8_t i = 0; i < 8; i++) {
@@ -799,7 +805,7 @@ FLASHMEM void updatesAllVoices() {
 //*************************************************************************
 // update panorama value
 //*************************************************************************
-FLASHMEM void update_panorama(void) {
+void update_panorama(void) {
 	
 	float gain;
 	float pan_a;

@@ -1,8 +1,10 @@
 // This optional setting causes Encoder to use more optimized code,
 // It must be defined before Encoder.h is included.
-#define ENCODER_OPTIMIZE_INTERRUPTS
-#include <Encoder.h>
-#include <Bounce.h>
+//#define ENCODER_OPTIMIZE_INTERRUPTS
+//#include <Encoder.h>
+#include "EncoderTool.h"
+//#include <Bounce.h>
+
 
 #define BassBoost 14
 #define CS_HC595 36
@@ -11,10 +13,10 @@
 #define PWM3     19
 #define PWM4     18
 #define PWM5     25
-#define ENCODER_PINA 4
-#define ENCODER_PINB 5
+#define ENCODER_PINA 5
+#define ENCODER_PINB 4
 #define PAGE_SW 17
-#define QUANTISE_FACTOR 16	// 6 Sets a tolerance of noise on the ADC
+#define QUANTISE_FACTOR 3	// 6 Sets a tolerance of noise on the ADC
 #define Prev_Factor 4		// 4
 #define DEBOUNCE 30
 
@@ -28,9 +30,14 @@ static int mux5ValuesPrev = 0;
 // static int muxVCFValuesPrev = 0;
 // static int volumeRead = 0;
 // static int volumePrevious = 0;
-static long encPrevious = 0;
+static int32_t encPrevMenuNo = 0;
+static int32_t encPrevPatchNo = 0;
 
-Encoder encoder(ENCODER_PINB, ENCODER_PINA);//This often needs the pins swapping depending on the encoder
+//Encoder encoder(ENCODER_PINB, ENCODER_PINA);//This often needs the pins swapping depending on the encoder
+using namespace EncoderTool;
+PolledEncoder encoder;
+
+
 
 FLASHMEM void setupHardware() {
   //Switches

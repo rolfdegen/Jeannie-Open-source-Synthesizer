@@ -1,8 +1,8 @@
 /*
 8 Voices DIY Synthsizer "Jeannie"
 Software by Rolf Degen rolfdegen@hotmail.com & Hardware Andre Laska (tubeohm.com)
-Build Date: 29.10.2023
-Build Version 2.80
+Build Date: 16.01.2024
+Build Version 3.00
 
 MIT License
 Copyright (c) Rolf Degen (2021 - 2023)
@@ -37,15 +37,13 @@ Mark Tillotson - Special thanks for band-limiting the waveforms in the Audio Lib
 Additional libraries: Adafruit_GFX (available in Arduino libraries manager)
 */
 
- 
-
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
 #include <MIDI.h>
 #include <Mcp320x.h>
 #include <usb_midi.h>
-#include "Audio.h"		// using local version to override Teensyduino version
+#include "Audio.h" // using local version to override Teensyduino version
 #include "MidiCC.h"
 #include "effect_waveshaper.h"
 #include "effect_envelope.h"
@@ -62,44 +60,42 @@ Additional libraries: Adafruit_GFX (available in Arduino libraries manager)
 #include "Sequencer.h"
 #include "SysexDump.h"
 
-
-
 //*************************************************************************
 // defines and inits
 //*************************************************************************
 // 12Bit ADC MCP3208 for pots
-#define SPI_CS      10			// SPI slave select
-#define ADC_VREF    256			// 12Bit Resolution
-#define ADC_CLK     1200000		// SPI clock (max 1MHz 2.7V)
+#define SPI_CS 10		// SPI slave select
+#define ADC_VREF 256	// 12Bit Resolution
+#define ADC_CLK 1200000 // SPI clock (max 1MHz 2.7V)
 MCP3208 MCP_adc(ADC_VREF, SPI_CS);
 
-#define PARAMETER 0			//The main page for displaying the current patch and control (parameter) changes
-#define SETTINGS 8			//Settings page
-#define SETTINGSVALUE 9		//Settings page
-#define Pages 12			// Menu Pages
-#define UnisonoLED	2
+#define PARAMETER 0		// The main page for displaying the current patch and control (parameter) changes
+#define SETTINGS 8		// Settings page
+#define SETTINGSVALUE 9 // Settings page
+#define Pages 12		// Menu Pages
+#define UnisonoLED 2
 #define dumpRec 1
 #define dumpSend 0
 #include "ST7735Display.h"
 #include "Settings.h"
 
-//MIDI 5 Pin DIN
+// MIDI 5 Pin DIN
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
-//int prevNote = 48;//This is for glide to use previous note to glide from
+// int prevNote = 48;//This is for glide to use previous note to glide from
 uint8_t UnisonoNote = 0;
-float previousMillis = millis(); //For MIDI Clk Sync
-uint32_t count = 0;//For MIDI Clk Sync
-//uint32_t voiceToReturn = -1; //Initialise
-//long earliestTime = millis(); //For voice allocation - initialise to now
+float previousMillis = millis(); // For MIDI Clk Sync
+uint32_t count = 0;				 // For MIDI Clk Sync
+// uint32_t voiceToReturn = -1; //Initialise
+// long earliestTime = millis(); //For voice allocation - initialise to now
 boolean ParmSelectFlag = false;
-IntervalTimer myMidiTimer;	// Midi and Sequencer
-IntervalTimer myEncTimer;	// Enc query
-boolean SEQLed = false;			// Sequencer Lamp
-boolean SEQLedStatus = false;	// Sequencer Lamp
-//boolean SEQStepStatus = false;	// Sequencer red frame
-//boolean TempoLEDchange = false;
-//boolean TempoLEDstate = false;
+IntervalTimer myMidiTimer;	  // Midi and Sequencer
+IntervalTimer myEncTimer;	  // Enc query
+boolean SEQLed = false;		  // Sequencer Lamp
+boolean SEQLedStatus = false; // Sequencer Lamp
+// boolean SEQStepStatus = false;	// Sequencer red frame
+// boolean TempoLEDchange = false;
+// boolean TempoLEDstate = false;
 boolean myPrgChangeFlag = false;
 boolean myBankSelectFlag = false;
 uint8_t myPrgChangeChannel = 0;
@@ -112,7 +108,7 @@ boolean firstPatchLoaded = false;
 
 /* prototypes */
 void setOscFXCombineMode(AudioEffectDigitalCombine::combineMode mode);
-void Sequencer2 (boolean SEQNoteState);
+void Sequencer2(boolean SEQNoteState);
 void updateLFO1delay();
 void updateLFO1fade();
 void updateLFO1decay();
@@ -128,14 +124,14 @@ void updateLFO3fade();
 void updateLFO3decay();
 void updateLFO3sustain();
 void updateLFO3release();
-void loadArbWaveformA(const int16_t * wavedata);
-void loadArbWaveformB(const int16_t * wavedata);
+void loadArbWaveformA(const int16_t *wavedata);
+void loadArbWaveformB(const int16_t *wavedata);
 void updateUnison();
 void setfrequencyModulation();
 void updateOscLevelA();
 void updateOscLevelB();
 void setOscFXCombineMode(AudioEffectDigitalCombine::combineMode mode);
-void update_PWM_LFO (void);
+void update_PWM_LFO(void);
 void setOscModMixerA(int channel, float level);
 void setOscModMixerB(int channel, float level);
 void setRingModulation(boolean enabled);
@@ -148,28 +144,29 @@ void setphaseModulation();
 void myBankSelectLSB(byte cannel, byte bank);
 void myProgramChange(byte channel, byte program);
 void setCurrentPatchData(String data[]);
-void updateSupersawMix (void);
-
+void updateSupersawMix(void);
 
 //*************************************************************************
 // inits
 //*************************************************************************
 
 // init LFO1 shape
-FLASHMEM void init_ModLfo1 (void) {
+FLASHMEM void init_ModLfo1(void)
+{
 	pitchLfo.amplitude(1.0f);
-	pitchLfo.offset(0); //!!!!!!!!FB
-	pitchLfo.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform), AWFREQ); // LFO3 shape No: 1
+	pitchLfo.offset(0);																	//!!!!!!!!FB
+	pitchLfo.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform), AWFREQ); // LFO3 shape No: 1
 	pitchLfo.begin(LFO_WAVEFORM_ARBITRARY);
 	pitchLfo.frequency(1.0f);
 	updateOscLFOAmt();
 }
 
 // init LFO2 shape
-FLASHMEM void init_ModLfo2 (void) {
+FLASHMEM void init_ModLfo2(void)
+{
 	filterLfo.amplitude(1.0f);
 	filterLfo.offset(0);
-	filterLfo.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform), AWFREQ); // LFO3 shape No: 1
+	filterLfo.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform), AWFREQ); // LFO3 shape No: 1
 	filterLfo.begin(LFO_WAVEFORM_ARBITRARY);
 	filterLfo.frequency(1.0f);
 	updateFilterLfoAmt();
@@ -177,28 +174,30 @@ FLASHMEM void init_ModLfo2 (void) {
 	{
 		LFO2oscParModmixer[i].gain(0, 0.5f);
 		LFO2oscParModmixer[i].gain(1, 0.5f);
-		LFO2oscParModmixer[i].gain(2, 0.0f);
-		LFO2oscParModmixer[i].gain(3, 0.0f);
+		LFO2oscParModmixer[i].gain(2, 0.5f);
+		LFO2oscParModmixer[i].gain(3, 0.5f);
 	}
 }
 
 // init LFO3 shape
-FLASHMEM void init_ModLfo3 (void) {
+FLASHMEM void init_ModLfo3(void)
+{
 	ModLfo3.amplitude(1.0f);
 	ModLfo3.offset(0);
-	ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform), AWFREQ); // LFO3 shape No: 1
+	ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform), AWFREQ); // LFO3 shape No: 1
 	ModLfo3.begin(LFO_WAVEFORM_ARBITRARY);
 	ModLfo3.frequency(1.0f);
 	updateLFO3amt();
 	LFO3ModMixer1Dc.amplitude(1.0f);
 	LFOoscPrmDC.amplitude(1.0f);
-	LFO3oscParModmixer.gain(0, 0.25f);
-	LFO3oscParModmixer.gain(1, 0.25f);
+	LFO3oscParModmixer.gain(0, 0.5f);
+	LFO3oscParModmixer.gain(1, 0.5f);
 	LFO3oscParModmixer.gain(2, 0.0f);
 	LFO3oscParModmixer.gain(3, 0.0f);
 }
 
-FLASHMEM void init_LFO_envelopes(void) {
+FLASHMEM void init_LFO_envelopes(void)
+{
 	updateLFO1delay();
 	updateLFO1fade();
 	updateLFO1decay();
@@ -216,57 +215,68 @@ FLASHMEM void init_LFO_envelopes(void) {
 	updateLFO3release();
 }
 
-
-FLASHMEM void updateLFO1waveform () {
-	if (oscLFOWaveform != 5) {
+FLASHMEM void updateLFO1waveform()
+{
+	if (oscLFOWaveform != 5)
+	{
 		pitchLfo.begin(LFO_WAVEFORM_ARBITRARY);
 	}
-	else {
+	else
+	{
 		pitchLfo.begin(LFO_WAVEFORM_SAMPLE_HOLD);
 	}
 }
 
-FLASHMEM void updateLFO2waveform () {
-	if (filterLfoWaveform != 5) {
+FLASHMEM void updateLFO2waveform()
+{
+	if (filterLfoWaveform != 5)
+	{
 		filterLfo.begin(LFO_WAVEFORM_ARBITRARY);
 	}
-	else {
+	else
+	{
 		filterLfo.begin(LFO_WAVEFORM_SAMPLE_HOLD);
 	}
 }
 
-FLASHMEM void updateLFO3waveform () {
-	if (Lfo3Waveform != 5) {
+FLASHMEM void updateLFO3waveform()
+{
+	if (Lfo3Waveform != 5)
+	{
 		ModLfo3.begin(LFO_WAVEFORM_ARBITRARY);
 	}
-	else {
-		
+	else
+	{
+
 		ModLfo3.begin(LFO_WAVEFORM_SAMPLE_HOLD);
 	}
 }
 
-
-
-FLASHMEM void updateLFO3amt() {
+FLASHMEM void updateLFO3amt()
+{
 	float value = Lfo3amt + AtouchLFO3amt;
-	if (value >= 1.0) {
+	if (value >= 1.0)
+	{
 		value = 1.0f;
 	}
 	value = value * 0.5f;
-	
-	if (LFO3fadeTime != 0 || LFO3releaseTime != 0) {
-		LFO3ModMixer1.gain(0, value);	// LFO3envelope
+
+	if (LFO3fadeTime != 0 || LFO3releaseTime != 0)
+	{
+		LFO3ModMixer1.gain(0, value); // LFO3envelope
 		LFO3ModMixer1.gain(1, (1.0f - value));
-		LFO3ModMixer1.gain(2, 0);		// LFO3 > VCA off
+		LFO3ModMixer1.gain(2, 0); // LFO3 > VCA off
 	}
-	else {
-		LFO3ModMixer1.gain(0, 0);		// LFO3 without envelope
+	else
+	{
+		LFO3ModMixer1.gain(0, 0); // LFO3 without envelope
 		LFO3ModMixer1.gain(1, (1.0f - value));
-		LFO3ModMixer1.gain(2, value);	// LFO3 > VCA on
+		LFO3ModMixer1.gain(2, value); // LFO3 > VCA on
 	}
 }
 
-FLASHMEM void init_voices() {
+FLASHMEM void init_voices()
+{
 	voiceMixerM1.gain(0, VOICEMIXERLEVEL);
 	voiceMixerM1.gain(1, VOICEMIXERLEVEL);
 	voiceMixerM1.gain(2, VOICEMIXERLEVEL);
@@ -280,16 +290,18 @@ FLASHMEM void init_voices() {
 	ScopePeakMixer.gain(1, VOICEMIXERLEVEL);
 }
 
-FLASHMEM void init_waveformMod() {
-	
+FLASHMEM void init_waveformMod()
+{
+
 	float lev = 1.0f;
 	float frq = 440.0f;
 	short wav = 3;
 	float oct = 2.0f;
 	loadArbWaveformA(PARABOLIC_WAVE);
 	loadArbWaveformB(PARABOLIC_WAVE);
-	
-	for (uint8_t i = 0; i < 8; i++) {
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].begin(lev, frq, wav);
 		waveformModb[i].begin(lev, frq, wav);
 		waveformModa[i].frequencyModulation(oct);
@@ -297,7 +309,8 @@ FLASHMEM void init_waveformMod() {
 	}
 }
 
-FLASHMEM void init_Filter() {
+FLASHMEM void init_Filter()
+{
 	float filterFreq = 18000.0f;
 	filter1.frequency(filterFreq);
 	filter2.frequency(filterFreq);
@@ -310,7 +323,8 @@ FLASHMEM void init_Filter() {
 	filterOctave = 6.9999f;
 }
 
-FLASHMEM void init_Keytracking() {
+FLASHMEM void init_Keytracking()
+{
 	const float val = 1.0f;
 	keytracking1.amplitude(val);
 	keytracking2.amplitude(val);
@@ -322,7 +336,8 @@ FLASHMEM void init_Keytracking() {
 	keytracking8.amplitude(val);
 }
 
-FLASHMEM void init_FilterVelocity() {
+FLASHMEM void init_FilterVelocity()
+{
 	const float val = 1.0f;
 	FilterVelo1.amplitude(val);
 	FilterVelo2.amplitude(val);
@@ -334,23 +349,27 @@ FLASHMEM void init_FilterVelocity() {
 	FilterVelo8.amplitude(val);
 }
 
-
-FLASHMEM void init_WaveshaperTable() {
+FLASHMEM void init_WaveshaperTable()
+{
 	const int val = 3;
-	for (uint8_t i = 0; i < 8; i++) {
-		waveshaper[i].shape(const_cast<float*>(WAVESHAPER_TABLE1), val);
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		waveshaper[i].shape(const_cast<float *>(WAVESHAPER_TABLE1), val);
 	}
 }
 
-FLASHMEM void init_WaveshaperAmp() {
-	
+FLASHMEM void init_WaveshaperAmp()
+{
+
 	const float val = 1.0f;
-	for (uint8_t i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		WaveshaperAmp[i].gain(val);
 	}
 }
 
-FLASHMEM void init_LFO1envModMixer () {
+FLASHMEM void init_LFO1envModMixer()
+{
 	const float val = 0.125f;
 	LFO1envModMixer1.gain(0, val);
 	LFO1envModMixer1.gain(1, val);
@@ -362,9 +381,11 @@ FLASHMEM void init_LFO1envModMixer () {
 	LFO1envModMixer2.gain(3, val);
 }
 
-FLASHMEM void init_EnvelopeReleasePhase() {
+FLASHMEM void init_EnvelopeReleasePhase()
+{
 	const float time = 1.0f;
-	for (uint8_t i=0; i<8; i++){
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		filterEnvelope[i].releaseNoteOn(time);
 		ampEnvelope[i].releaseNoteOn(time);
 		LFO1Envelope[i].releaseNoteOn(time);
@@ -373,7 +394,8 @@ FLASHMEM void init_EnvelopeReleasePhase() {
 	LFO3EnvelopeAmp.releaseNoteOn(time);
 }
 
-FLASHMEM void set_Filter_Envelope_releaseNoteOn() {
+FLASHMEM void set_Filter_Envelope_releaseNoteOn()
+{
 	const float time = 1.0f;
 	filterEnvelope[0].releaseNoteOn(time);
 	filterEnvelope[1].releaseNoteOn(time);
@@ -385,7 +407,8 @@ FLASHMEM void set_Filter_Envelope_releaseNoteOn() {
 	filterEnvelope[7].releaseNoteOn(time);
 }
 
-FLASHMEM void set_Amp_Envelope_releaseNoteOn() {
+FLASHMEM void set_Amp_Envelope_releaseNoteOn()
+{
 	const float time = 1.0f;
 	ampEnvelope[0].releaseNoteOn(time);
 	ampEnvelope[1].releaseNoteOn(time);
@@ -397,8 +420,9 @@ FLASHMEM void set_Amp_Envelope_releaseNoteOn() {
 	ampEnvelope[7].releaseNoteOn(time);
 }
 
-FLASHMEM void init_EnvelopeCurve() {
-	const int8_t envelopeType = 0;	// 0 linear, -8 fast exponential, -8 slow exponential
+FLASHMEM void init_EnvelopeCurve()
+{
+	const int8_t envelopeType = 0; // 0 linear, -8 fast exponential, -8 slow exponential
 	ampEnvelope[0].setEnvType(envelopeType);
 	ampEnvelope[1].setEnvType(envelopeType);
 	ampEnvelope[2].setEnvType(envelopeType);
@@ -434,7 +458,8 @@ FLASHMEM void init_EnvelopeCurve() {
 	LFO3EnvelopeAmp.setEnvType(envelopeType);
 }
 
-FLASHMEM void updateLFOsyn() {
+FLASHMEM void updateLFOsyn()
+{
 	/*
 	if (oscLfoRetrig == 2 && oscLFOWaveform == WAVEFORM_SAWTOOTH ) {
 	lfo1ph = 180;
@@ -445,11 +470,10 @@ FLASHMEM void updateLFOsyn() {
 	*/
 }
 
-
-
-FLASHMEM void updateLFO1delay () {
+FLASHMEM void updateLFO1delay()
+{
 	float t_delay = 0;
-	
+
 	LFO1Envelope[0].delay(t_delay);
 	LFO1Envelope[1].delay(t_delay);
 	LFO1Envelope[2].delay(t_delay);
@@ -460,7 +484,8 @@ FLASHMEM void updateLFO1delay () {
 	LFO1Envelope[7].delay(t_delay);
 }
 
-FLASHMEM void updateLFO2delay () {
+FLASHMEM void updateLFO2delay()
+{
 	float t_delay = 0;
 	LFO2Envelope[0].delay(t_delay);
 	LFO2Envelope[1].delay(t_delay);
@@ -470,17 +495,18 @@ FLASHMEM void updateLFO2delay () {
 	LFO2Envelope[5].delay(t_delay);
 	LFO2Envelope[6].delay(t_delay);
 	LFO2Envelope[7].delay(t_delay);
-	
 }
 
-FLASHMEM void updateLFO3delay () {
+FLASHMEM void updateLFO3delay()
+{
 	float t_delay = 0;
 	LFO3EnvelopeAmp.delay(t_delay);
 }
 
-FLASHMEM void updateLFO1fade () {
+FLASHMEM void updateLFO1fade()
+{
 	float t_fade = LFO1fadeTime;
-	
+
 	LFO1Envelope[0].attack(t_fade);
 	LFO1Envelope[1].attack(t_fade);
 	LFO1Envelope[2].attack(t_fade);
@@ -491,7 +517,8 @@ FLASHMEM void updateLFO1fade () {
 	LFO1Envelope[7].attack(t_fade);
 }
 
-FLASHMEM void updateLFO2fade () {
+FLASHMEM void updateLFO2fade()
+{
 	float t_fade = LFO2fadeTime;
 	LFO2Envelope[0].attack(t_fade);
 	LFO2Envelope[1].attack(t_fade);
@@ -501,17 +528,18 @@ FLASHMEM void updateLFO2fade () {
 	LFO2Envelope[5].attack(t_fade);
 	LFO2Envelope[6].attack(t_fade);
 	LFO2Envelope[7].attack(t_fade);
-	
 }
 
-FLASHMEM void updateLFO3fade () {
+FLASHMEM void updateLFO3fade()
+{
 	float value = 0.0f;
 	LFO3EnvelopeAmp.decay(value);
 	value = LFO3fadeTime;
 	LFO3EnvelopeAmp.attack(value);
 }
 
-FLASHMEM void updateLFO1decay () {
+FLASHMEM void updateLFO1decay()
+{
 	float t_decay = 0.0f;
 	LFO1Envelope[0].decay(t_decay);
 	LFO1Envelope[1].decay(t_decay);
@@ -523,7 +551,8 @@ FLASHMEM void updateLFO1decay () {
 	LFO1Envelope[7].decay(t_decay);
 }
 
-FLASHMEM void updateLFO2decay () {
+FLASHMEM void updateLFO2decay()
+{
 	float t_decay = 0.0f;
 	LFO2Envelope[0].decay(t_decay);
 	LFO2Envelope[1].decay(t_decay);
@@ -532,15 +561,17 @@ FLASHMEM void updateLFO2decay () {
 	LFO2Envelope[4].decay(t_decay);
 	LFO2Envelope[5].decay(t_decay);
 	LFO2Envelope[6].decay(t_decay);
-	LFO2Envelope[7].decay(t_decay);	
+	LFO2Envelope[7].decay(t_decay);
 }
 
-FLASHMEM void updateLFO3decay () {
+FLASHMEM void updateLFO3decay()
+{
 	float t_decay = 0.0f;
 	LFO3EnvelopeAmp.decay(t_decay);
 }
 
-FLASHMEM void updateLFO1sustain () {
+FLASHMEM void updateLFO1sustain()
+{
 	float val = 1.0f;
 	LFO1Envelope[0].sustain(val);
 	LFO1Envelope[1].sustain(val);
@@ -552,7 +583,8 @@ FLASHMEM void updateLFO1sustain () {
 	LFO1Envelope[7].sustain(val);
 }
 
-FLASHMEM void updateLFO2sustain () {
+FLASHMEM void updateLFO2sustain()
+{
 	float val = 1.0f;
 	LFO2Envelope[0].sustain(val);
 	LFO2Envelope[1].sustain(val);
@@ -562,20 +594,22 @@ FLASHMEM void updateLFO2sustain () {
 	LFO2Envelope[5].sustain(val);
 	LFO2Envelope[6].sustain(val);
 	LFO2Envelope[7].sustain(val);
-	
 }
 
-FLASHMEM void updateLFO3sustain () {
+FLASHMEM void updateLFO3sustain()
+{
 	LFO3EnvelopeAmp.sustain(1.0f);
 }
 
-FLASHMEM void updateLFO1release () {
+FLASHMEM void updateLFO1release()
+{
 	float t_release = LFO1releaseTime;
-	
-	if (LFO1releaseTime > ampRelease) {
+
+	if (LFO1releaseTime > ampRelease)
+	{
 		t_release = ampRelease;
 	}
-	
+
 	LFO1Envelope[0].release(t_release);
 	LFO1Envelope[1].release(t_release);
 	LFO1Envelope[2].release(t_release);
@@ -584,13 +618,14 @@ FLASHMEM void updateLFO1release () {
 	LFO1Envelope[5].release(t_release);
 	LFO1Envelope[6].release(t_release);
 	LFO1Envelope[7].release(t_release);
-	
 }
 
-FLASHMEM void updateLFO2release () {
+FLASHMEM void updateLFO2release()
+{
 	float t_release = LFO2releaseTime;
-	
-	if (LFO2releaseTime > ampRelease) {
+
+	if (LFO2releaseTime > ampRelease)
+	{
 		t_release = ampRelease;
 	}
 	LFO2Envelope[0].release(t_release);
@@ -601,24 +636,27 @@ FLASHMEM void updateLFO2release () {
 	LFO2Envelope[5].release(t_release);
 	LFO2Envelope[6].release(t_release);
 	LFO2Envelope[7].release(t_release);
-	
 }
 
-FLASHMEM void updateLFO3release () {
-	
+FLASHMEM void updateLFO3release()
+{
+
 	float t_release;
-	
-	if (LFO2releaseTime > ampRelease) {
+
+	if (LFO2releaseTime > ampRelease)
+	{
 		t_release = ampRelease;
 	}
-	else {
+	else
+	{
 		t_release = LFO3releaseTime;
 	}
-	
+
 	LFO3EnvelopeAmp.release(t_release);
 }
 
-FLASHMEM void ampEnvelopes_off() {
+FLASHMEM void ampEnvelopes_off()
+{
 	float val = 25.0f;
 	ampEnvelope[0].release(val);
 	ampEnvelope[1].release(val);
@@ -630,9 +668,8 @@ FLASHMEM void ampEnvelopes_off() {
 	ampEnvelope[7].release(val);
 }
 
-
-
-FLASHMEM void updateFilterFM() {
+FLASHMEM void updateFilterFM()
+{
 	filterModMixer1b.gain(1, filterFM);
 	filterModMixer2b.gain(1, filterFM);
 	filterModMixer3b.gain(1, filterFM);
@@ -643,7 +680,8 @@ FLASHMEM void updateFilterFM() {
 	filterModMixer8b.gain(1, filterFM);
 }
 
-FLASHMEM void updateFilterFM2() {
+FLASHMEM void updateFilterFM2()
+{
 	filterModMixer1b.gain(2, filterFM2);
 	filterModMixer2b.gain(2, filterFM2);
 	filterModMixer3b.gain(2, filterFM2);
@@ -654,12 +692,12 @@ FLASHMEM void updateFilterFM2() {
 	filterModMixer8b.gain(2, filterFM2);
 }
 
-
 //*************************************************************************
 // init Potentiometer
 //*************************************************************************
-FLASHMEM void pot_init () {
-	
+FLASHMEM void pot_init()
+{
+
 	int mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
 	mux1ValuesPrev = mux1Read;
 	int mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
@@ -668,33 +706,66 @@ FLASHMEM void pot_init () {
 	mux3ValuesPrev = mux3Read;
 	int mux4Read = MCP_adc.read(MCP3208::Channel::SINGLE_3);
 	mux4ValuesPrev = mux4Read;
-	
+
 	// read Pot1 (change Patch Bank)
 	mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
-	if (mux1Read > (mux1ValuesPrev + (QUANTISE_FACTOR * 4)) || mux1Read < (mux1ValuesPrev - (QUANTISE_FACTOR *4))) {
+	if (mux1Read > (mux1ValuesPrev + (QUANTISE_FACTOR * 4)) || mux1Read < (mux1ValuesPrev - (QUANTISE_FACTOR * 4)))
+	{
 		mux1ValuesPrev = mux1Read;
 	}
 	// read Pot2 (non)
 	mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
-	if (mux2Read > (mux2ValuesPrev + (QUANTISE_FACTOR * 4)) || mux2Read < (mux2ValuesPrev - (QUANTISE_FACTOR *4))) {
+	if (mux2Read > (mux2ValuesPrev + (QUANTISE_FACTOR * 4)) || mux2Read < (mux2ValuesPrev - (QUANTISE_FACTOR * 4)))
+	{
 		mux2ValuesPrev = mux2Read;
 	}
 	// read Pot3 (non)
 	mux3Read = MCP_adc.read(MCP3208::Channel::SINGLE_2);
-	if (mux3Read > (mux3ValuesPrev + (QUANTISE_FACTOR * 4)) || mux3Read < (mux3ValuesPrev - (QUANTISE_FACTOR *4))) {
+	if (mux3Read > (mux3ValuesPrev + (QUANTISE_FACTOR * 4)) || mux3Read < (mux3ValuesPrev - (QUANTISE_FACTOR * 4)))
+	{
 		mux3ValuesPrev = mux3Read;
 	}
 	// read Pot4 (Cutoff value)
 	mux4Read = MCP_adc.read(MCP3208::Channel::SINGLE_3);
-	if (mux4Read > (mux4ValuesPrev + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev - QUANTISE_FACTOR)) {
+	if (mux4Read > (mux4ValuesPrev + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev - QUANTISE_FACTOR))
+	{
 		mux4ValuesPrev = mux4Read;
 	}
+}
+
+//***********************************************************************
+// init Sound synthesis
+//***********************************************************************
+FLASHMEM void init_SoundSynthesis (void) {
+	voiceMixerM1.gain(0,0);
+	voiceMixerM1.gain(1,0);
+	voiceMixerM2.gain(0,0);
+	voiceMixerM2.gain(1,0);
+
+	for (size_t i = 0; i < 8; i++)
+	{
+		int level = 0;
+		ampEnvelope[i].release(level);
+	}
+	
+	for (size_t i = 0; i < 8; i++)
+	{
+		byte note = 63;
+		byte velocity = 0;
+		get_play_voice(note, velocity);
+	}
+	allNotesOff();
+	voiceMixerM1.gain(0,1);
+	voiceMixerM1.gain(1,1);
+	voiceMixerM2.gain(0,1);
+	voiceMixerM2.gain(1,1);
 }
 
 //*************************************************************************
 // get LFO Waveform
 //*************************************************************************
-FLASHMEM int getLFOWaveform(int value) {
+FLASHMEM int getLFOWaveform(int value)
+{
 	/*
 	if (value >= 0 && value < 8) {
 	return WAVEFORM_SINE;
@@ -715,10 +786,11 @@ FLASHMEM int getLFOWaveform(int value) {
 //*************************************************************************
 // convert LFO1 Waveform
 //*************************************************************************
-FLASHMEM int convertLFOWaveform(int value) {
-	
+FLASHMEM int convertLFOWaveform(int value)
+{
+
 	return 20;
-	
+
 	/*
 	switch (value)
 	{
@@ -735,10 +807,11 @@ FLASHMEM int convertLFOWaveform(int value) {
 //*************************************************************************
 // convert LFO2 Waveform
 //*************************************************************************
-FLASHMEM int convertLFO2Waveform(int value) {
-	
+FLASHMEM int convertLFO2Waveform(int value)
+{
+
 	return 22;
-	
+
 	/*
 	switch (value)
 	{
@@ -750,16 +823,16 @@ FLASHMEM int convertLFO2Waveform(int value) {
 	case WAVEFORM_SAMPLE_HOLD2: return 5;break;
 	}
 	*/
-	
 }
 
 //*************************************************************************
 // convert LFO3 Waveform
 //*************************************************************************
-FLASHMEM int convertLFO3Waveform(int value) {
-	
+FLASHMEM int convertLFO3Waveform(int value)
+{
+
 	return 24;
-	
+
 	/*
 	switch (value)
 	{
@@ -776,12 +849,15 @@ FLASHMEM int convertLFO3Waveform(int value) {
 //*************************************************************************
 // convert pitchEnv
 //*************************************************************************
-FLASHMEM int convert_pitchEnv(float pitch_Env){
-	
+FLASHMEM int convert_pitchEnv(float pitch_Env)
+{
+
 	float Value1 = (pitch_Env / OSCMODMIXERMAX);
-	for (int i = 0; i < 128; i++) {
+	for (int i = 0; i < 128; i++)
+	{
 		float Value2 = LINEARCENTREZERO[i];
-		if (Value1 <= Value2){
+		if (Value1 <= Value2)
+		{
 			return i;
 		}
 	}
@@ -791,16 +867,20 @@ FLASHMEM int convert_pitchEnv(float pitch_Env){
 //*************************************************************************
 // load arbitrary Waveforms
 //*************************************************************************
-FLASHMEM void loadArbWaveformA(const int16_t * wavedata) {
-	
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void loadArbWaveformA(const int16_t *wavedata)
+{
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].arbitraryWaveform(wavedata, AWFREQ);
 	}
 }
 
-FLASHMEM void loadArbWaveformB(const int16_t * wavedata) {
-	
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void loadArbWaveformB(const int16_t *wavedata)
+{
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModb[i].arbitraryWaveform(wavedata, AWFREQ);
 	}
 }
@@ -808,7 +888,8 @@ FLASHMEM void loadArbWaveformB(const int16_t * wavedata) {
 //*************************************************************************
 // get LFO TempoRate
 //*************************************************************************
-FLASHMEM float getLFOTempoRate(int value) {
+FLASHMEM float getLFOTempoRate(int value)
+{
 	lfoTempoValue = LFOTEMPO[value];
 	return lfoSyncFreq * LFOTEMPO[value];
 }
@@ -816,28 +897,32 @@ FLASHMEM float getLFOTempoRate(int value) {
 //*************************************************************************
 // get Pitch
 //*************************************************************************
-FLASHMEM int getPitch(int value) {
+FLASHMEM int getPitch(int value)
+{
 	return PITCH[value];
 }
 
 //*************************************************************************
 // get Pitch
 //*************************************************************************
-FLASHMEM int getTranspose(int value) {
+FLASHMEM int getTranspose(int value)
+{
 	return TRANSPOSE[value];
 }
 
 //*************************************************************************
 // get Pitch
 //*************************************************************************
-FLASHMEM int getMasterTune(int value) {
+FLASHMEM int getMasterTune(int value)
+{
 	return MASTERTUNE[value];
 }
 
 //*************************************************************************
 // set PwmMixerA_LFO
 //*************************************************************************
-FLASHMEM void setPwmMixerALFO(float value) {
+FLASHMEM void setPwmMixerALFO(float value)
+{
 	pwMixer1a.gain(0, value);
 	pwMixer2a.gain(0, value);
 	pwMixer3a.gain(0, value);
@@ -851,7 +936,8 @@ FLASHMEM void setPwmMixerALFO(float value) {
 //*************************************************************************
 // set PwmMixerB_LFO
 //*************************************************************************
-FLASHMEM void setPwmMixerBLFO(float value) {
+FLASHMEM void setPwmMixerBLFO(float value)
+{
 	pwMixer1b.gain(0, value);
 	pwMixer2b.gain(0, value);
 	pwMixer3b.gain(0, value);
@@ -862,7 +948,8 @@ FLASHMEM void setPwmMixerBLFO(float value) {
 	pwMixer8b.gain(0, value);
 }
 
-FLASHMEM void setPwmMixerAPW(float value) {
+FLASHMEM void setPwmMixerAPW(float value)
+{
 	pwMixer1a.gain(1, value);
 	pwMixer2a.gain(1, value);
 	pwMixer3a.gain(1, value);
@@ -873,7 +960,8 @@ FLASHMEM void setPwmMixerAPW(float value) {
 	pwMixer8a.gain(1, value);
 }
 
-FLASHMEM void setPwmMixerBPW(float value) {
+FLASHMEM void setPwmMixerBPW(float value)
+{
 	pwMixer1b.gain(1, value);
 	pwMixer2b.gain(1, value);
 	pwMixer3b.gain(1, value);
@@ -884,7 +972,8 @@ FLASHMEM void setPwmMixerBPW(float value) {
 	pwMixer8b.gain(1, value);
 }
 
-FLASHMEM void setPwmMixerAFEnv(float value) {
+FLASHMEM void setPwmMixerAFEnv(float value)
+{
 	pwMixer1a.gain(2, value);
 	pwMixer2a.gain(2, value);
 	pwMixer3a.gain(2, value);
@@ -895,7 +984,8 @@ FLASHMEM void setPwmMixerAFEnv(float value) {
 	pwMixer8a.gain(2, value);
 }
 
-FLASHMEM void setPwmMixerBFEnv(float value) {
+FLASHMEM void setPwmMixerBFEnv(float value)
+{
 	pwMixer1b.gain(2, value);
 	pwMixer2b.gain(2, value);
 	pwMixer3b.gain(2, value);
@@ -906,10 +996,12 @@ FLASHMEM void setPwmMixerBFEnv(float value) {
 	pwMixer8b.gain(2, value);
 }
 
-FLASHMEM void updateUnison() {
-		allNotesOff();					// Unison off
-		updateDetune();
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void updateUnison()
+{
+	allNotesOff(); // Unison off
+	updateDetune();
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		voices[i].voiceOn = 0;
 		voices[i].timeOn = 0;
 	}
@@ -918,8 +1010,8 @@ FLASHMEM void updateUnison() {
 //*************************************************************************
 // update Glide
 //*************************************************************************
-FLASHMEM void updateGlide() {
-
+FLASHMEM void updateGlide()
+{
 }
 
 //*************************************************************************
@@ -927,8 +1019,8 @@ FLASHMEM void updateGlide() {
 //*************************************************************************
 FLASHMEM void updateWaveformA(void)
 {
-	int newWaveform;
-	
+	int16_t newWaveform;
+
 	// Bank P (Mutable instruments Braids waveforms)
 	if (Osc1WaveBank == 15)
 	{
@@ -940,10 +1032,11 @@ FLASHMEM void updateWaveformA(void)
 		{
 			newWaveform = waveform[0];
 		}
-		else newWaveform = waveform[oscWaveformA + 12];
+		else
+			newWaveform = waveform[oscWaveformA + 12];
 
 		if (oscWaveformA >= 12 && oscWaveformA <= 15)
-		{			
+		{
 			for (size_t i = 0; i < 8; i++)
 			{
 				waveformModa[i].ShapeDigitalFilter(oscWaveformA - 12);
@@ -994,7 +1087,8 @@ FLASHMEM void updateWaveformB()
 		{
 			newWaveform = waveform[0];
 		}
-		else newWaveform = waveform[oscWaveformB + 12];
+		else
+			newWaveform = waveform[oscWaveformB + 12];
 
 		if (oscWaveformB >= 12 && oscWaveformB <= 15)
 		{
@@ -1036,88 +1130,158 @@ FLASHMEM void updateWaveformB()
 //*************************************************************************
 // set Waveshaper Table
 //*************************************************************************
-FLASHMEM void setWaveShaperTable (uint8_t WShaperNo){
-	
+FLASHMEM void setWaveShaperTable(uint8_t WShaperNo)
+{
+
 	int length;
 	const float *WS_array_addr = 0; //!!!!!!!!!!!!!
-	
-	switch(WShaperNo) {
-		case 0: WS_array_addr = WAVESHAPER_TABLE1; break;
-		case 1: WS_array_addr = WAVESHAPER_TABLE2; break;
-		case 2: WS_array_addr = WAVESHAPER_TABLE3; break;
-		case 3: WS_array_addr = WAVESHAPER_TABLE4; break;
-		case 4: WS_array_addr = WAVESHAPER_TABLE5; break;
-		case 5: WS_array_addr = WAVESHAPER_TABLE6; break;
-		case 6: WS_array_addr = WAVESHAPER_TABLE7; break;
-		case 7: WS_array_addr = WAVESHAPER_TABLE8; break;
-		case 8: WS_array_addr = WAVESHAPER_TABLE9; break;
-		case 9: WS_array_addr = WAVESHAPER_TABLE10; break;
-		case 10: WS_array_addr = WAVESHAPER_TABLE11; break;
-		case 11: WS_array_addr = WAVESHAPER_TABLE12; break;
-		case 12: WS_array_addr = WAVESHAPER_TABLE13; break;
-		case 13: WS_array_addr = WAVESHAPER_TABLE14; break;
-		case 14: WS_array_addr = WAVESHAPER_TABLE15; break;
-		case 15: WS_array_addr = WAVESHAPER_TABLE16; break;
-		case 16: WS_array_addr = WAVESHAPER_TABLE17; break;
-		case 17: WS_array_addr = WAVESHAPER_TABLE18; break;
-		case 18: WS_array_addr = WAVESHAPER_TABLE19; break;
-		case 19: WS_array_addr = WAVESHAPER_TABLE20; break;
-		case 20: WS_array_addr = WAVESHAPER_TABLE21; break;
-		case 21: WS_array_addr = WAVESHAPER_TABLE22; break;
-		case 22: WS_array_addr = WAVESHAPER_TABLE23; break;
-		case 23: WS_array_addr = WAVESHAPER_TABLE24; break;
-		case 24: WS_array_addr = WAVESHAPER_TABLE25; break;
-		case 25: WS_array_addr = WAVESHAPER_TABLE26; break;
-		case 26: WS_array_addr = WAVESHAPER_TABLE27; break;
-		case 27: WS_array_addr = WAVESHAPER_TABLE28; break;
-		case 28: WS_array_addr = WAVESHAPER_TABLE29; break;
-		case 29: WS_array_addr = WAVESHAPER_TABLE30; break;
-		
+
+	switch (WShaperNo)
+	{
+	case 0:
+		WS_array_addr = WAVESHAPER_TABLE1;
+		break;
+	case 1:
+		WS_array_addr = WAVESHAPER_TABLE2;
+		break;
+	case 2:
+		WS_array_addr = WAVESHAPER_TABLE3;
+		break;
+	case 3:
+		WS_array_addr = WAVESHAPER_TABLE4;
+		break;
+	case 4:
+		WS_array_addr = WAVESHAPER_TABLE5;
+		break;
+	case 5:
+		WS_array_addr = WAVESHAPER_TABLE6;
+		break;
+	case 6:
+		WS_array_addr = WAVESHAPER_TABLE7;
+		break;
+	case 7:
+		WS_array_addr = WAVESHAPER_TABLE8;
+		break;
+	case 8:
+		WS_array_addr = WAVESHAPER_TABLE9;
+		break;
+	case 9:
+		WS_array_addr = WAVESHAPER_TABLE10;
+		break;
+	case 10:
+		WS_array_addr = WAVESHAPER_TABLE11;
+		break;
+	case 11:
+		WS_array_addr = WAVESHAPER_TABLE12;
+		break;
+	case 12:
+		WS_array_addr = WAVESHAPER_TABLE13;
+		break;
+	case 13:
+		WS_array_addr = WAVESHAPER_TABLE14;
+		break;
+	case 14:
+		WS_array_addr = WAVESHAPER_TABLE15;
+		break;
+	case 15:
+		WS_array_addr = WAVESHAPER_TABLE16;
+		break;
+	case 16:
+		WS_array_addr = WAVESHAPER_TABLE17;
+		break;
+	case 17:
+		WS_array_addr = WAVESHAPER_TABLE18;
+		break;
+	case 18:
+		WS_array_addr = WAVESHAPER_TABLE19;
+		break;
+	case 19:
+		WS_array_addr = WAVESHAPER_TABLE20;
+		break;
+	case 20:
+		WS_array_addr = WAVESHAPER_TABLE21;
+		break;
+	case 21:
+		WS_array_addr = WAVESHAPER_TABLE22;
+		break;
+	case 22:
+		WS_array_addr = WAVESHAPER_TABLE23;
+		break;
+	case 23:
+		WS_array_addr = WAVESHAPER_TABLE24;
+		break;
+	case 24:
+		WS_array_addr = WAVESHAPER_TABLE25;
+		break;
+	case 25:
+		WS_array_addr = WAVESHAPER_TABLE26;
+		break;
+	case 26:
+		WS_array_addr = WAVESHAPER_TABLE27;
+		break;
+	case 27:
+		WS_array_addr = WAVESHAPER_TABLE28;
+		break;
+	case 28:
+		WS_array_addr = WAVESHAPER_TABLE29;
+		break;
+	case 29:
+		WS_array_addr = WAVESHAPER_TABLE30;
+		break;
 	}
-	
+
 	// 1st WaveShaper table has 3 entries. Others have 257
-	if (WShaperNo == 0) {
+	if (WShaperNo == 0)
+	{
 		length = 3;
-		} else {
+	}
+	else
+	{
 		length = 257;
 	}
-	
-	for (uint8_t i = 0; i < 8; i++) {
-		waveshaper[i].shape(const_cast<float*>(WS_array_addr),length);
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		waveshaper[i].shape(const_cast<float *>(WS_array_addr), length);
 	}
 }
 
 //*************************************************************************
 // set Waveshaper drive value
 //*************************************************************************
-FLASHMEM void setWaveShaperDrive (float value){
-	
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void setWaveShaperDrive(float value)
+{
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		WaveshaperAmp[i].gain(value);
 	}
 }
 
-
 //*************************************************************************
 // update Pitch + Detune
 //*************************************************************************
-FLASHMEM void updatePitchA() {
+FLASHMEM void updatePitchA()
+{
 	updatesAllVoices();
 }
 
-FLASHMEM void updatePitchB() {
+FLASHMEM void updatePitchB()
+{
 	updatesAllVoices();
 }
 
-FLASHMEM void updateDetune() {
+FLASHMEM void updateDetune()
+{
 	updatesAllVoices();
 }
 
-FLASHMEM void updateFilterEnvelopeType() {
+FLASHMEM void updateFilterEnvelopeType()
+{
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
-	//envelopeType1 = -128;	// old liniear curve
-	
+	// envelopeType1 = -128;	// old liniear curve
+
 	filterEnvelope[0].setEnvType(envelopeType1);
 	filterEnvelope[1].setEnvType(envelopeType1);
 	filterEnvelope[2].setEnvType(envelopeType1);
@@ -1128,12 +1292,12 @@ FLASHMEM void updateFilterEnvelopeType() {
 	filterEnvelope[7].setEnvType(envelopeType1);
 }
 
-
-FLASHMEM void updateAmpEnvelopeType() {
+FLASHMEM void updateAmpEnvelopeType()
+{
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
-	//envelopeType2 = -128;	// old linear curve
-	
+	// envelopeType2 = -128;	// old linear curve
+
 	ampEnvelope[0].setEnvType(envelopeType2);
 	ampEnvelope[1].setEnvType(envelopeType2);
 	ampEnvelope[2].setEnvType(envelopeType2);
@@ -1144,21 +1308,24 @@ FLASHMEM void updateAmpEnvelopeType() {
 	ampEnvelope[7].setEnvType(envelopeType2);
 }
 
-FLASHMEM void updateLFO1EnvelopeType() {
+FLASHMEM void updateLFO1EnvelopeType()
+{
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
-	//envelopeType2 = -128;	// old linear curve
-	
-	for (uint8_t i = 0; i < 8; i++) {
-		//LFO1Envelope[i].setEnvType(LFO1envCurve);
-	}	
+	// envelopeType2 = -128;	// old linear curve
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		// LFO1Envelope[i].setEnvType(LFO1envCurve);
+	}
 }
 
-FLASHMEM void updateLFO2EnvelopeType() {
+FLASHMEM void updateLFO2EnvelopeType()
+{
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
-	//envelopeType2 = -128;	// old linear curve
-	
+	// envelopeType2 = -128;	// old linear curve
+
 	LFO2Envelope[0].setEnvType(LFO2envCurve);
 	LFO2Envelope[1].setEnvType(LFO2envCurve);
 	LFO2Envelope[2].setEnvType(LFO2envCurve);
@@ -1167,13 +1334,13 @@ FLASHMEM void updateLFO2EnvelopeType() {
 	LFO2Envelope[5].setEnvType(LFO2envCurve);
 	LFO2Envelope[6].setEnvType(LFO2envCurve);
 	LFO2Envelope[7].setEnvType(LFO2envCurve);
-	
 }
 
-FLASHMEM void updateLFO3EnvelopeType() {
+FLASHMEM void updateLFO3EnvelopeType()
+{
 	// set Envelupe curve
 	// 0 linear, -8 fast exponential, -8 slow exponential
-	//envelopeType2 = -128;	// old linear curve
+	// envelopeType2 = -128;	// old linear curve
 	LFO2Envelope[0].setEnvType(LFO2envCurve);
 	LFO2Envelope[1].setEnvType(LFO2envCurve);
 	LFO2Envelope[2].setEnvType(LFO2envCurve);
@@ -1182,229 +1349,274 @@ FLASHMEM void updateLFO3EnvelopeType() {
 	LFO2Envelope[5].setEnvType(LFO2envCurve);
 	LFO2Envelope[6].setEnvType(LFO2envCurve);
 	LFO2Envelope[7].setEnvType(LFO2envCurve);
-	
+
 	LFO3EnvelopeAmp.setEnvType(LFO3envCurve);
-	
 }
 
-
-FLASHMEM void updatePWMSourceA() {
-	if (pwmSource == PWMSOURCELFO) {
-		setPwmMixerAFEnv(0);//Set filter mod to zero
-		//setPwmMixerBFEnv(0);//Set filter mod to zero
-		if (pwmRateA > -5) {
-			setPwmMixerALFO(pwmAmtA);//Set LFO mod
-			//setPwmMixerBLFO(pwmAmtB);//Set LFO mod
+FLASHMEM void updatePWMSourceA()
+{
+	if (pwmSource == PWMSOURCELFO)
+	{
+		setPwmMixerAFEnv(0); // Set filter mod to zero
+		// setPwmMixerBFEnv(0);//Set filter mod to zero
+		if (pwmRateA > -5)
+		{
+			setPwmMixerALFO(pwmAmtA); // Set LFO mod
+			// setPwmMixerBLFO(pwmAmtB);//Set LFO mod
 		}
-		} else {
-		setPwmMixerALFO(0);//Set LFO mod to zero
-		//setPwmMixerBLFO(0);//Set LFO mod to zero
-		if (pwmRateA > -5) {
-			setPwmMixerAFEnv(pwmAmtA);//Set filter mod
-			//setPwmMixerBFEnv(pwmAmtB);//Set filter mod
+	}
+	else
+	{
+		setPwmMixerALFO(0); // Set LFO mod to zero
+		// setPwmMixerBLFO(0);//Set LFO mod to zero
+		if (pwmRateA > -5)
+		{
+			setPwmMixerAFEnv(pwmAmtA); // Set filter mod
+			// setPwmMixerBFEnv(pwmAmtB);//Set filter mod
 		}
 	}
 }
 
-FLASHMEM void updatePWMSourceB() {
-	if (pwmSource == PWMSOURCELFO) {
-		//setPwmMixerAFEnv(0);//Set filter mod to zero
-		setPwmMixerBFEnv(0);//Set filter mod to zero
-		if (pwmRateB > -5) {
-			//setPwmMixerALFO(pwmAmtA);//Set LFO mod
-			setPwmMixerBLFO(pwmAmtB);//Set LFO mod
+FLASHMEM void updatePWMSourceB()
+{
+	if (pwmSource == PWMSOURCELFO)
+	{
+		// setPwmMixerAFEnv(0);//Set filter mod to zero
+		setPwmMixerBFEnv(0); // Set filter mod to zero
+		if (pwmRateB > -5)
+		{
+			// setPwmMixerALFO(pwmAmtA);//Set LFO mod
+			setPwmMixerBLFO(pwmAmtB); // Set LFO mod
 		}
-		} else {
-		//setPwmMixerALFO(0);//Set LFO mod to zero
-		setPwmMixerBLFO(0);//Set LFO mod to zero
-		if (pwmRateB > -5) {
-			//setPwmMixerAFEnv(pwmAmtA);//Set filter mod
-			setPwmMixerBFEnv(pwmAmtB);//Set filter mod
+	}
+	else
+	{
+		// setPwmMixerALFO(0);//Set LFO mod to zero
+		setPwmMixerBLFO(0); // Set LFO mod to zero
+		if (pwmRateB > -5)
+		{
+			// setPwmMixerAFEnv(pwmAmtA);//Set filter mod
+			setPwmMixerBFEnv(pwmAmtB); // Set filter mod
 		}
 	}
 }
 
-FLASHMEM void updatePWMRateA() {
+FLASHMEM void updatePWMRateA()
+{
 	pwmLfoA.frequency(pwmRateA);
-	//pwmLfoB.frequency(pwmRate);
-	if (pwmRateA == -10) {
-		//Set to fixed PW mode
-		setPwmMixerALFO(0);//LFO Source off
-		//setPwmMixerBLFO(0);
-		setPwmMixerAFEnv(0);//Filter Env Source off
-		//setPwmMixerBFEnv(0);
-		setPwmMixerAPW(1);//Manually adjustable pulse width on
-		//setPwmMixerBPW(1);
-		} else if (pwmRateA == -5) {
-		//Set to Filter Env Mod source
+	// pwmLfoB.frequency(pwmRate);
+	if (pwmRateA == -10)
+	{
+		// Set to fixed PW mode
+		setPwmMixerALFO(0); // LFO Source off
+		// setPwmMixerBLFO(0);
+		setPwmMixerAFEnv(0); // Filter Env Source off
+		// setPwmMixerBFEnv(0);
+		setPwmMixerAPW(1); // Manually adjustable pulse width on
+		// setPwmMixerBPW(1);
+	}
+	else if (pwmRateA == -5)
+	{
+		// Set to Filter Env Mod source
 		pwmSource = PWMSOURCEFENV;
 		updatePWMSourceA();
 		setPwmMixerAFEnv(pwmAmtA);
-		//setPwmMixerBFEnv(pwmAmtB);
+		// setPwmMixerBFEnv(pwmAmtB);
 		setPwmMixerAPW(0);
-		//setPwmMixerBPW(0);
-		} else {
+		// setPwmMixerBPW(0);
+	}
+	else
+	{
 		pwmSource = PWMSOURCELFO;
 		updatePWMSourceA();
 		setPwmMixerAPW(0);
-		//setPwmMixerBPW(0);
+		// setPwmMixerBPW(0);
 	}
 }
 
-FLASHMEM void updatePWMRateB() {
-	//pwmLfoA.frequency(pwmRate);
+FLASHMEM void updatePWMRateB()
+{
+	// pwmLfoA.frequency(pwmRate);
 	pwmLfoB.frequency(pwmRateB);
-	if (pwmRateB == -10) {
-		//Set to fixed PW mode
-		//setPwmMixerALFO(0);//LFO Source off
+	if (pwmRateB == -10)
+	{
+		// Set to fixed PW mode
+		// setPwmMixerALFO(0);//LFO Source off
 		setPwmMixerBLFO(0);
-		//setPwmMixerAFEnv(0);//Filter Env Source off
+		// setPwmMixerAFEnv(0);//Filter Env Source off
 		setPwmMixerBFEnv(0);
-		//setPwmMixerAPW(1);//Manually adjustable pulse width on
+		// setPwmMixerAPW(1);//Manually adjustable pulse width on
 		setPwmMixerBPW(1);
-		} else if (pwmRateB == -5) {
-		//Set to Filter Env Mod source
+	}
+	else if (pwmRateB == -5)
+	{
+		// Set to Filter Env Mod source
 		pwmSource = PWMSOURCEFENV;
 		updatePWMSourceB();
-		//setPwmMixerAFEnv(pwmAmtA);
+		// setPwmMixerAFEnv(pwmAmtA);
 		setPwmMixerBFEnv(pwmAmtB);
-		//setPwmMixerAPW(0);
+		// setPwmMixerAPW(0);
 		setPwmMixerBPW(0);
-		} else {
+	}
+	else
+	{
 		pwmSource = PWMSOURCELFO;
 		updatePWMSourceB();
-		//setPwmMixerAPW(0);
+		// setPwmMixerAPW(0);
 		setPwmMixerBPW(0);
 	}
 }
 
-FLASHMEM void updatePWMAmount() {
-	//MIDI only - sets both osc
-	if (PageNr == 1) {
+FLASHMEM void updatePWMAmount()
+{
+	// MIDI only - sets both osc
+	if (PageNr == 1)
+	{
 		pwA = 0;
 		setPwmMixerALFO(pwmAmtA);
-		} else {
+	}
+	else
+	{
 		pwB = 0;
 		setPwmMixerBLFO(pwmAmtB);
 	}
 }
 
-FLASHMEM void updatePWA() {
-	if (pwmRateA == -10) {
-		//if PWM amount is around zero, fixed PW is enabled
+FLASHMEM void updatePWA()
+{
+	if (pwmRateA == -10)
+	{
+		// if PWM amount is around zero, fixed PW is enabled
 		setPwmMixerALFO(0);
-		//setPwmMixerBLFO(0);
+		// setPwmMixerBLFO(0);
 		setPwmMixerAFEnv(0);
-		//setPwmMixerBFEnv(0);
+		// setPwmMixerBFEnv(0);
 		setPwmMixerAPW(1);
-		//setPwmMixerBPW(1);
-		} else {
+		// setPwmMixerBPW(1);
+	}
+	else
+	{
 		setPwmMixerAPW(0);
-		//setPwmMixerBPW(0);
-		if (pwmSource == PWMSOURCELFO) {
-			//PW alters PWM LFO amount for waveform A
+		// setPwmMixerBPW(0);
+		if (pwmSource == PWMSOURCELFO)
+		{
+			// PW alters PWM LFO amount for waveform A
 			setPwmMixerALFO(pwmAmtA);
-			} else {
-			//PW alters PWM Filter Env amount for waveform A
+		}
+		else
+		{
+			// PW alters PWM Filter Env amount for waveform A
 			setPwmMixerAFEnv(pwmAmtA);
 		}
 	}
-	float pwA_Adj = pwA;//Prevent silence when pw = +/-1.0 on pulse
-	if (pwA > 0.98) pwA_Adj = 0.98f;
-	if (pwA < -0.98) pwA_Adj = -0.98f;
+	float pwA_Adj = pwA; // Prevent silence when pw = +/-1.0 on pulse
+	if (pwA > 0.98)
+		pwA_Adj = 0.98f;
+	if (pwA < -0.98)
+		pwA_Adj = -0.98f;
 	pwa.amplitude(pwA_Adj);
 }
 
-FLASHMEM void updatePWB() {
-	if (pwmRateB == -10)  {
-		//if PWM amount is around zero, fixed PW is enabled
-		//setPwmMixerALFO(0);
+FLASHMEM void updatePWB()
+{
+	if (pwmRateB == -10)
+	{
+		// if PWM amount is around zero, fixed PW is enabled
+		// setPwmMixerALFO(0);
 		setPwmMixerBLFO(0);
-		//setPwmMixerAFEnv(0);
+		// setPwmMixerAFEnv(0);
 		setPwmMixerBFEnv(0);
-		//setPwmMixerAPW(1);
+		// setPwmMixerAPW(1);
 		setPwmMixerBPW(1);
-		} else {
-		//setPwmMixerAPW(0);
+	}
+	else
+	{
+		// setPwmMixerAPW(0);
 		setPwmMixerBPW(0);
-		if (pwmSource == PWMSOURCELFO) {
-			//PW alters PWM LFO amount for waveform B
+		if (pwmSource == PWMSOURCELFO)
+		{
+			// PW alters PWM LFO amount for waveform B
 			setPwmMixerBLFO(pwmAmtB);
-			} else {
-			//PW alters PWM Filter Env amount for waveform B
+		}
+		else
+		{
+			// PW alters PWM Filter Env amount for waveform B
 			setPwmMixerBFEnv(pwmAmtB);
 		}
 	}
-	float pwB_Adj = pwB;//Prevent silence when pw = +/-1 on pulse
-	if (pwB > 0.98) pwB_Adj = 0.98f;
-	if (pwB < -0.98) pwB_Adj = -0.98f;
+	float pwB_Adj = pwB; // Prevent silence when pw = +/-1 on pulse
+	if (pwB > 0.98)
+		pwB_Adj = 0.98f;
+	if (pwB < -0.98)
+		pwB_Adj = -0.98f;
 	pwb.amplitude(pwB_Adj);
 }
 
 //*************************************************************************
 //  Update OscFX
 //*************************************************************************
-FLASHMEM void updateOscFX() {
-	
-	
-	switch (oscFX) {
-		case 0:	// oscFX Mode: OFF
+FLASHMEM void updateOscFX()
+{
+
+	switch (oscFX)
+	{
+	case 0: // oscFX Mode: OFF
 		setfrequencyModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::OFF);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 1:	// oscFX Mode: XOR
+
+	case 1: // oscFX Mode: XOR
 		setfrequencyModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::XOR);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 2:	// oscFX Mode: XMO
+
+	case 2: // oscFX Mode: XMO
 		setfrequencyModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::OFF);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 3:	// oscFX Mode: MOD
+
+	case 3: // oscFX Mode: MOD
 		setfrequencyModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::MODULO);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 4:	// oscFX Mode: AND
+
+	case 4: // oscFX Mode: AND
 		setfrequencyModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::AND);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 5:	// oscFX Mode: PHA
+
+	case 5: // oscFX Mode: PHA
 		setphaseModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::OFF);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 6:	// oscFX Mode: FM
+
+	case 6: // oscFX Mode: FM
 		setfrequencyModulation();
 		setOscFXCombineMode(AudioEffectDigitalCombine::OFF);
 		updateOscLevelA();
 		updateOscLevelB();
 		setRingModulation(false);
 		break;
-		
-		case 7:	// oscFX Mode: RING
+
+	case 7: // oscFX Mode: RING
 		setRingModulation(true);
 		setOscFXCombineMode(AudioEffectDigitalCombine::OFF);
 		updateOscLevelA();
@@ -1413,128 +1625,132 @@ FLASHMEM void updateOscFX() {
 	}
 }
 
+FLASHMEM void updateOscLevelA()
+{
 
-FLASHMEM void updateOscLevelA() {
+	switch (oscFX)
+	{
 
-	switch (oscFX) {
-		
-		case 0:	// oscFX Mode: off
-		setOscModMixerA(3, 0);	//Feed from Osc2: off
-		setWaveformMixerLevel(0, (oscALevel / 2));	// Osc1 Mix Level 0.5
-		setWaveformMixerLevel(3, 0);	// oscFX out: off
+	case 0:										   // oscFX Mode: off
+		setOscModMixerA(3, 0);					   // Feed from Osc2: off
+		setWaveformMixerLevel(0, (oscALevel / 2)); // Osc1 Mix Level 0.5
+		setWaveformMixerLevel(3, 0);			   // oscFX out: off
 		break;
-		
-		case 1:	// oscFX Mode: XOR
-		setOscModMixerA(3, 0);	//Feed from Osc2: off
-		setWaveformMixerLevel(0, (oscALevel / 2));//Osc 1 (A)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 1:																		   // oscFX Mode: XOR
+		setOscModMixerA(3, 0);													   // Feed from Osc2: off
+		setWaveformMixerLevel(0, (oscALevel / 2));								   // Osc 1 (A)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		break;
-		
-		case 2:	// oscFX Mode: XMO
-		if (oscALevel == 1.0f && oscBLevel <= 1.0f) {
-			setOscModMixerA(3, ((1 - oscBLevel) * Osc1ModAmt) * Osc1ModAmt);//Feed from Osc 2 (B)
-			setWaveformMixerLevel(0, ONE);//Osc 1 (A)
-			setWaveformMixerLevel(1, 0);//Osc 2 (B)
+
+	case 2: // oscFX Mode: XMO
+		if (oscALevel == 1.0f && oscBLevel <= 1.0f)
+		{
+			setOscModMixerA(3, ((1 - oscBLevel) * Osc1ModAmt) * Osc1ModAmt); // Feed from Osc 2 (B)
+			setWaveformMixerLevel(0, ONE);									 // Osc 1 (A)
+			setWaveformMixerLevel(1, 0);									 // Osc 2 (B)
 		}
-		setWaveformMixerLevel(3, 0);	// oscFX out: off
+		setWaveformMixerLevel(3, 0); // oscFX out: off
 		break;
-		
-		case 3:	// oscFX Mode: MOD
-		setOscModMixerA(3, 0);//XMod off
-		setOscModMixerB(3, 0);//XMod off
-		setWaveformMixerLevel(0, (oscALevel / 2));	//Osc 1 (A)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 3:																		   // oscFX Mode: MOD
+		setOscModMixerA(3, 0);													   // XMod off
+		setOscModMixerB(3, 0);													   // XMod off
+		setWaveformMixerLevel(0, (oscALevel / 2));								   // Osc 1 (A)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		break;
-		
-		case 4:	// oscFX Mode: AND
-		setOscModMixerA(3, 0);//XMod off
-		setWaveformMixerLevel(0, (oscALevel / 2));//Osc 1 (A)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 4:																		   // oscFX Mode: AND
+		setOscModMixerA(3, 0);													   // XMod off
+		setWaveformMixerLevel(0, (oscALevel / 2));								   // Osc 1 (A)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		break;
-		
-		case 5:	// oscFX Mode: PHA
-		setOscModMixerB(3, 0);//XMod off
-		setWaveformMixerLevel(0, (oscALevel / 2));//Osc 1 (A)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 5:																		   // oscFX Mode: PHA
+		setOscModMixerB(3, 0);													   // XMod off
+		setWaveformMixerLevel(0, (oscALevel / 2));								   // Osc 1 (A)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		setOscModMixerA(3, ((oscBLevel / 2) * Osc1ModAmt));
 		break;
-		
-		case 6:	// oscFX Mode: FM
-		setOscModMixerB(3, 0);//XMod off
-		setWaveformMixerLevel(0, (oscALevel / 2));//Osc 1 (A)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 6:																		   // oscFX Mode: FM
+		setOscModMixerB(3, 0);													   // XMod off
+		setWaveformMixerLevel(0, (oscALevel / 2));								   // Osc 1 (A)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		setOscModMixerA(3, ((oscBLevel / 2) * Osc1ModAmt));
 		break;
-		
-		case 7:	// oscFX Mode: Ring
-		setOscModMixerA(3, 0);//XMod off
-		setWaveformMixerLevel(0, (oscALevel * (1.0f - Osc1ModAmt)));	//Osc1
-		setWaveformMixerLevel(3, ((oscALevel + oscBLevel) * (Osc1ModAmt * 2)));//oscFX XOR level
+
+	case 7:																		// oscFX Mode: Ring
+		setOscModMixerA(3, 0);													// XMod off
+		setWaveformMixerLevel(0, (oscALevel * (1.0f - Osc1ModAmt)));			// Osc1
+		setWaveformMixerLevel(3, ((oscALevel + oscBLevel) * (Osc1ModAmt * 2))); // oscFX XOR level
 	}
 }
 
-FLASHMEM void updateOscLevelB() {
-	
-	switch (oscFX) {
-		case 0: // oscFX Mode: off
-		setOscModMixerB(3, 0);	//Feed from Osc1: off
+FLASHMEM void updateOscLevelB()
+{
+
+	switch (oscFX)
+	{
+	case 0:										   // oscFX Mode: off
+		setOscModMixerB(3, 0);					   // Feed from Osc1: off
 		setWaveformMixerLevel(1, (oscBLevel / 2)); // Osc2 Mix Level 0.5
-		setWaveformMixerLevel(3, 0);	// oscFX out: off
+		setWaveformMixerLevel(3, 0);			   // oscFX out: off
 		break;
-		
-		case 1:	// oscFX Mode: XOR
-		setOscModMixerB(3, 0);	//Feed from Osc1: off
-		setWaveformMixerLevel(1, (oscBLevel / 2));//Osc 2 (B)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 1:																		   // oscFX Mode: XOR
+		setOscModMixerB(3, 0);													   // Feed from Osc1: off
+		setWaveformMixerLevel(1, (oscBLevel / 2));								   // Osc 2 (B)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		break;
-		
-		case 2:	// oscFX Mode: XMO
-		if (oscBLevel == 1.0f && oscALevel < 1.0f) {
-			setOscModMixerA(3, ((1 - oscALevel) * Osc1ModAmt) * Osc1ModAmt);//Feed from Osc 2 (B)
-			setWaveformMixerLevel(0, 0);//Osc 1 (A)
-			setWaveformMixerLevel(1, ONE);//Osc 2 (B)
+
+	case 2: // oscFX Mode: XMO
+		if (oscBLevel == 1.0f && oscALevel < 1.0f)
+		{
+			setOscModMixerA(3, ((1 - oscALevel) * Osc1ModAmt) * Osc1ModAmt); // Feed from Osc 2 (B)
+			setWaveformMixerLevel(0, 0);									 // Osc 1 (A)
+			setWaveformMixerLevel(1, ONE);									 // Osc 2 (B)
 		}
-		setWaveformMixerLevel(3, 0);	// oscFX out: off
+		setWaveformMixerLevel(3, 0); // oscFX out: off
 		break;
-		
-		case 3:	// oscFX Mode: MOD
-		setOscModMixerA(3, 0);//XMod off
-		setOscModMixerB(3, 0);//XMod off
-		setWaveformMixerLevel(1, (oscBLevel / 2));	//Osc 1 (A)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 3:																		   // oscFX Mode: MOD
+		setOscModMixerA(3, 0);													   // XMod off
+		setOscModMixerB(3, 0);													   // XMod off
+		setWaveformMixerLevel(1, (oscBLevel / 2));								   // Osc 1 (A)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		break;
-		
-		case 4:	// oscFX Mode: AND
-		setOscModMixerB(3, 0);//XMod off
-		setWaveformMixerLevel(1, (oscBLevel / 2));//Osc 2 (B)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 4:																		   // oscFX Mode: AND
+		setOscModMixerB(3, 0);													   // XMod off
+		setWaveformMixerLevel(1, (oscBLevel / 2));								   // Osc 2 (B)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		break;
-		
-		case 5:	// oscFX Mode: PHA
-		setWaveformMixerLevel(1, (oscBLevel / 2));//Osc 2 (B)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 5:																		   // oscFX Mode: PHA
+		setWaveformMixerLevel(1, (oscBLevel / 2));								   // Osc 2 (B)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		setOscModMixerA(3, ((oscALevel / 2) * Osc1ModAmt));
 		break;
-		
-		case 6:	// oscFX Mode: FM
-		setWaveformMixerLevel(1, (oscBLevel / 2));//Osc 2 (B)
-		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt));//oscFX XOR level
+
+	case 6:																		   // oscFX Mode: FM
+		setWaveformMixerLevel(1, (oscBLevel / 2));								   // Osc 2 (B)
+		setWaveformMixerLevel(3, (((oscALevel + oscBLevel) / 2.0f) * Osc1ModAmt)); // oscFX XOR level
 		setOscModMixerA(3, ((oscALevel / 2) * Osc1ModAmt));
 		break;
-		
-		case 7:	// oscFX Mode: Ring
-		setOscModMixerB(3, 0);//XMod off
-		setWaveformMixerLevel(1, (oscBLevel * (1.0f - Osc1ModAmt)));	//Osc2
-		setWaveformMixerLevel(3, ((oscALevel + oscBLevel) * (Osc1ModAmt * 2)));//oscFX XOR level
+
+	case 7:																		// oscFX Mode: Ring
+		setOscModMixerB(3, 0);													// XMod off
+		setWaveformMixerLevel(1, (oscBLevel * (1.0f - Osc1ModAmt)));			// Osc2
+		setWaveformMixerLevel(3, ((oscALevel + oscBLevel) * (Osc1ModAmt * 2))); // oscFX XOR level
 		break;
 	}
 }
-
-
 
 //*******************************************************************
 
-FLASHMEM void setWaveformMixerLevel(int channel, float level) {
+FLASHMEM void setWaveformMixerLevel(int channel, float level)
+{
 	level = level * oscGainLevel;
 	waveformMixer1.gain(channel, level);
 	waveformMixer2.gain(channel, level);
@@ -1546,13 +1762,15 @@ FLASHMEM void setWaveformMixerLevel(int channel, float level) {
 	waveformMixer8.gain(channel, level);
 }
 
-FLASHMEM void setAmpLevel(float level) {
+FLASHMEM void setAmpLevel(float level)
+{
 	oscGainLevel = level;
 	updateOscLevelA();
 	updateOscLevelB();
 }
 
-FLASHMEM void setOscModMixerA(int channel, float level) {
+FLASHMEM void setOscModMixerA(int channel, float level)
+{
 	oscModMixer1a.gain(channel, level);
 	oscModMixer2a.gain(channel, level);
 	oscModMixer3a.gain(channel, level);
@@ -1563,7 +1781,8 @@ FLASHMEM void setOscModMixerA(int channel, float level) {
 	oscModMixer8a.gain(channel, level);
 }
 
-FLASHMEM void setOscModMixerB(int channel, float level) {
+FLASHMEM void setOscModMixerB(int channel, float level)
+{
 	oscModMixer1b.gain(channel, level);
 	oscModMixer2b.gain(channel, level);
 	oscModMixer3b.gain(channel, level);
@@ -1574,21 +1793,29 @@ FLASHMEM void setOscModMixerB(int channel, float level) {
 	oscModMixer8b.gain(channel, level);
 }
 
-FLASHMEM void updateNoiseLevel() {
-	if (noiseLevel > 0) {
+FLASHMEM void updateNoiseLevel()
+{
+	if (noiseLevel > 0)
+	{
 		pink.amplitude(noiseLevel * 0.3f);
 		white.amplitude(0.0f);
-		} else if (noiseLevel < 0) {
+	}
+	else if (noiseLevel < 0)
+	{
 		pink.amplitude(0.0f);
 		white.amplitude(abs(noiseLevel * 0.3f));
-		} else {
+	}
+	else
+	{
 		pink.amplitude(noiseLevel * 0.3f);
 		white.amplitude(noiseLevel * 0.3f);
 	}
 }
 
-FLASHMEM void updateFilterFreq() {
-	if (myFilter == 1) {
+FLASHMEM void updateFilterFreq()
+{
+	if (myFilter == 1)
+	{
 		filter1.frequency(filterFreq);
 		filter2.frequency(filterFreq);
 		filter3.frequency(filterFreq);
@@ -1606,7 +1833,9 @@ FLASHMEM void updateFilterFreq() {
 		filter6.octaveControl(filterOctave);
 		filter7.octaveControl(filterOctave);
 		filter8.octaveControl(filterOctave);
-		} else {
+	}
+	else
+	{
 		filter2_1.frequency(filterFreq);
 		filter2_2.frequency(filterFreq);
 		filter2_3.frequency(filterFreq);
@@ -1627,19 +1856,21 @@ FLASHMEM void updateFilterFreq() {
 	}
 }
 
-FLASHMEM void updateFilterSweeb(int value) {
-	
+FLASHMEM void updateFilterSweeb(int value)
+{
+
 	// calc cutoff
 	float val;
-	float filterOctave = 7.0f;	// set filter ctrl range (7 octav)
-	float frequenz = 440.0f;	// set filter's corner frequency
-	
+	float filterOctave = 7.0f; // set filter ctrl range (7 octav)
+	float frequenz = 440.0f;   // set filter's corner frequency
+
 	val = DIV255 * value * 1.30f;
 	val = -0.66 + val;
 	DC_FilterModCC.amplitude(val);
-	
+
 	// State Variable Filter
-	if (myFilter == 1) {	
+	if (myFilter == 1)
+	{
 		filter1.frequency(frequenz);
 		filter2.frequency(frequenz);
 		filter3.frequency(frequenz);
@@ -1655,9 +1886,11 @@ FLASHMEM void updateFilterSweeb(int value) {
 		filter5.octaveControl(filterOctave);
 		filter6.octaveControl(filterOctave);
 		filter7.octaveControl(filterOctave);
-		filter8.octaveControl(filterOctave); } 
-		// Ladder Filter
-		else {
+		filter8.octaveControl(filterOctave);
+	}
+	// Ladder Filter
+	else
+	{
 		filter2_1.frequency(frequenz);
 		filter2_2.frequency(frequenz);
 		filter2_3.frequency(frequenz);
@@ -1677,9 +1910,11 @@ FLASHMEM void updateFilterSweeb(int value) {
 	}
 }
 
-FLASHMEM void updateHPFFilterFreq() {
+FLASHMEM void updateHPFFilterFreq()
+{
 	uint16_t hpf_value = HPF_filterFreq_value + ccModwheelHPFamt;
-	if (hpf_value >= 0xFF) {
+	if (hpf_value >= 0xFF)
+	{
 		hpf_value = 0xFF;
 	}
 	HPF_filterFreq = HPF_FILTERFREQS256[hpf_value]; // convert 7bit value into frequency
@@ -1690,7 +1925,8 @@ FLASHMEM void updateHPFFilterFreq() {
 	hpFilter2.octaveControl(filterOctave);
 }
 
-FLASHMEM void updateHPFFilterRes() {
+FLASHMEM void updateHPFFilterRes()
+{
 	HPFRes = (14.29f * LINEAR[HPF_Res_value]) + 0.71f; // convert 7bit value into frequency
 	hpFilter1.resonance(HPFRes);
 	hpFilter2.resonance(HPFRes);
@@ -1699,7 +1935,7 @@ FLASHMEM void updateHPFFilterRes() {
 FLASHMEM void update_hp_filter_connect()
 {
 	// hp_filter on
-	if (HPF_filterFreq_value >1)
+	if (HPF_filterFreq_value > 1)
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
@@ -1723,11 +1959,14 @@ FLASHMEM void update_hp_filter_connect()
 	}
 }
 
-FLASHMEM void updateFilterRes() {
+FLASHMEM void updateFilterRes()
+{
 	float maxReso;
-	if (myFilter == 1) {
+	if (myFilter == 1)
+	{
 		maxReso = 15.0f;
-		if (filterRes >= maxReso) {
+		if (filterRes >= maxReso)
+		{
 			filterRes = maxReso;
 		}
 		filter1.resonance(filterRes);
@@ -1738,9 +1977,12 @@ FLASHMEM void updateFilterRes() {
 		filter6.resonance(filterRes);
 		filter7.resonance(filterRes);
 		filter8.resonance(filterRes);
-		} else {
+	}
+	else
+	{
 		maxReso = 1.8f;
-		if (filterRes >= maxReso) {
+		if (filterRes >= maxReso)
+		{
 			filterRes = maxReso;
 		}
 		filter2_1.resonance(filterRes);
@@ -1757,31 +1999,38 @@ FLASHMEM void updateFilterRes() {
 //*******************************************************************
 // Update Filter
 //*******************************************************************
-FLASHMEM void updateFilterMixer() {
-	
+FLASHMEM void updateFilterMixer()
+{
+
 	float LP = 1.0f;
 	float BP = 0.0f;
 	float HP = 0.0f;
 	float LA = 0.0f;
-	
+
 	// State Variable Filter
-	if (myFilter == 1) {
+	if (myFilter == 1)
+	{
 		String filterStr;
-		if (filterMix == LINEAR_FILTERMIXER[127]) {
-			//BP mode
+		if (filterMix == LINEAR_FILTERMIXER[127])
+		{
+			// BP mode
 			LP = 0.0f;
 			BP = 1.0f;
 			HP = 0.0f;
 			LA = 0.0f;
 			filterStr = "Band Pass";
-			} else {
-			//LP-HP mix mode - a notch filter
+		}
+		else
+		{
+			// LP-HP mix mode - a notch filter
 			LP = 1.0f - filterMix;
 			BP = 0.0f;
 			HP = filterMix;
-			LA = 0.0f;			
+			LA = 0.0f;
 		}
-		} else {		// Ladder Filter
+	}
+	else
+	{ // Ladder Filter
 		LP = 0.0f;
 		BP = 0.0f;
 		HP = 0.0f;
@@ -1822,9 +2071,12 @@ FLASHMEM void updateFilterMixer() {
 	filterMixer8.gain(3, LA);
 }
 
-FLASHMEM void updateLadderFilterDrive(uint8_t value) {
-	if (myFilter == 2) {
-		if (value <= 1) {
+FLASHMEM void updateLadderFilterDrive(uint8_t value)
+{
+	if (myFilter == 2)
+	{
+		if (value <= 1)
+		{
 			value = 1;
 		}
 		float Div = 4.0f / 128;
@@ -1840,9 +2092,11 @@ FLASHMEM void updateLadderFilterDrive(uint8_t value) {
 	}
 }
 
-FLASHMEM void updateLadderFilterPassbandGain(uint8_t value) {
+FLASHMEM void updateLadderFilterPassbandGain(uint8_t value)
+{
 
-	if (myFilter == 2) {
+	if (myFilter == 2)
+	{
 		float Div = 0.5f / 128;
 		float drv = float(value * Div);
 		filter2_1.passbandGain(drv);
@@ -1856,7 +2110,8 @@ FLASHMEM void updateLadderFilterPassbandGain(uint8_t value) {
 	}
 }
 
-FLASHMEM void updateLFO1env(){
+FLASHMEM void updateLFO1env()
+{
 	/*
 	float t_delay = LFO1delayTime;
 	LFO1Envelope1.delay(t_delay);
@@ -1867,7 +2122,7 @@ FLASHMEM void updateLFO1env(){
 	LFO1Envelope6.delay(t_delay);
 	LFO1Envelope7.delay(t_delay);
 	LFO1Envelope8.delay(t_delay);
-	
+
 	float t_fade = LFO1fadeTime;
 	LFO1Envelope1.attack(t_fade);
 	LFO1Envelope2.attack(t_fade);
@@ -1877,7 +2132,7 @@ FLASHMEM void updateLFO1env(){
 	LFO1Envelope6.attack(t_fade);
 	LFO1Envelope7.attack(t_fade);
 	LFO1Envelope8.attack(t_fade);
-	
+
 	LFO1Envelope1.delay(LFO1delayTime);
 	LFO1Envelope2.delay(LFO1delayTime);
 	LFO1Envelope3.delay(LFO1delayTime);
@@ -1919,10 +2174,10 @@ FLASHMEM void updateLFO1env(){
 	LFO1Envelope7.release(ampRelease);
 	LFO1Envelope8.release(ampRelease);
 	*/
-
 }
 
-FLASHMEM void setFilterModMixer(int channel, float level) {
+FLASHMEM void setFilterModMixer(int channel, float level)
+{
 	filterModMixer_a[0].gain(channel, level);
 	filterModMixer_a[1].gain(channel, level);
 	filterModMixer_a[2].gain(channel, level);
@@ -1933,82 +2188,92 @@ FLASHMEM void setFilterModMixer(int channel, float level) {
 	filterModMixer_a[7].gain(channel, level);
 }
 
-FLASHMEM void updateFilterEnv() {
+FLASHMEM void updateFilterEnv()
+{
 	setFilterModMixer(0, filterEnv);
 }
 
-FLASHMEM void updatePitchEnv() {
+FLASHMEM void updatePitchEnv()
+{
 	setOscModMixerA(1, pitchEnvA);
 	setOscModMixerB(1, pitchEnvB);
 }
 
-FLASHMEM void updateKeyTracking() {
+FLASHMEM void updateKeyTracking()
+{
 	setFilterModMixer(2, keytrackingValue);
 }
 
-FLASHMEM void updateAtouchPitch() {
+FLASHMEM void updateAtouchPitch()
+{
 	AtouchModAmp2.gain(AtouchPitch);
 }
 
-FLASHMEM void updateAtouchCutoff() {
+FLASHMEM void updateAtouchCutoff()
+{
 	float val = (AtouchCutoff / 2.0f);
 	AtouchModAmp1.gain(val);
 }
 
-FLASHMEM void updateOscLFOAmt() {
+FLASHMEM void updateOscLFOAmt()
+{
 	float value = oscLfoAmt + (AtouchLFO1amt * 0.0015f) + ccModwheelAmt;
-	if (value >= 0.50f) {
+	if (value >= 0.50f)
+	{
 		value = 0.50f;
 	}
-	
-	if (LFO1fadeTime != 0.0f || LFO1releaseTime != 0.0f) {
-		oscGlobalModMixer1.gain(1,value);	// set pitch LFO fade value
-		oscGlobalModMixer2.gain(1,value);
-		oscGlobalModMixer3.gain(1,value);
-		oscGlobalModMixer4.gain(1,value);
-		oscGlobalModMixer5.gain(1,value);
-		oscGlobalModMixer6.gain(1,value);
-		oscGlobalModMixer7.gain(1,value);
-		oscGlobalModMixer8.gain(1,value);
-		oscGlobalModMixer1.gain(2,0);		// set pitch LFO off
-		oscGlobalModMixer2.gain(2,0);
-		oscGlobalModMixer3.gain(2,0);
-		oscGlobalModMixer4.gain(2,0);
-		oscGlobalModMixer5.gain(2,0);
-		oscGlobalModMixer6.gain(2,0);
-		oscGlobalModMixer7.gain(2,0);
-		oscGlobalModMixer8.gain(2,0);
+
+	if (LFO1fadeTime != 0.0f || LFO1releaseTime != 0.0f)
+	{
+		oscGlobalModMixer1.gain(1, value); // set pitch LFO fade value
+		oscGlobalModMixer2.gain(1, value);
+		oscGlobalModMixer3.gain(1, value);
+		oscGlobalModMixer4.gain(1, value);
+		oscGlobalModMixer5.gain(1, value);
+		oscGlobalModMixer6.gain(1, value);
+		oscGlobalModMixer7.gain(1, value);
+		oscGlobalModMixer8.gain(1, value);
+		oscGlobalModMixer1.gain(2, 0); // set pitch LFO off
+		oscGlobalModMixer2.gain(2, 0);
+		oscGlobalModMixer3.gain(2, 0);
+		oscGlobalModMixer4.gain(2, 0);
+		oscGlobalModMixer5.gain(2, 0);
+		oscGlobalModMixer6.gain(2, 0);
+		oscGlobalModMixer7.gain(2, 0);
+		oscGlobalModMixer8.gain(2, 0);
 	}
-	else {
-		oscGlobalModMixer1.gain(1,0);	// set pitch LFO fade off
-		oscGlobalModMixer2.gain(1,0);
-		oscGlobalModMixer3.gain(1,0);
-		oscGlobalModMixer4.gain(1,0);
-		oscGlobalModMixer5.gain(1,0);
-		oscGlobalModMixer6.gain(1,0);
-		oscGlobalModMixer7.gain(1,0);
-		oscGlobalModMixer8.gain(1,0);
-		oscGlobalModMixer1.gain(2,value);	// set pitch LFO value
-		oscGlobalModMixer2.gain(2,value);
-		oscGlobalModMixer3.gain(2,value);
-		oscGlobalModMixer4.gain(2,value);
-		oscGlobalModMixer5.gain(2,value);
-		oscGlobalModMixer6.gain(2,value);
-		oscGlobalModMixer7.gain(2,value);
-		oscGlobalModMixer8.gain(2,value);
+	else
+	{
+		oscGlobalModMixer1.gain(1, 0); // set pitch LFO fade off
+		oscGlobalModMixer2.gain(1, 0);
+		oscGlobalModMixer3.gain(1, 0);
+		oscGlobalModMixer4.gain(1, 0);
+		oscGlobalModMixer5.gain(1, 0);
+		oscGlobalModMixer6.gain(1, 0);
+		oscGlobalModMixer7.gain(1, 0);
+		oscGlobalModMixer8.gain(1, 0);
+		oscGlobalModMixer1.gain(2, value); // set pitch LFO value
+		oscGlobalModMixer2.gain(2, value);
+		oscGlobalModMixer3.gain(2, value);
+		oscGlobalModMixer4.gain(2, value);
+		oscGlobalModMixer5.gain(2, value);
+		oscGlobalModMixer6.gain(2, value);
+		oscGlobalModMixer7.gain(2, value);
+		oscGlobalModMixer8.gain(2, value);
 	}
 }
 
-FLASHMEM void updateModWheel() {
+FLASHMEM void updateModWheel()
+{
 	float Amt = oscLfoAmt + ccModwheelAmt;
-	oscGlobalModMixer1.gain(2,Amt);
-	oscGlobalModMixer2.gain(2,Amt);
-	oscGlobalModMixer3.gain(2,Amt);
-	oscGlobalModMixer4.gain(2,Amt);
-	oscGlobalModMixer5.gain(2,Amt);
-	oscGlobalModMixer6.gain(2,Amt);
-	oscGlobalModMixer7.gain(2,Amt);
-	oscGlobalModMixer8.gain(2,Amt);
+	oscGlobalModMixer1.gain(2, Amt);
+	oscGlobalModMixer2.gain(2, Amt);
+	oscGlobalModMixer3.gain(2, Amt);
+	oscGlobalModMixer4.gain(2, Amt);
+	oscGlobalModMixer5.gain(2, Amt);
+	oscGlobalModMixer6.gain(2, Amt);
+	oscGlobalModMixer7.gain(2, Amt);
+	oscGlobalModMixer8.gain(2, Amt);
 	/*
 	oscGlobalModMixer1.gain(2,ccModwheelAmt);
 	oscGlobalModMixer2.gain(2,ccModwheelAmt);
@@ -2018,7 +2283,7 @@ FLASHMEM void updateModWheel() {
 	oscGlobalModMixer6.gain(2,ccModwheelAmt);
 	oscGlobalModMixer7.gain(2,ccModwheelAmt);
 	oscGlobalModMixer8.gain(2,ccModwheelAmt);
-	
+
 	filterModMixAtCC1.gain(2,ccModwheelCutoffAmt);
 	filterModMixAtCC2.gain(2,ccModwheelCutoffAmt);
 	filterModMixAtCC3.gain(2,ccModwheelCutoffAmt);
@@ -2030,136 +2295,158 @@ FLASHMEM void updateModWheel() {
 	*/
 }
 
-FLASHMEM void updateModWheelCutoff() {
-	filterModMixAtCC1.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC2.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC3.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC4.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC5.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC6.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC7.gain(2,ccModwheelCutoffAmt);
-	filterModMixAtCC8.gain(2,ccModwheelCutoffAmt);
+FLASHMEM void updateModWheelCutoff()
+{
+	filterModMixAtCC1.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC2.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC3.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC4.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC5.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC6.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC7.gain(2, ccModwheelCutoffAmt);
+	filterModMixAtCC8.gain(2, ccModwheelCutoffAmt);
 }
 
-
-FLASHMEM void initAtouchPitch() {
+FLASHMEM void initAtouchPitch()
+{
 	AtouchModAmp1.gain(0.0f);
 	AtouchModAmp2.gain(0.0f);
 	AtouchModAmp3.gain(0.0f);
 	AtouchModAmp4.gain(0.0f);
 }
 
-FLASHMEM void updateOsc1Parameter_a(uint8_t value) {
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void updateOsc1Parameter_a(uint16_t value)
+{
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].parameter_a(value);
 	}
 }
 
-FLASHMEM void updateOsc1Parameter_b(uint8_t value) {
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void updateOsc1Parameter_b(uint16_t value)
+{
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].parameter_b(value);
 	}
 }
 
-FLASHMEM void updateOsc2Parameter_a(uint8_t value) {
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void updateOsc2Parameter_a(uint16_t value)
+{
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModb[i].parameter_a(value);
 	}
 }
 
-FLASHMEM void updateOsc2Parameter_b(uint8_t value) {
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void updateOsc2Parameter_b(uint16_t value)
+{
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModb[i].parameter_b(value);
 	}
 }
 
-
-
-FLASHMEM void updatePitchLFORate() {
+FLASHMEM void updatePitchLFORate()
+{
 	pitchLfo.frequency(oscLfoRate);
 }
 
-FLASHMEM void updatePitchLFOWaveform() {
+FLASHMEM void updatePitchLFOWaveform()
+{
 	pitchLfo.begin(oscLFOWaveform);
 }
 
-//MIDI CC only
-FLASHMEM void updatePitchLFOMidiClkSync() {
+// MIDI CC only
+FLASHMEM void updatePitchLFOMidiClkSync()
+{
 }
 
-FLASHMEM void updateFilterLfoRate() {
+FLASHMEM void updateFilterLfoRate()
+{
 	filterLfo.frequency(filterLfoRate);
 }
 
-FLASHMEM void updateLfo3Rate() {
+FLASHMEM void updateLfo3Rate()
+{
 	ModLfo3.frequency(Lfo3Rate);
 }
 
-FLASHMEM void updateFilterLfoAmt() {
+FLASHMEM void updateFilterLfoAmt()
+{
 	float value = filterLfoAmt + (AtouchLFO2amt * 0.0039f);
-	if (value >= 0.5f) {
+	if (value >= 0.5f)
+	{
 		value = 0.5f;
 	}
-	if (LFO2fadeTime != 0.0f || LFO2releaseTime != 0.0f) {
-		LFO2mix1.gain(0,value);
-		LFO2mix2.gain(0,value);
-		LFO2mix3.gain(0,value);
-		LFO2mix4.gain(0,value);
-		LFO2mix5.gain(0,value);
-		LFO2mix6.gain(0,value);
-		LFO2mix7.gain(0,value);
-		LFO2mix8.gain(0,value);
-		LFO2mix1.gain(1,0);
-		LFO2mix2.gain(1,0);
-		LFO2mix3.gain(1,0);
-		LFO2mix4.gain(1,0);
-		LFO2mix5.gain(1,0);
-		LFO2mix6.gain(1,0);
-		LFO2mix7.gain(1,0);
-		LFO2mix8.gain(1,0);
+	if (LFO2fadeTime != 0.0f || LFO2releaseTime != 0.0f)
+	{
+		LFO2mix1.gain(0, value);
+		LFO2mix2.gain(0, value);
+		LFO2mix3.gain(0, value);
+		LFO2mix4.gain(0, value);
+		LFO2mix5.gain(0, value);
+		LFO2mix6.gain(0, value);
+		LFO2mix7.gain(0, value);
+		LFO2mix8.gain(0, value);
+		LFO2mix1.gain(1, 0);
+		LFO2mix2.gain(1, 0);
+		LFO2mix3.gain(1, 0);
+		LFO2mix4.gain(1, 0);
+		LFO2mix5.gain(1, 0);
+		LFO2mix6.gain(1, 0);
+		LFO2mix7.gain(1, 0);
+		LFO2mix8.gain(1, 0);
 	}
-	else {
-		LFO2mix1.gain(0,0);
-		LFO2mix2.gain(0,0);
-		LFO2mix3.gain(0,0);
-		LFO2mix4.gain(0,0);
-		LFO2mix5.gain(0,0);
-		LFO2mix6.gain(0,0);
-		LFO2mix7.gain(0,0);
-		LFO2mix8.gain(0,0);
-		LFO2mix1.gain(1,value);
-		LFO2mix2.gain(1,value);
-		LFO2mix3.gain(1,value);
-		LFO2mix4.gain(1,value);
-		LFO2mix5.gain(1,value);
-		LFO2mix6.gain(1,value);
-		LFO2mix7.gain(1,value);
-		LFO2mix8.gain(1,value);
+	else
+	{
+		LFO2mix1.gain(0, 0);
+		LFO2mix2.gain(0, 0);
+		LFO2mix3.gain(0, 0);
+		LFO2mix4.gain(0, 0);
+		LFO2mix5.gain(0, 0);
+		LFO2mix6.gain(0, 0);
+		LFO2mix7.gain(0, 0);
+		LFO2mix8.gain(0, 0);
+		LFO2mix1.gain(1, value);
+		LFO2mix2.gain(1, value);
+		LFO2mix3.gain(1, value);
+		LFO2mix4.gain(1, value);
+		LFO2mix5.gain(1, value);
+		LFO2mix6.gain(1, value);
+		LFO2mix7.gain(1, value);
+		LFO2mix8.gain(1, value);
 	}
 }
 
-FLASHMEM void updateFilterLFOWaveform() {
+FLASHMEM void updateFilterLFOWaveform()
+{
 	filterLfo.begin(filterLfoWaveform);
 }
 
-FLASHMEM void updatePitchLFORetrig() {
+FLASHMEM void updatePitchLFORetrig()
+{
 	pitchLfo.LFO_mode(LFO1mode);
 	pitchLfo.LFO_oneShoot(lfo1oneShoot);
 }
-FLASHMEM void updateFilterLFORetrig() {
+FLASHMEM void updateFilterLFORetrig()
+{
 	filterLfo.LFO_mode(LFO2mode);
 	filterLfo.LFO_oneShoot(lfo2oneShoot);
 }
-FLASHMEM void updateModLFORetrig() {
+FLASHMEM void updateModLFORetrig()
+{
 	ModLfo3.LFO_mode(LFO3mode);
 	ModLfo3.LFO_oneShoot(lfo3oneShoot);
 }
 
-FLASHMEM void updateFilterLFOMidiClkSync() {
+FLASHMEM void updateFilterLFOMidiClkSync()
+{
 }
 
 // update Filter Envelope -------------------------------------------------
-FLASHMEM void updateFilterAttack() {
+FLASHMEM void updateFilterAttack()
+{
 	filterEnvelope[0].delay(0);
 	filterEnvelope[1].delay(0);
 	filterEnvelope[2].delay(0);
@@ -2185,7 +2472,8 @@ FLASHMEM void updateFilterAttack() {
 	filterEnvelope[6].hold(0);
 	filterEnvelope[7].hold(0);
 }
-FLASHMEM void updateFilterDecay() {
+FLASHMEM void updateFilterDecay()
+{
 	filterEnvelope[0].decay(filterDecay);
 	filterEnvelope[1].decay(filterDecay);
 	filterEnvelope[2].decay(filterDecay);
@@ -2195,7 +2483,8 @@ FLASHMEM void updateFilterDecay() {
 	filterEnvelope[6].decay(filterDecay);
 	filterEnvelope[7].decay(filterDecay);
 }
-FLASHMEM void updateFilterSustain() {
+FLASHMEM void updateFilterSustain()
+{
 	filterEnvelope[0].sustain(filterSustain);
 	filterEnvelope[1].sustain(filterSustain);
 	filterEnvelope[2].sustain(filterSustain);
@@ -2205,7 +2494,8 @@ FLASHMEM void updateFilterSustain() {
 	filterEnvelope[6].sustain(filterSustain);
 	filterEnvelope[7].sustain(filterSustain);
 }
-FLASHMEM void updateFilterRelease() {
+FLASHMEM void updateFilterRelease()
+{
 	filterEnvelope[0].release(filterRelease);
 	filterEnvelope[1].release(filterRelease);
 	filterEnvelope[2].release(filterRelease);
@@ -2225,7 +2515,8 @@ FLASHMEM void updateFilterRelease() {
 }
 
 // update Amp Envelope ----------------------------------------------------
-FLASHMEM void updateAttack() {
+FLASHMEM void updateAttack()
+{
 	ampEnvelope[0].delay(0);
 	ampEnvelope[1].delay(0);
 	ampEnvelope[2].delay(0);
@@ -2251,7 +2542,8 @@ FLASHMEM void updateAttack() {
 	ampEnvelope[6].hold(0);
 	ampEnvelope[7].hold(0);
 }
-FLASHMEM void updateDecay() {
+FLASHMEM void updateDecay()
+{
 	ampEnvelope[0].decay(ampDecay);
 	ampEnvelope[1].decay(ampDecay);
 	ampEnvelope[2].decay(ampDecay);
@@ -2261,7 +2553,8 @@ FLASHMEM void updateDecay() {
 	ampEnvelope[6].decay(ampDecay);
 	ampEnvelope[7].decay(ampDecay);
 }
-FLASHMEM void updateSustain() {
+FLASHMEM void updateSustain()
+{
 	ampEnvelope[0].sustain(ampSustain);
 	ampEnvelope[1].sustain(ampSustain);
 	ampEnvelope[2].sustain(ampSustain);
@@ -2271,7 +2564,8 @@ FLASHMEM void updateSustain() {
 	ampEnvelope[6].sustain(ampSustain);
 	ampEnvelope[7].sustain(ampSustain);
 }
-FLASHMEM void updateRelease() {
+FLASHMEM void updateRelease()
+{
 	ampEnvelope[0].release(ampRelease);
 	ampEnvelope[1].release(ampRelease);
 	ampEnvelope[2].release(ampRelease);
@@ -2290,9 +2584,11 @@ FLASHMEM void updateRelease() {
 	ampEnvelope[7].releaseNoteOn(0);
 }
 
-FLASHMEM void updateFilterVelocity() {
+FLASHMEM void updateFilterVelocity()
+{
 	float value = myFilVelocity;
-	if (value >= 1.0f) {
+	if (value >= 1.0f)
+	{
 		value = 1.0f;
 	}
 	FilterVelo1.amplitude(value);
@@ -2305,29 +2601,33 @@ FLASHMEM void updateFilterVelocity() {
 	FilterVelo8.amplitude(value);
 }
 
+FLASHMEM void setphaseModulation()
+{
 
-
-FLASHMEM void setphaseModulation() {
-	
 	float degrees = 180.0f;
-	
-	for (uint8_t i = 0; i < 8; i++) {
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].phaseModulation(degrees);
-	}	
+	}
 }
 
-FLASHMEM void setfrequencyModulation() {
-	
+FLASHMEM void setfrequencyModulation()
+{
+
 	float value = 2.0f;
-	
-	for (uint8_t i = 0; i < 8; i++) {
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].frequencyModulation(value);
 		waveformModb[i].frequencyModulation(value);
 	}
 }
 
-FLASHMEM void setRingModulation(boolean enabled) {
-	if (enabled == true) {
+FLASHMEM void setRingModulation(boolean enabled)
+{
+	if (enabled == true)
+	{
 		oscFxMix1.gain(0, 0);
 		oscFxMix2.gain(0, 0);
 		oscFxMix3.gain(0, 0);
@@ -2344,7 +2644,9 @@ FLASHMEM void setRingModulation(boolean enabled) {
 		oscFxMix6.gain(1, 0.5f);
 		oscFxMix7.gain(1, 0.5f);
 		oscFxMix8.gain(1, 0.5f);
-	} else {
+	}
+	else
+	{
 		oscFxMix1.gain(0, 1);
 		oscFxMix2.gain(0, 1);
 		oscFxMix3.gain(0, 1);
@@ -2362,12 +2664,13 @@ FLASHMEM void setRingModulation(boolean enabled) {
 		oscFxMix7.gain(1, 0);
 		oscFxMix8.gain(1, 0);
 	}
-	
 }
 
-FLASHMEM void setOscFXCombineMode(AudioEffectDigitalCombine::combineMode mode) {
-	
-	for (uint8_t i = 0; i < 8; i++) {
+FLASHMEM void setOscFXCombineMode(AudioEffectDigitalCombine::combineMode mode)
+{
+
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		oscEffect[i].setCombineMode(mode);
 	}
 }
@@ -2375,14 +2678,16 @@ FLASHMEM void setOscFXCombineMode(AudioEffectDigitalCombine::combineMode mode) {
 //*************************************************************************
 // Update Osc overdrive
 //*************************************************************************
-FLASHMEM void updateOverdrive() {
+FLASHMEM void updateOverdrive()
+{
 	setAmpLevel(driveLevel);
 }
 
 //*************************************************************************
 // Update Osc overdrive
 //*************************************************************************
-FLASHMEM void updateOscVCFMOD() {
+FLASHMEM void updateOscVCFMOD()
+{
 	oscGlobalModMixer1.gain(2, OscVCFMOD);
 	oscGlobalModMixer2.gain(2, OscVCFMOD);
 	oscGlobalModMixer3.gain(2, OscVCFMOD);
@@ -2396,24 +2701,25 @@ FLASHMEM void updateOscVCFMOD() {
 //*************************************************************************
 // Update FX Chip VF1
 //*************************************************************************
-FLASHMEM void updateFxChip (void)
+FLASHMEM void updateFxChip(void)
 {
-	
-	if (FxClkRate <= 10000) {
+
+	if (FxClkRate <= 10000)
+	{
 		FxClkRate = 10000;
 	}
-	analogWriteFrequency (PWM5, FxClkRate);
+	analogWriteFrequency(PWM5, FxClkRate);
 	analogWrite(PWM1, FxPot1value * 2);
 	analogWrite(PWM2, FxPot2value * 2);
 	analogWrite(PWM3, FxPot3value * 2);
 	analogWrite(PWM4, FxMixValue * 2);
-	
 }
 
 //*************************************************************************
 // Update PitchBend
 //*************************************************************************
-FLASHMEM void myPitchBend(byte channel, int bend) {
+FLASHMEM void myPitchBend(byte channel, int bend)
+{
 	bend = (bend * PitchWheelAmt);
 	pitchBend.amplitude(bend * 0.000122f); // 0.000061
 }
@@ -2421,90 +2727,100 @@ FLASHMEM void myPitchBend(byte channel, int bend) {
 //*************************************************************************
 // Update Boost
 //*************************************************************************
-FLASHMEM void updateBoost (void) {
-	
-	if (myBoost == 1) {
+FLASHMEM void updateBoost(void)
+{
+
+	if (myBoost == 1)
+	{
 		BassBoostStatus = 1;
-		digitalWrite(BassBoost,LOW);  // Boost on
+		digitalWrite(BassBoost, LOW); // Boost on
 	}
-	else {
+	else
+	{
 		BassBoostStatus = 0;
-		digitalWrite(BassBoost,HIGH);  // Boost off
+		digitalWrite(BassBoost, HIGH); // Boost off
 	}
 }
-
-
 
 //*************************************************************************
 // Midi Aftertouch
 //*************************************************************************
-void myAftertouch(byte channel, byte value) {
-	
-//	uint16_t valFx;
+void myAftertouch(byte channel, byte value)
+{
+
+	//	uint16_t valFx;
 
 	// calc Aftertouch float
 	float val;
 	val = DIV127 * value;
-	AfterTouchValue = value;		// save
+	AfterTouchValue = value; // save
 	AtouchDc.amplitude(val);
-	
+
 	// Aftertouch Pitch
-	if (AtouchPitchAmt > 0 || AtouchPitch > 0) {
+	if (AtouchPitchAmt > 0 || AtouchPitch > 0)
+	{
 		AtouchPitch = POWER[AtouchPitchAmt];
 		updateAtouchPitch();
 	}
-	
+
 	// Aftertouch Cutoff
-	if (AtouchAmt > 0 || AtouchCutoff > 0) {
+	if (AtouchAmt > 0 || AtouchCutoff > 0)
+	{
 		AtouchCutoff = DIV127 * AtouchAmt;
 		updateAtouchCutoff();
 	}
-	
-	
+
 	// LFO1 Amt
-	if (AtouchLFO1Amt > 0 || AtouchLFO1amt > 0) {
-		//val = DIV127 * AtouchLFO1Amt;
+	if (AtouchLFO1Amt > 0 || AtouchLFO1amt > 0)
+	{
+		// val = DIV127 * AtouchLFO1Amt;
 		AtouchLFO1amt = POWER[value] * AtouchLFO1Amt;
 		updateOscLFOAmt();
 	}
-	
+
 	// LFO2 Amt
-	if (AtouchLFO2Amt > 0 || AtouchLFO2amt > 0) {
-		//val = DIV127 * AtouchLFO2Amt;
+	if (AtouchLFO2Amt > 0 || AtouchLFO2amt > 0)
+	{
+		// val = DIV127 * AtouchLFO2Amt;
 		AtouchLFO2amt = POWER[value] * AtouchLFO2Amt;
 		updateFilterLfoAmt();
 	}
-	
+
 	// LFO3 Amt
-	if (AtouchLFO3Amt > 0 || AtouchLFO3amt > 0) {
-		//val = DIV127 * AtouchLFO3Amt;
+	if (AtouchLFO3Amt > 0 || AtouchLFO3amt > 0)
+	{
+		// val = DIV127 * AtouchLFO3Amt;
 		AtouchLFO3amt = POWER[value] * AtouchLFO3Amt;
 		updateLFO3amt();
 	}
-	
+
 	// FxP1 Amt
-	if (AtouchFxP1Amt > 0 || AtouchFxP1amt > 0) {
+	if (AtouchFxP1Amt > 0 || AtouchFxP1amt > 0)
+	{
 		AtouchFxP1amt = AtouchFxP1Amt * val;
-		//valFx = (AtouchFxP1amt * 2) + FxPot1Val;
-		//analogWrite(PWM1, valFx);  // max 8bit value
+		// valFx = (AtouchFxP1amt * 2) + FxPot1Val;
+		// analogWrite(PWM1, valFx);  // max 8bit value
 	}
 	// FxP2 Amt
-	if (AtouchFxP2Amt > 0 || AtouchFxP2amt > 0) {
-		AtouchFxP2amt = AtouchFxP2Amt * val;	// inv. value
-		//valFx = (AtouchFxP2amt * 2) + FxPot2Val;
-		//analogWrite(PWM2, valFx);  // max 8bit value
+	if (AtouchFxP2Amt > 0 || AtouchFxP2amt > 0)
+	{
+		AtouchFxP2amt = AtouchFxP2Amt * val; // inv. value
+											 // valFx = (AtouchFxP2amt * 2) + FxPot2Val;
+		// analogWrite(PWM2, valFx);  // max 8bit value
 	}
 	// FxP3 Amt
-	if (AtouchFxP3Amt > 0 || AtouchFxP3amt) {
+	if (AtouchFxP3Amt > 0 || AtouchFxP3amt)
+	{
 		AtouchFxP3amt = AtouchFxP3Amt * val;
-		//valFx = (AtouchFxP3amt * 2) + FxPot3Val;
-		//analogWrite(PWM3, valFx);  // max 8bit value
+		// valFx = (AtouchFxP3amt * 2) + FxPot3Val;
+		// analogWrite(PWM3, valFx);  // max 8bit value
 	}
-	
+
 	// FxClk Amt
-	if (AtouchFxClkAmt > 0 || AtouchFxCLKamt > 0) {
+	if (AtouchFxClkAmt > 0 || AtouchFxCLKamt > 0)
+	{
 		AtouchFxCLKamt = AtouchFxClkAmt * val;
-//		valFx = (AtouchFxCLKamt * 2) + FxPot4Val;	// parameter update into LFO3 routine //!!!!!!!!
+		//		valFx = (AtouchFxCLKamt * 2) + FxPot4Val;	// parameter update into LFO3 routine //!!!!!!!!
 		/*
 		if (valFx >= 255) {
 		valFx = 255;
@@ -2513,50 +2829,70 @@ void myAftertouch(byte channel, byte value) {
 		analogWriteFrequency (PWM5, Rate);
 		*/
 	}
-	
+
 	// FxMix Amt
-	if (AtouchFxMixAmt > 0 || AtouchFxMIXamt > 0) {
-		AtouchFxMIXamt = AtouchFxMixAmt * val;			// PWM4 update into LFO3 routine
+	if (AtouchFxMixAmt > 0 || AtouchFxMIXamt > 0)
+	{
+		AtouchFxMIXamt = AtouchFxMixAmt * val; // PWM4 update into LFO3 routine
 	}
 }
 
 //*************************************************************************
 // Midi CC (extern midi ControlChanges)
 //*************************************************************************
-FLASHMEM void update_MODWHEEL_value(byte value) {
-	
-		last_modwheel_value = value;
-		value = (value * MODWheelAmt);
-		ccModwheelAmt = POWER[value] * modWheelDepth; //Variable LFO amount from mod wheel - Settings Option
-		updateOscLFOAmt();
-		value = (last_modwheel_value * ModWheelCutoffAmt);
-		ccModwheelCutoffAmt = (POWER[value] * ModWheelCutoffAmt) * 2; // Variable Cutoff amount from mod wheel - Settings Option
-		updateModWheelCutoff();
-		ccModwheelHPFamt = (last_modwheel_value * ModWheelHPFamt) * 2;
-		updateHPFFilterFreq();
-}
+FLASHMEM void update_MODWHEEL_value(byte value)
+{
 
+	last_modwheel_value = value;
+	value = (value * MODWheelAmt);
+	ccModwheelAmt = POWER[value] * modWheelDepth; // Variable LFO amount from mod wheel - Settings Option
+	updateOscLFOAmt();
+	value = (last_modwheel_value * ModWheelCutoffAmt);
+	ccModwheelCutoffAmt = (POWER[value] * ModWheelCutoffAmt) * 2; // Variable Cutoff amount from mod wheel - Settings Option
+	updateModWheelCutoff();
+	ccModwheelHPFamt = (last_modwheel_value * ModWheelHPFamt) * 2;
+	updateHPFFilterFreq();
+}
 
 //*************************************************************************
 // Midi CC (extern midi ControlChanges)
 //*************************************************************************
-FLASHMEM void myControlChange1(byte channel, byte control, byte value) {
+FLASHMEM void myControlChange1(byte channel, byte control, byte value)
+{
+	// Midi hold function ------------------------------------------------
+	if (control == CCsustain)
+	{
+		if (value == 127)
+		{
+			Midi_hold_flag = true;
+		}
+		else if (value == 0)
+		{
+			Midi_hold_flag = false;
+			//allNotesOff();
+
+		}
+		
+		
+	}
 	
 	// Modulation Wheel	---------------------------------------------------
-	if (control == CCmodwheel) {
+	if (control == CCmodwheel)
+	{
 		update_MODWHEEL_value(value);
 		return;
 	}
-	
+
 	// HPF/VCF: convert CC value from 127 to 255 --------------------------
-	if (control == 62 || control == 74) {
+	if (control == 62 || control == 74)
+	{
 		value = value << 1;
 	}
-	
+
 	// convert Midi CC to intern control data -----------------------------
 	control = MidiCCTabel[control];
-	
-	myControlChange(channel, control, value);
+	uint16_t value16_ = value;
+	myControlChange(channel, control, value16_);
 }
 
 //*************************************************************************
@@ -2574,34 +2910,34 @@ FLASHMEM void myCC_No3(uint8_t value)
 FLASHMEM void myCC_No5(uint8_t value)
 {
 	glideSpeed = POWER[value];
-		// updateGlide();
-		//  draw parameter value on menu page1
-		if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
-		{
-			ParameterNr = 3;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRoundRect(54, 77, 22, 9, 2, ST7735_BLUE);
-			tft.setCursor(56, 78);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print(value);
-			ParUpdate = true;
-			usbMIDI.sendControlChange(30, value, channel);
-		}
+	// updateGlide();
+	//  draw parameter value on menu page1
+	if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 3;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRoundRect(54, 77, 22, 9, 2, ST7735_BLUE);
+		tft.setCursor(56, 78);
+		tft.setTextColor(ST7735_WHITE);
+		tft.print(value);
+		ParUpdate = true;
+		usbMIDI.sendControlChange(30, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No9(uint8_t value)
 {
-		uint8_t newWaveBank = value;
-		if (newWaveBank > 15)
+	uint8_t newWaveBank = value;
+	if (newWaveBank > 15)
+	{
+		newWaveBank = 15;
+	}
+	if (newWaveBank != Osc1WaveBank)
+	{
+		Osc1WaveBank = newWaveBank;
+		updateWaveformA();
+		if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
 		{
-			newWaveBank = 15;
-		}
-		if (newWaveBank != Osc1WaveBank)
-		{
-			Osc1WaveBank = newWaveBank;
-			updateWaveformA();
-			if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
-			{
 			ParameterNr = 0;
 			drawParamterFrame(PageNr, ParameterNr);
 			tft.fillRoundRect(34, 20, 7, 10, 2, ST7735_RED);
@@ -2611,23 +2947,23 @@ FLASHMEM void myCC_No9(uint8_t value)
 			draw_Waveform(oscWaveformA, ST7735_RED);
 			print_quadsaw_pwamt(); // print PWAMT/SPREAD & PWMOD/SAWMIX
 			usbMIDI.sendControlChange(14, Osc1WaveBank, channel);
-			}
 		}
+	}
 }
 
 FLASHMEM void myCC_No10(uint8_t value)
 {
-		uint8_t newWaveBank = value;
-		if (newWaveBank > 15)
+	uint8_t newWaveBank = value;
+	if (newWaveBank > 15)
+	{
+		newWaveBank = 15;
+	}
+	if (newWaveBank != Osc2WaveBank)
+	{
+		Osc2WaveBank = newWaveBank;
+		updateWaveformB();
+		if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
 		{
-			newWaveBank = 15;
-		}
-		if (newWaveBank != Osc2WaveBank)
-		{
-			Osc2WaveBank = newWaveBank;
-			updateWaveformB();
-			if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
-			{
 			ParameterNr = 0;
 			drawParamterFrame(PageNr, ParameterNr);
 			tft.fillRoundRect(34, 20, 7, 10, 2, ST7735_RED);
@@ -2637,222 +2973,245 @@ FLASHMEM void myCC_No10(uint8_t value)
 			draw_Waveform(oscWaveformB, ST7735_ORANGE);
 			print_quadsaw_pwamt(); // print PWAMT/SPREAD & PWMOD/SAWMIX
 			usbMIDI.sendControlChange(15, Osc2WaveBank, channel);
-			}
 		}
+	}
 }
 
 FLASHMEM void myCC_No14(uint8_t value)
 {
 	oscWaveformA = value;
-		// only Vowel in Bank P
-		if (Osc1WaveBank == 15 && oscWaveformA >= max_waveform_BankP)
+	// only Vowel in Bank P
+	if (Osc1WaveBank == 15 && oscWaveformA >= max_waveform_BankP)
+	{
+		oscWaveformA = max_waveform_BankP - 1;
+	}
+	if (currentWaveformA != oscWaveformA)
+	{
+		updateWaveformA();
+		currentWaveformA = oscWaveformA;
+		if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
 		{
-			oscWaveformA = max_waveform_BankP;
+			ParameterNr = 0;
+			drawParamterFrame(PageNr, ParameterNr);
+			tft.fillRoundRect(54, 19, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(56, 21);
+			tft.setTextColor(ST7735_WHITE);
+			tft.print(oscWaveformA);
+			draw_Waveform(oscWaveformA, ST7735_RED);
+			printPWMrate(pwmRateA);
+			ParUpdate = true;
+			print_quadsaw_pwamt(); // print PWAMT/SPREAD & PWMOD/SAWMIX
+			usbMIDI.sendControlChange(21, oscWaveformA, channel);
 		}
-		if (currentWaveformA != oscWaveformA) {			
-			updateWaveformA();
-			currentWaveformA = oscWaveformA;
-			if (PageNr == 1 && myPageShiftStatus[PageNr] == false) {
-				ParameterNr = 0;
-				drawParamterFrame(PageNr, ParameterNr);
-				tft.fillRoundRect(54,19,22,10,2,ST7735_BLUE);
-				tft.setCursor(56,21);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print(oscWaveformA);
-				draw_Waveform(oscWaveformA, ST7735_RED);
-				printPWMrate(pwmRateA);
-				ParUpdate = true;
-				print_quadsaw_pwamt();  // print PWAMT/SPREAD & PWMOD/SAWMIX
-				usbMIDI.sendControlChange(21, oscWaveformA, channel);
-			}
-		}
+	}
 }
 
 FLASHMEM void myCC_No15(uint8_t value)
 {
 	oscWaveformB = value;
-		// only Vowel in Bank P
-		if (Osc2WaveBank == 15 && oscWaveformB > max_waveform_BankP)
+	// only Vowel in Bank P
+	if (Osc2WaveBank == 15 && oscWaveformB >= max_waveform_BankP)
+	{
+		oscWaveformB = max_waveform_BankP - 1;
+	}
+	if (currentWaveformB != oscWaveformB)
+	{
+		updateWaveformB();
+		currentWaveformB = oscWaveformB;
+		if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
 		{
-			oscWaveformB = max_waveform_BankP - 1;
+			ParameterNr = 0;
+			drawParamterFrame(PageNr, ParameterNr);
+			tft.fillRoundRect(54, 19, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(56, 21);
+			tft.setTextColor(ST7735_WHITE);
+			tft.print(oscWaveformB);
+			draw_Waveform(oscWaveformB, ST7735_ORANGE);
+			printPWMrate(pwmRateB);
+			ParUpdate = true;
+			print_quadsaw_pwamt(); // print PWAMT/SPREAD & PWMOD/SAWMIX
+			usbMIDI.sendControlChange(22, oscWaveformB, channel);
 		}
-		if (currentWaveformB != oscWaveformB) {
-			updateWaveformB();
-			currentWaveformB = oscWaveformB;
-			if (PageNr == 2 && myPageShiftStatus[PageNr] == false) {
-				ParameterNr = 0;
-				drawParamterFrame(PageNr, ParameterNr);
-				tft.fillRoundRect(54,19,22,10,2,ST7735_BLUE);
-				tft.setCursor(56,21);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print(oscWaveformB);
-				draw_Waveform(oscWaveformB, ST7735_ORANGE);
-				printPWMrate(pwmRateB);
-				ParUpdate = true;
-				print_quadsaw_pwamt();  // print PWAMT/SPREAD & PWMOD/SAWMIX
-				usbMIDI.sendControlChange(22, oscWaveformB, channel);
-			}
-		}
+	}
 }
 
 FLASHMEM void myCC_No16(uint8_t value)
 {
-	if (value >= 126) {
-			value = 126;
+	if (value >= 126)
+	{
+		value = 126;
+	}
+	filterEnv = (LINEARCENTREZERO[value] * FILTERMODMIXERMAX); // Bipolar
+	updateFilterEnv();
+	if (PageNr == 3 && myPageShiftStatus[3] < 2)
+	{
+		draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
+		if (myPageShiftStatus[3] == 0)
+		{
+			tft.fillRect(82, 116, 30, 7, ST7735_BLACK);
+			print_value_63(value, 90, 116, ST7735_GRAY);
+			printRedMarker(2, value);
 		}
-		filterEnv = (LINEARCENTREZERO[value] * FILTERMODMIXERMAX); //Bipolar
-		updateFilterEnv();
-		if (PageNr == 3 && myPageShiftStatus[3] < 2) {
-			draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
-			if (myPageShiftStatus[3] == 0) {
-				tft.fillRect(82, 116, 30, 7, ST7735_BLACK);
-				print_value_63(value, 90, 116, ST7735_GRAY);
-				printRedMarker (2, value);
-			}
-			usbMIDI.sendControlChange(90, value, channel);
-		}
+		usbMIDI.sendControlChange(90, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No19(uint8_t value)
 {
 	filterMix = LINEAR_FILTERMIXER[value];
-		filterMixStr = LINEAR_FILTERMIXERSTR[value];
-		updateFilterMixer();
-		if (PageNr == 3 && myPageShiftStatus[3] < 2) {
-			draw_filter_curves(FilterCut >> 1, FilterRes, value);
-			if (myFilter == 1 && myPageShiftStatus[3] == 0) {
-				printFilterTyp(value);
-			}
+	filterMixStr = LINEAR_FILTERMIXERSTR[value];
+	updateFilterMixer();
+	if (PageNr == 3 && myPageShiftStatus[3] < 2)
+	{
+		draw_filter_curves(FilterCut >> 1, FilterRes, value);
+		if (myFilter == 1 && myPageShiftStatus[3] == 0)
+		{
+			printFilterTyp(value);
 		}
+	}
 }
 
 FLASHMEM void myCC_No20(uint8_t value)
 {
 	oscALevel = LINEAR[value];
-		updateOscLevelA();
+	updateOscLevelA();
 }
 
 FLASHMEM void myCC_No21(uint8_t value)
 {
 	oscBLevel = LINEAR[value];
-		updateOscLevelB();
+	updateOscLevelB();
 }
 
 FLASHMEM void myCC_No23(uint8_t value)
 {
-	if (value >= 62 && value <= 64) {
-			value = 63;
-		}
-		else if (value >= 126) {
+	if (value >= 62 && value <= 64)
+	{
+		value = 63;
+	}
+	else if (value >= 126)
+	{
+		value = 126;
+	}
+	noiseLevel = LINEARCENTREZERO[value];
+	updateNoiseLevel();
+	// draw noise level on submenu Osc1+2 submenu
+	if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == true)
+	{
+		ParameterNr = 5;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRoundRect(133, 59, 21, 8, 2, ST7735_BLUE);
+		tft.setCursor(135, 59);
+		tft.setTextColor(ST7735_WHITE);
+		if (value >= 126)
+		{
 			value = 126;
 		}
-		noiseLevel = LINEARCENTREZERO[value];
-		updateNoiseLevel();
-		// draw noise level on submenu Osc1+2 submenu
-		if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == true) {
-			ParameterNr = 5;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRoundRect(133,59,21,8,2,ST7735_BLUE);
-			tft.setCursor(135,59);
+		if (value >= 62 && value <= 64)
+		{
+			tft.fillRoundRect(133, 59, 21, 8, 2, ST7735_BLUE);
+			tft.setCursor(135, 59);
 			tft.setTextColor(ST7735_WHITE);
-			if (value >= 126) {
-				value = 126;
-			}
-			if (value >= 62 && value <= 64) {
-				tft.fillRoundRect(133,59,21,8,2,ST7735_BLUE);
-				tft.setCursor(135,59);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print("OFF");
-				tft.fillRect(122,59,5,7,ST7735_BLACK);
-			}
-			else if (value < 62) {
-				tft.println(62 - value);
-				tft.setCursor(122,59);
-				tft.fillRect(122,59,5,7,ST7735_BLACK);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print("W");
-			}
-			else {
-				tft.println(value - 64);
-				tft.setCursor(122,59);
-				tft.fillRect(122,59,5,7,ST7735_BLACK);
-				tft.setTextColor(ST77XX_MAGENTA);
-				tft.print("P");
-			}
+			tft.print("OFF");
+			tft.fillRect(122, 59, 5, 7, ST7735_BLACK);
 		}
+		else if (value < 62)
+		{
+			tft.println(62 - value);
+			tft.setCursor(122, 59);
+			tft.fillRect(122, 59, 5, 7, ST7735_BLACK);
+			tft.setTextColor(ST7735_WHITE);
+			tft.print("W");
+		}
+		else
+		{
+			tft.println(value - 64);
+			tft.setCursor(122, 59);
+			tft.fillRect(122, 59, 5, 7, ST7735_BLACK);
+			tft.setTextColor(ST77XX_MAGENTA);
+			tft.print("P");
+		}
+	}
 }
 
 FLASHMEM void myCC_No24(uint8_t value)
 {
 	uint8_t val = (value * 0.056);
-		oscFX = (val <= 7)? val : 0;
-		updateOscFX();
+	oscFX = (val <= 7) ? val : 0;
+	updateOscFX();
 }
 
 FLASHMEM void myCC_No26(uint8_t value)
 {
 	oscPitchA = getPitch(value);
-		updatePitchA();
-		// draw parameter value on menu page1
-		if (PageNr == 1 && myPageShiftStatus[PageNr] == false) {
-			ParameterNr = 1;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRect(54,38,22,10,ST7735_BLUE);
-			tft.setCursor(56,40);
-			tft.setTextColor(ST7735_WHITE);
-			int temp = getPitch(value);
-			if (temp > 0) {
-				tft.print("+");
-			}
-			tft.print(temp);
-			usbMIDI.sendControlChange(26, value, channel);
+	updatePitchA();
+	// draw parameter value on menu page1
+	if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 1;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRect(54, 38, 22, 10, ST7735_BLUE);
+		tft.setCursor(56, 40);
+		tft.setTextColor(ST7735_WHITE);
+		int temp = getPitch(value);
+		if (temp > 0)
+		{
+			tft.print("+");
 		}
+		tft.print(temp);
+		usbMIDI.sendControlChange(26, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No27(uint8_t value)
 {
 	oscPitchB = getPitch(value);
-		updatePitchB();
-		// draw parameter value on menu page1
-		if (PageNr == 2 && myPageShiftStatus[PageNr] == false) {
-			ParameterNr = 1;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRect(54,38,22,10,ST7735_BLUE);
-			tft.setCursor(56,40);
-			tft.setTextColor(ST7735_WHITE);
-			int temp = getPitch(value);
-			if (temp > 0) {
-				tft.print("+");
-			}
-			tft.print(temp);
-			usbMIDI.sendControlChange(27, value, channel);
+	updatePitchB();
+	// draw parameter value on menu page1
+	if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 1;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRect(54, 38, 22, 10, ST7735_BLUE);
+		tft.setCursor(56, 40);
+		tft.setTextColor(ST7735_WHITE);
+		int temp = getPitch(value);
+		if (temp > 0)
+		{
+			tft.print("+");
 		}
+		tft.print(temp);
+		usbMIDI.sendControlChange(27, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No30(uint8_t value)
 {
 	value > 0 ? oscLfoRetrig = 1 : oscLfoRetrig = 0;
-		updatePitchLFORetrig();
+	updatePitchLFORetrig();
 }
 
 FLASHMEM void myCC_No31(uint8_t value)
 {
 	value > 0 ? filterLfoRetrig = 1 : filterLfoRetrig = 0;
-		updateFilterLFORetrig();
+	updateFilterLFORetrig();
 }
 
 FLASHMEM void myCC_No60(uint8_t value)
 {
-	if (!pickUpActive && pickUp && (filterLfoRatePrevValue <  LFOMAXRATE * POWER[value - TOLERANCE] ||
-		filterLfoRatePrevValue > LFOMAXRATE * POWER[value + TOLERANCE])) return; //PICK-UP
-		if (filterLFOMidiClkSync == 1) {
-			filterLfoRate = getLFOTempoRate(value);
-			filterLFOTimeDivStr = LFOTEMPOSTR[value];
-			} else {
-			filterLfoRate = LFOMAXRATE * POWER[value];
-		}
-		updateFilterLfoRate();
-		filterLfoRatePrevValue = filterLfoRate;//PICK-UP
+	if (!pickUpActive && pickUp && (filterLfoRatePrevValue < LFOMAXRATE * POWER[value - TOLERANCE] || filterLfoRatePrevValue > LFOMAXRATE * POWER[value + TOLERANCE]))
+		return; // PICK-UP
+	if (filterLFOMidiClkSync == 1)
+	{
+		filterLfoRate = getLFOTempoRate(value);
+		filterLFOTimeDivStr = LFOTEMPOSTR[value];
+	}
+	else
+	{
+		filterLfoRate = LFOMAXRATE * POWER[value];
+	}
+	updateFilterLfoRate();
+	filterLfoRatePrevValue = filterLfoRate; // PICK-UP
 }
 
 FLASHMEM void myCC_No61(uint8_t value)
@@ -2869,41 +3228,20 @@ FLASHMEM void myCC_No61(uint8_t value)
 FLASHMEM void myCC_No62(uint8_t value)
 {
 	if (HPF_filterFreq_value != value)
+	{
+		if ((HPF_filterFreq_value <= 1 && value > 1) || (HPF_filterFreq_value > 1 && value <= 1))
 		{
-			if ((HPF_filterFreq_value <= 1 && value > 1) || (HPF_filterFreq_value > 1 && value <= 1))
-			{
-				HPF_filterFreq_value = value;
-				update_hp_filter_connect(); // set hp_filter on/off
-			}
 			HPF_filterFreq_value = value;
-			updateHPFFilterFreq();
-			if (PageNr == 3 && myPageShiftStatus[3] == 2)
-			{
-				value = value >> 1;
-				draw_HPF_filter_curves(value, HPF_Res_value);
-				printDataValue(0, value);
-				printRedMarker(0, value);
-				if (HPF_filterFreq_value <= 1)
-				{
-					tft.fillRoundRect(69, 43, 24, 12, 2, ST7735_RED);
-					tft.setFont(NULL);
-					tft.setTextColor(ST7735_WHITE);
-					print_String(18, 73, 45); // print "OFF"
-				}
-				usbMIDI.sendControlChange(62, value, channel);
-			}
+			update_hp_filter_connect(); // set hp_filter on/off
 		}
-}
-
-FLASHMEM void myCC_No63(uint8_t value)
-{
-	HPF_Res_value = value;
-		updateHPFFilterRes();
+		HPF_filterFreq_value = value;
+		updateHPFFilterFreq();
 		if (PageNr == 3 && myPageShiftStatus[3] == 2)
 		{
-			draw_HPF_filter_curves(HPF_filterFreq_value >> 1, HPF_Res_value);
-			printDataValue(1, value);
-			printRedMarker(1, value);
+			value = value >> 1;
+			draw_HPF_filter_curves(value, HPF_Res_value);
+			printDataValue(0, value);
+			printRedMarker(0, value);
 			if (HPF_filterFreq_value <= 1)
 			{
 				tft.fillRoundRect(69, 43, 24, 12, 2, ST7735_RED);
@@ -2911,343 +3249,383 @@ FLASHMEM void myCC_No63(uint8_t value)
 				tft.setTextColor(ST7735_WHITE);
 				print_String(18, 73, 45); // print "OFF"
 			}
-			usbMIDI.sendControlChange(63, value, channel);
+			usbMIDI.sendControlChange(62, value, channel);
 		}
+	}
+}
+
+FLASHMEM void myCC_No63(uint8_t value)
+{
+	HPF_Res_value = value;
+	updateHPFFilterRes();
+	if (PageNr == 3 && myPageShiftStatus[3] == 2)
+	{
+		draw_HPF_filter_curves(HPF_filterFreq_value >> 1, HPF_Res_value);
+		printDataValue(1, value);
+		printRedMarker(1, value);
+		if (HPF_filterFreq_value <= 1)
+		{
+			tft.fillRoundRect(69, 43, 24, 12, 2, ST7735_RED);
+			tft.setFont(NULL);
+			tft.setTextColor(ST7735_WHITE);
+			print_String(18, 73, 45); // print "OFF"
+		}
+		usbMIDI.sendControlChange(63, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No64(uint8_t value)
 {
-	if (value <= 63 && ccSustain == true) {
-			ccSustain = false;
-			for (uint8_t v = 0; v < NO_OF_VOICES; v++ ) {
-				if (voiceSustain[v] == true) {
-					voiceSustain[v] = false;
-					endVoice(v + 1);
-				}
+	if (value <= 63 && ccSustain == true)
+	{
+		ccSustain = false;
+		for (uint8_t v = 0; v < NO_OF_VOICES; v++)
+		{
+			if (voiceSustain[v] == true)
+			{
+				voiceSustain[v] = false;
+				endVoice(v + 1);
 			}
 		}
-		else if (value >= 64 && ccSustain == false) {
-			ccSustain = true;
-		}
+	}
+	else if (value >= 64 && ccSustain == false)
+	{
+		ccSustain = true;
+	}
 }
 
 FLASHMEM void myCC_No74(uint8_t value)
 {
 	filterFreq = FILTERFREQS256[value];
-		updateFilterSweeb(value);
-		FilterCut = value;
-		value = value >> 1;
-		if (PageNr == 3 && myPageShiftStatus[3] < 2) {
-			draw_filter_curves(value, FilterRes, FilterMix);
-			if (myPageShiftStatus[3] == 0) {
-				printDataValue (0, value);	// Value 0...127
-				printRedMarker (0, value);
-				cutoffPickupFlag = false;
-			}
-			usbMIDI.sendControlChange(74, value, channel);
+	updateFilterSweeb(value);
+	FilterCut = value;
+	value = value >> 1;
+	if (PageNr == 3 && myPageShiftStatus[3] < 2)
+	{
+		draw_filter_curves(value, FilterRes, FilterMix);
+		if (myPageShiftStatus[3] == 0)
+		{
+			printDataValue(0, value); // Value 0...127
+			printRedMarker(0, value);
+			cutoffPickupFlag = false;
 		}
+		usbMIDI.sendControlChange(74, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No75(uint8_t value)
 {
-		// State Variable Filter -------------------
-		if (myFilter == 1)
+	// State Variable Filter -------------------
+	if (myFilter == 1)
+	{
+		// Pick up
+		if (!pickUpActive && pickUp && (resonancePrevValue < ((14.29f * LINEAR[value - TOLERANCE]) + 0.71f) || resonancePrevValue > ((14.29f * LINEAR[value + TOLERANCE]) + 0.71f)))
+			return;									  // PICK-UP
+		filterRes = (14.29f * LINEAR[value]) + 0.71f; // If <1.1 there is noise at high cutoff freq
+		SVF_filterRes = filterRes;
+		updateFilterRes();
+		FilterRes = value;
+		if (PageNr == 3 && myPageShiftStatus[3] < 2)
 		{
-			// Pick up
-			if (!pickUpActive && pickUp && (resonancePrevValue < ((14.29f * LINEAR[value - TOLERANCE]) + 0.71f) || 
-				resonancePrevValue > ((14.29f * LINEAR[value + TOLERANCE]) + 0.71f)))
-				return;									  // PICK-UP
-			filterRes = (14.29f * LINEAR[value]) + 0.71f; // If <1.1 there is noise at high cutoff freq
-			SVF_filterRes = filterRes;
-			updateFilterRes();
-			FilterRes = value;
-			if (PageNr == 3 && myPageShiftStatus[3] < 2)
+			draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
+			if (myPageShiftStatus[3] == 0)
 			{
-				draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
-				if (myPageShiftStatus[3] == 0)
-				{
-					printDataValue(1, value);
-					printRedMarker(1, value);
-				}
-				usbMIDI.sendControlChange(75, value, channel);
+				printDataValue(1, value);
+				printRedMarker(1, value);
 			}
+			usbMIDI.sendControlChange(75, value, channel);
 		}
-		// Ladder Filter ---------------------------
-		else
+	}
+	// Ladder Filter ---------------------------
+	else
+	{
+		if (!pickUpActive && pickUp && (resonancePrevValue < (1.8f * LINEAR[value - TOLERANCE]) || resonancePrevValue > (1.8f * LINEAR[value + TOLERANCE])))
+			return; // PICK-UP
+		filterRes = (1.8f * LINEAR[value]);
+		LAD_filterRes = filterRes;
+		updateFilterRes();
+		resonancePrevValue = filterRes; // PICK-UP
+		FilterRes = value;
+		if (PageNr == 3 && myPageShiftStatus[3] < 2)
 		{
-			if (!pickUpActive && pickUp && (resonancePrevValue < (1.8f * LINEAR[value - TOLERANCE]) || 
-				resonancePrevValue > (1.8f * LINEAR[value + TOLERANCE])))
-				return; // PICK-UP
-			filterRes = (1.8f * LINEAR[value]);
-			LAD_filterRes = filterRes;
-			updateFilterRes();
-			resonancePrevValue = filterRes; // PICK-UP
-			FilterRes = value;
-			if (PageNr == 3 && myPageShiftStatus[3] < 2)
+			draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
+			if (myPageShiftStatus[3] == 0)
 			{
-				draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
-				if (myPageShiftStatus[3] == 0)
-				{
-					printDataValue(1, value);
-					printRedMarker(1, value);
-				}
-				usbMIDI.sendControlChange(75, value, channel);
+				printDataValue(1, value);
+				printRedMarker(1, value);
 			}
+			usbMIDI.sendControlChange(75, value, channel);
 		}
+	}
 }
 
 FLASHMEM void myCC_No76(uint8_t value)
 {
 	filterAttack = ENVTIMES[value];
-		updateFilterAttack();
-		updateFilterRelease();	// Realeas needs to be updated when Attack is updated!
-		set_Filter_Envelope_releaseNoteOn();
-		Env1Atk = value;
-		if (PageNr == 4 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
-			printDataValue (0, value);
-			printRedMarker (0, value);
-			usbMIDI.sendControlChange(76, value, channel);
-		}
+	updateFilterAttack();
+	updateFilterRelease(); // Realeas needs to be updated when Attack is updated!
+	set_Filter_Envelope_releaseNoteOn();
+	Env1Atk = value;
+	if (PageNr == 4 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
+		printDataValue(0, value);
+		printRedMarker(0, value);
+		usbMIDI.sendControlChange(76, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No77(uint8_t value)
 {
 	filterDecay = ENVTIMES[value];
-		updateFilterDecay();
-		Env1Dcy = value;
-		if (PageNr == 4 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
-			printDataValue (1, value);
-			printRedMarker (1, value);
-			usbMIDI.sendControlChange(77, value, channel);
-		}
+	updateFilterDecay();
+	Env1Dcy = value;
+	if (PageNr == 4 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
+		printDataValue(1, value);
+		printRedMarker(1, value);
+		usbMIDI.sendControlChange(77, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No78(uint8_t value)
 {
 	filterSustain = LINEAR[value];
-		updateFilterSustain();
-		Env1Sus = value;
-		if (PageNr == 4 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
-			printDataValue (2, value);
-			printRedMarker (2, value);
-			usbMIDI.sendControlChange(78, value, channel);
-		}
+	updateFilterSustain();
+	Env1Sus = value;
+	if (PageNr == 4 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
+		printDataValue(2, value);
+		printRedMarker(2, value);
+		usbMIDI.sendControlChange(78, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No79(uint8_t value)
 {
 	filterRelease = ENVTIMES[value];
-		updateFilterRelease();
-		set_Filter_Envelope_releaseNoteOn();
-		Env1Rel = value;
-		if (PageNr == 4 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
-			printDataValue (3, value);
-			printRedMarker (3, value);
-			usbMIDI.sendControlChange(79, value, channel);
-		}
+	updateFilterRelease();
+	set_Filter_Envelope_releaseNoteOn();
+	Env1Rel = value;
+	if (PageNr == 4 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env1Atk, Env1Dcy, Env1Sus, Env1Rel);
+		printDataValue(3, value);
+		printRedMarker(3, value);
+		usbMIDI.sendControlChange(79, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No80(uint8_t value)
 {
 	ampAttack = ENVTIMES[value];
-		updateAttack();
-		updateRelease();		// Release needs to be updated when Attack is updated!
-		set_Amp_Envelope_releaseNoteOn();
-		Env2Atk = value;
-		if (PageNr == 5 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
-			printDataValue (0, value);
-			printRedMarker (0, value);
-			usbMIDI.sendControlChange(80, value, channel);
-		}
+	updateAttack();
+	updateRelease(); // Release needs to be updated when Attack is updated!
+	set_Amp_Envelope_releaseNoteOn();
+	Env2Atk = value;
+	if (PageNr == 5 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
+		printDataValue(0, value);
+		printRedMarker(0, value);
+		usbMIDI.sendControlChange(80, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No81(uint8_t value)
 {
 	ampDecay = ENVTIMES[value];
-		updateDecay();
-		Env2Dcy = value;
-		if (PageNr == 5 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
-			printDataValue (1, value);
-			printRedMarker (1, value);
-			usbMIDI.sendControlChange(81, value, channel);
-		}
+	updateDecay();
+	Env2Dcy = value;
+	if (PageNr == 5 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
+		printDataValue(1, value);
+		printRedMarker(1, value);
+		usbMIDI.sendControlChange(81, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No82(uint8_t value)
 {
 	ampSustain = LINEAR[value];
-		updateSustain();
-		Env2Sus = value;
-		if (PageNr == 5 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
-			printDataValue (2, value);
-			printRedMarker (2, value);
-			usbMIDI.sendControlChange(82, value, channel);
-		}
+	updateSustain();
+	Env2Sus = value;
+	if (PageNr == 5 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
+		printDataValue(2, value);
+		printRedMarker(2, value);
+		usbMIDI.sendControlChange(82, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No83(uint8_t value)
 {
 	ampRelease = ENVTIMES[value];
-		updateRelease();
-		set_Amp_Envelope_releaseNoteOn();
-		if (ampRelease < LFO1releaseTime) {
-			updateLFO1release();
-		}
-		Env2Rel = value;
-		if (PageNr == 5 && myPageShiftStatus[PageNr] == false) {
-			drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
-			printDataValue (3, value);
-			printRedMarker (3, value);
-			usbMIDI.sendControlChange(83, value, channel);
-		}
+	updateRelease();
+	set_Amp_Envelope_releaseNoteOn();
+	if (ampRelease < LFO1releaseTime)
+	{
+		updateLFO1release();
+	}
+	Env2Rel = value;
+	if (PageNr == 5 && myPageShiftStatus[PageNr] == false)
+	{
+		drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
+		printDataValue(3, value);
+		printRedMarker(3, value);
+		usbMIDI.sendControlChange(83, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No85(uint8_t value)
 {
-		pwA = LINEARCENTREZERO[value]; // Bipolar
-		pwmAmtA = LINEAR[value];
-		updatePWA();
-		if (PageNr == 1 && myPageShiftStatus[1] == 0 && Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12))
+	pwA = LINEARCENTREZERO[value]; // Bipolar
+	pwmAmtA = LINEAR[value];
+	updatePWA();
+	if (PageNr == 1 && myPageShiftStatus[1] == 0 && Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12))
+	{
+		ParameterNr = 5;
+		drawParamterFrame(PageNr, ParameterNr);
+		ParameterNrMem[PageNr] = ParameterNr;
+		tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
+		tft.setCursor(135, 59);
+		tft.setTextColor(ST7735_WHITE);
+		tft.print(value);
+		if (Osc1WaveBank == 0 && oscWaveformA != 0 && (oscWaveformA == 5 || oscWaveformA == 12))
 		{
-			ParameterNr = 5;
-			drawParamterFrame(PageNr, ParameterNr);
-			ParameterNrMem[PageNr] = ParameterNr;
-			tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
-			tft.setCursor(135, 59);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print(value);
-			if (Osc1WaveBank == 0 && oscWaveformA != 0 && (oscWaveformA == 5 || oscWaveformA == 12))
+			if (value >= 126)
 			{
-				if (value >= 126)
-				{
-					value = 126;
-				}
-				draw_PWM_curve(LINEARCENTREZERO[value]);
-				printPWMrate(pwmRateA);
+				value = 126;
 			}
+			draw_PWM_curve(LINEARCENTREZERO[value]);
+			printPWMrate(pwmRateA);
 		}
+	}
 }
 
 FLASHMEM void myCC_No86(uint8_t value)
 {
-		pwB = LINEARCENTREZERO[value]; // Bipolar
-		pwmAmtB = LINEAR[value];
-		updatePWB();
-		if (PageNr == 2 && myPageShiftStatus[2] == 0 && Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12))
+	pwB = LINEARCENTREZERO[value]; // Bipolar
+	pwmAmtB = LINEAR[value];
+	updatePWB();
+	if (PageNr == 2 && myPageShiftStatus[2] == 0 && Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12))
+	{
+		ParameterNr = 5;
+		drawParamterFrame(PageNr, ParameterNr);
+		ParameterNrMem[PageNr] = ParameterNr;
+		tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
+		tft.setCursor(135, 59);
+		tft.setTextColor(ST7735_WHITE);
+		tft.print(value);
+		if (Osc2WaveBank == 0 && oscWaveformB != 0 && (oscWaveformB == 5 || oscWaveformB == 12))
 		{
-			ParameterNr = 5;
-			drawParamterFrame(PageNr, ParameterNr);
-			ParameterNrMem[PageNr] = ParameterNr;
-			tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
-			tft.setCursor(135, 59);
-			tft.setTextColor(ST7735_WHITE);
-			tft.print(value);
-			if (Osc2WaveBank == 0 && oscWaveformB != 0 && (oscWaveformB == 5 || oscWaveformB == 12))
+			if (value >= 126)
 			{
-				if (value >= 126)
-				{
-					value = 126;
-				}
-				draw_PWM_curve(LINEARCENTREZERO[value]);
-				printPWMrate(pwmRateB);
+				value = 126;
 			}
+			draw_PWM_curve(LINEARCENTREZERO[value]);
+			printPWMrate(pwmRateB);
 		}
+	}
 }
 
 FLASHMEM void myCC_No89(uint8_t value)
 {
-		keytrackingAmount = (value * DIV127);
-		updateKeyTracking();
-		if (PageNr == 3 && myPageShiftStatus[3] == 1)
-		{
-			printDataValue(0, value);
-			printRedMarker(0, value);
-			usbMIDI.sendControlChange(89, value, channel);
-		}
+	keytrackingAmount = (value * DIV127);
+	updateKeyTracking();
+	if (PageNr == 3 && myPageShiftStatus[3] == 1)
+	{
+		printDataValue(0, value);
+		printRedMarker(0, value);
+		usbMIDI.sendControlChange(89, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No94(uint8_t value)
 {
-		static uint8_t detuneVal = 0;
-		if (detuneVal != value)
+	static uint8_t detuneVal = 0;
+	if (detuneVal != value)
+	{
+		detune = 1.0f - (MAXDETUNE * POWER[value]);
+		chordDetune = value;
+		detuneVal = value;
+		updateDetune();
+		if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
 		{
-			detune = 1.0f - (MAXDETUNE * POWER[value]);
-			chordDetune = value;
-			detuneVal = value;
-			updateDetune();
-			if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
+			ParameterNr = 3;
+			drawParamterFrame(PageNr, ParameterNr);
+			tft.fillRoundRect(50, 76, 26, 10, 2, ST7735_BLACK);
+			tft.fillRoundRect(54, 76, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(56, 78);
+			if (unison == 0 || (unison == 1 && Voice_mode <= 4))
 			{
-				ParameterNr = 3;
-				drawParamterFrame(PageNr, ParameterNr);
-				tft.fillRoundRect(50, 76, 26, 10, 2, ST7735_BLACK);
-				tft.fillRoundRect(54, 76, 22, 10, 2, ST7735_BLUE);
-				tft.setCursor(56, 78);
-				if (unison == 0 || (unison == 1 && Voice_mode <= 4))
-				{
-					tft.setTextColor(ST7735_WHITE);
-					tft.print(value);
-				}
-				else
-				{
-					tft.fillRoundRect(50, 76, 26, 10, 2, ST7735_BLUE);
-					tft.setCursor(52, 78);
-					tft.print(CDT_STR[value]);
-				}
+				tft.setTextColor(ST7735_WHITE);
+				tft.print(value);
 			}
-			usbMIDI.sendControlChange(31, value, channel);
+			else
+			{
+				tft.fillRoundRect(50, 76, 26, 10, 2, ST7735_BLUE);
+				tft.setCursor(52, 78);
+				tft.print(CDT_STR[value]);
+			}
 		}
+		usbMIDI.sendControlChange(31, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No102(uint8_t value)
 {
-	//Pick up
-		if (!pickUpActive && pickUp && (oscLfoRatePrevValue <  LFOMAXRATE * POWER[value - TOLERANCE] || 
-			oscLfoRatePrevValue > LFOMAXRATE * POWER[value + TOLERANCE])) return; //PICK-UP
-		if (oscLFOMidiClkSync == 1) {
-			oscLfoRate = getLFOTempoRate(value);
-			oscLFOTimeDivStr = LFOTEMPOSTR[value];
-		}
-		else {
-			oscLfoRate = LFOMAXRATE * POWER[value];
-		}
-		updatePitchLFORate();
-		oscLfoRatePrevValue = oscLfoRate;//PICK-UP
+	// Pick up
+	if (!pickUpActive && pickUp && (oscLfoRatePrevValue < LFOMAXRATE * POWER[value - TOLERANCE] || oscLfoRatePrevValue > LFOMAXRATE * POWER[value + TOLERANCE]))
+		return; // PICK-UP
+	if (oscLFOMidiClkSync == 1)
+	{
+		oscLfoRate = getLFOTempoRate(value);
+		oscLFOTimeDivStr = LFOTEMPOSTR[value];
+	}
+	else
+	{
+		oscLfoRate = LFOMAXRATE * POWER[value];
+	}
+	updatePitchLFORate();
+	oscLfoRatePrevValue = oscLfoRate; // PICK-UP
 }
 
 FLASHMEM void myCC_No103(uint8_t value)
 {
-	if (oscLFOWaveform == getLFOWaveform(value))return;
-		oscLFOWaveform = getLFOWaveform(value);
-		updatePitchLFOWaveform();
+	if (oscLFOWaveform == getLFOWaveform(value))
+		return;
+	oscLFOWaveform = getLFOWaveform(value);
+	updatePitchLFOWaveform();
 }
 
 FLASHMEM void myCC_No104(uint8_t value)
 {
 	value > 0 ? filterLFOMidiClkSync = 1 : filterLFOMidiClkSync = 0;
-		updateFilterLFOMidiClkSync();
+	updateFilterLFOMidiClkSync();
 }
 
 FLASHMEM void myCC_No105(uint8_t value)
 {
 	value > 0 ? oscLFOMidiClkSync = 1 : oscLFOMidiClkSync = 0;
-		updatePitchLFOMidiClkSync();
+	updatePitchLFOMidiClkSync();
 }
 
 FLASHMEM void myCC_No106(uint8_t value)
 {
 	value > 0 ? pwmSource = PWMSOURCEFENV : pwmSource = PWMSOURCELFO;
-		if (PageNr == 1) {
-			updatePWMSourceA();
-			} else {
-			updatePWMSourceB();
-		}
+	if (PageNr == 1)
+	{
+		updatePWMSourceA();
+	}
+	else
+	{
+		updatePWMSourceB();
+	}
 }
 
 FLASHMEM void myCC_No123(uint8_t value)
@@ -3257,265 +3635,298 @@ FLASHMEM void myCC_No123(uint8_t value)
 
 FLASHMEM void myCC_No126(uint8_t value)
 {
-	switch (value) {
-			case 0:
-			unison = 0;
-			break;
-			case 1:
-			unison = 1;
-			break;
-			default:
-			unison = 0;
-			break;
-		}
-		updateUnison();
-		KeyLED2State = true;
+	switch (value)
+	{
+	case 0:
+		unison = 0;
+		break;
+	case 1:
+		unison = 1;
+		break;
+	default:
+		unison = 0;
+		break;
+	}
+	updateUnison();
+	KeyLED2State = true;
 }
 
 FLASHMEM void myCC_No141(uint8_t value)
 {
 	value = value * 0.51f;
-		if (value >= 63) {
-			value = 63;
+	if (value >= 63)
+	{
+		value = 63;
+	}
+	if (oscLFOWaveform != value)
+	{
+		oscLFOWaveform = value;
+		pitchLfo.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform) + (256 * oscLFOWaveform), AWFREQ); // half sine
+		updateLFO1waveform();
+		if (PageNr == 6)
+		{
+			drawLFOwaveform(oscLFOWaveform, ST77XX_RED);
+			uint8_t frame_no = value % 6;
+			drawLFOframe(frame_no);
+			printDataValue(0, (value + 1));
+			printRedMarker(0, (value * 2));
 		}
-		if (oscLFOWaveform != value) {
-			oscLFOWaveform = value;
-			pitchLfo.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * oscLFOWaveform), AWFREQ); // half sine
-			updateLFO1waveform();
-			if (PageNr == 6) {
-				drawLFOwaveform(oscLFOWaveform, ST77XX_RED);
-				uint8_t frame_no = value % 6;
-				drawLFOframe(frame_no);
-				printDataValue (0, (value + 1));
-				printRedMarker (0, (value * 2));
-			}
-		}
+	}
 }
 
 FLASHMEM void myCC_No142(uint8_t value)
 {
-	if (value == 0) {
-			value = 1;
-		}
-		oscLfoRate = LFOMAXRATE * POWER[value];
-		updatePitchLFORate();
-		myLFO1RateValue = value;
-		if (PageNr == 6 && myPageShiftStatus[6] == false) {
-			printDataValue (1, value);
-			printRedMarker (1, value);
-		}
+	if (value == 0)
+	{
+		value = 1;
+	}
+	oscLfoRate = LFOMAXRATE * POWER[value];
+	updatePitchLFORate();
+	myLFO1RateValue = value;
+	if (PageNr == 6 && myPageShiftStatus[6] == false)
+	{
+		printDataValue(1, value);
+		printRedMarker(1, value);
+	}
 }
 
 FLASHMEM void myCC_No143(uint8_t value)
 {
 	oscLfoAmt = LINEARLFO[value];
-		updateOscLFOAmt();
-		if (PageNr == 6 && myPageShiftStatus[6] == false) {
-			printDataValue (2, value);
-			printRedMarker (2, value);
-		}
+	updateOscLFOAmt();
+	if (PageNr == 6 && myPageShiftStatus[6] == false)
+	{
+		printDataValue(2, value);
+		printRedMarker(2, value);
+	}
 }
 
 FLASHMEM void myCC_No144(uint8_t value)
 {
 	value = value * 0.51f;
-		if (value >= 63) {
-			value = 63;
+	if (value >= 63)
+	{
+		value = 63;
+	}
+	if (filterLfoWaveform != value)
+	{
+		filterLfoWaveform = value;
+		filterLfo.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform) + (256 * filterLfoWaveform), AWFREQ); // half sine
+		updateLFO2waveform();
+		if (PageNr == 7)
+		{
+			drawLFOwaveform(filterLfoWaveform, ST7735_ORANGE);
+			uint8_t frame_no = value % 6;
+			drawLFOframe(frame_no);
+			printDataValue(0, (value + 1));
+			printRedMarker(0, (value * 2));
 		}
-		if (filterLfoWaveform != value) {
-			filterLfoWaveform = value;
-			filterLfo.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * filterLfoWaveform), AWFREQ); // half sine
-			updateLFO2waveform();
-			if (PageNr == 7) {
-				drawLFOwaveform(filterLfoWaveform, ST7735_ORANGE);
-				uint8_t frame_no = value % 6;
-				drawLFOframe(frame_no);
-				printDataValue (0, (value + 1));
-				printRedMarker (0, (value * 2));
-			}
-		}
+	}
 }
 
 FLASHMEM void myCC_No145(uint8_t value)
 {
-	if (value == 0) {
-			value = 1;
-		}
-		filterLfoRate = LFOMAXRATE * POWER[value];
-		updateFilterLfoRate();
-		myLFO2RateValue = value;
-		if (PageNr == 7 && myPageShiftStatus[7] == false) {
-			printDataValue (1, value);
-			printRedMarker (1, value);
-		}
+	if (value == 0)
+	{
+		value = 1;
+	}
+	filterLfoRate = LFOMAXRATE * POWER[value];
+	updateFilterLfoRate();
+	myLFO2RateValue = value;
+	if (PageNr == 7 && myPageShiftStatus[7] == false)
+	{
+		printDataValue(1, value);
+		printRedMarker(1, value);
+	}
 }
 
 FLASHMEM void myCC_No146(uint8_t value)
 {
 	filterLfoAmt = LINEARLFO[value];
-		updateFilterLfoAmt();
-		if (PageNr == 7 && myPageShiftStatus[7] == false) {
-			printDataValue (2, value);
-			printRedMarker (2, value);
-			usbMIDI.sendControlChange(51, value, channel);
+	updateFilterLfoAmt();
+	if (PageNr == 7 && myPageShiftStatus[7] == false)
+	{
+		printDataValue(2, value);
+		printRedMarker(2, value);
+		usbMIDI.sendControlChange(51, value, channel);
+	}
+	// Filter page
+	else if (PageNr == 3 && myPageShiftStatus[3] < 2)
+	{
+		draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
+		if (myPageShiftStatus[3] == 1)
+		{
+			printDataValue(2, value);
+			printRedMarker(2, value);
 		}
-		// Filter page
-		else if (PageNr == 3 && myPageShiftStatus[3] < 2) {
-			draw_filter_curves(FilterCut >> 1, FilterRes, FilterMix);
-			if (myPageShiftStatus[3] == 1) {
-				printDataValue (2, value);
-				printRedMarker (2, value);
-			}
-			usbMIDI.sendControlChange(51, value, channel);
-		}
+		usbMIDI.sendControlChange(51, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No150(uint8_t value)
 {
 	uint8_t valA = OSCMIXA[value];
-		uint8_t valB = OSCMIXB[value];
-		oscALevel = LINEAR[valA];
-		oscBLevel = LINEAR[valB];
-		updateOscLevelA();
-		updateOscLevelB();
-		if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == false) {
-			ParameterNr = 7;
-			drawParamterFrame(PageNr, ParameterNr);
-			printOscMixVal(value);
-			usbMIDI.sendControlChange(25, value, channel);
-		}
+	uint8_t valB = OSCMIXB[value];
+	oscALevel = LINEAR[valA];
+	oscBLevel = LINEAR[valB];
+	updateOscLevelA();
+	updateOscLevelB();
+	if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 7;
+		drawParamterFrame(PageNr, ParameterNr);
+		printOscMixVal(value);
+		usbMIDI.sendControlChange(25, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No151(uint8_t value)
 {
-	if (value >= 126) {
-			value = 126;
-		}
-		pitchEnvA = LINEARCENTREZERO[value] * OSCMODMIXERMAX;
-		updatePitchEnv();
-		if (PageNr == 1 && myPageShiftStatus[PageNr] == false) {
-			ParameterNr = 2;
-			drawParamterFrame(PageNr, ParameterNr);
-			printOscPitchEnv(value);
-			usbMIDI.sendControlChange(28, value, channel);
-		}
+	if (value >= 126)
+	{
+		value = 126;
+	}
+	pitchEnvA = LINEARCENTREZERO[value] * OSCMODMIXERMAX;
+	updatePitchEnv();
+	if (PageNr == 1 && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 2;
+		drawParamterFrame(PageNr, ParameterNr);
+		printOscPitchEnv(value);
+		usbMIDI.sendControlChange(28, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No152(uint8_t value)
 {
-	if (value >= 126) {
-			value = 126;
-		}
-		pitchEnvB = LINEARCENTREZERO[value] * OSCMODMIXERMAX;
-		updatePitchEnv();
-		if (PageNr == 2 && myPageShiftStatus[PageNr] == false) {
-			ParameterNr = 2;
-			drawParamterFrame(PageNr, ParameterNr);
-			printOscPitchEnv(value);
-			usbMIDI.sendControlChange(29, value, channel);
-		}
+	if (value >= 126)
+	{
+		value = 126;
+	}
+	pitchEnvB = LINEARCENTREZERO[value] * OSCMODMIXERMAX;
+	updatePitchEnv();
+	if (PageNr == 2 && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 2;
+		drawParamterFrame(PageNr, ParameterNr);
+		printOscPitchEnv(value);
+		usbMIDI.sendControlChange(29, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No153(uint8_t value)
 {
 	driveLevel = ((LINEAR[value]) * 1.25f);
-		setAmpLevel(driveLevel);
-		if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == false) {
-			ParameterNr = 4;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRoundRect(54,95,22,10,2,ST7735_BLUE);
-			tft.setCursor(5,97);
-			if (value == 0) {
-				tft.setTextColor(ST7735_RED);
-				tft.println("LEVEL");
-				} else {
-				tft.setTextColor(ST7735_GRAY);
-				tft.println("LEVEL");
-			}
-			tft.setCursor(56,97);
-			tft.setTextColor(ST7735_WHITE);
-			//tft.print(int(DIV100 * value));
-			tft.print(value);
-			usbMIDI.sendControlChange(24, value, channel);
-			
+	setAmpLevel(driveLevel);
+	if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == false)
+	{
+		ParameterNr = 4;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRoundRect(54, 95, 22, 10, 2, ST7735_BLUE);
+		tft.setCursor(5, 97);
+		if (value == 0)
+		{
+			tft.setTextColor(ST7735_RED);
+			tft.println("LEVEL");
 		}
+		else
+		{
+			tft.setTextColor(ST7735_GRAY);
+			tft.println("LEVEL");
+		}
+		tft.setCursor(56, 97);
+		tft.setTextColor(ST7735_WHITE);
+		// tft.print(int(DIV100 * value));
+		tft.print(value);
+		usbMIDI.sendControlChange(24, value, channel);
+	}
 }
 
 FLASHMEM void myCC_No155(uint8_t value)
 {
 	myFilVelocity = ((DIV127 * value));
-		if (PageNr == 3 && myPageShiftStatus[PageNr] == 1) {
-			printDataValue (1, value);
-			printRedMarker (1, value);
-		}
+	if (PageNr == 3 && myPageShiftStatus[PageNr] == 1)
+	{
+		printDataValue(1, value);
+		printRedMarker(1, value);
+	}
 }
 
 FLASHMEM void myCC_No156(uint8_t value)
 {
 	myAmpVelocity = ((DIV127 * value) * 0.5f);
-		if (PageNr == 5 && myPageShiftStatus[PageNr] == true) {
-			printDataValue (1, value);
-			printRedMarker (1, value);
-		}
+	if (PageNr == 5 && myPageShiftStatus[PageNr] == true)
+	{
+		printDataValue(1, value);
+		printRedMarker(1, value);
+	}
 }
 
 FLASHMEM void myCC_No160(uint8_t value)
 {
 	uint8_t val = (uint8_t)(value * 0.23f);
-		if (val >= 29) {
-			val = 29;
-		}
-		if (WShaperNo != val) {
-			WShaperNo = val;
-			setWaveShaperTable(val);
-			if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == 1) {
-				ParameterNr = 0;
-				drawParamterFrame(PageNr, ParameterNr);
-				tft.fillRoundRect(54,19,22,10,2,ST7735_BLUE);
-				tft.setCursor(56,21);
-				tft.setTextColor(ST7735_WHITE);
-				if (WShaperNo == 0) {
-					tft.print("OFF");
-					WShaperDrive = 1.0f;
-					val = 1.0f;
-					setWaveShaperDrive(val);
-					tft.fillRect(56,40,17,7,ST7735_BLUE);
-					tft.setCursor(56, 40);
-					tft.print("1.0");
-				}
-				else tft.print(val,1);
-				drawWaveshaperCurve(WShaperNo);
+	if (val >= 29)
+	{
+		val = 29;
+	}
+	if (WShaperNo != val)
+	{
+		WShaperNo = val;
+		setWaveShaperTable(val);
+		if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == 1)
+		{
+			ParameterNr = 0;
+			drawParamterFrame(PageNr, ParameterNr);
+			tft.fillRoundRect(54, 19, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(56, 21);
+			tft.setTextColor(ST7735_WHITE);
+			if (WShaperNo == 0)
+			{
+				tft.print("OFF");
+				WShaperDrive = 1.0f;
+				val = 1.0f;
+				setWaveShaperDrive(val);
+				tft.fillRect(56, 40, 17, 7, ST7735_BLUE);
+				tft.setCursor(56, 40);
+				tft.print("1.0");
 			}
+			else
+				tft.print(val, 1);
+			drawWaveshaperCurve(WShaperNo);
 		}
+	}
 }
 
 FLASHMEM void myCC_No161(uint8_t value)
 {
 	float valmax = 5.0f;
-		float val = 0;
-		val = ((valmax / 127.0f) * value);
-		if (val <= 0.1f) {
-			val = 0.1f;
-		}
-		if (WShaperNo == 0) {
-			val = 1.0f;
-		}
-		WShaperDrive = val;
-		setWaveShaperDrive(val);
-		if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == 1) {
-			ParameterNr = 1;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRect(56,40,17,7,ST7735_BLUE);
-			tft.setTextColor(ST7735_WHITE);
-			tft.setCursor(56, 40);
-			tft.print(val,1);
-		}
+	float val = 0;
+	val = ((valmax / 127.0f) * value);
+	if (val <= 0.1f)
+	{
+		val = 0.1f;
+	}
+	if (WShaperNo == 0)
+	{
+		val = 1.0f;
+	}
+	WShaperDrive = val;
+	setWaveShaperDrive(val);
+	if ((PageNr == 1 || PageNr == 2) && myPageShiftStatus[PageNr] == 1)
+	{
+		ParameterNr = 1;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRect(56, 40, 17, 7, ST7735_BLUE);
+		tft.setTextColor(ST7735_WHITE);
+		tft.setCursor(56, 40);
+		tft.print(val, 1);
+	}
 }
 
 FLASHMEM void myCC_No179(uint8_t value)
 {
-	//myBankSelect16(midiChannel, value);
-	//Serial.println("BankSelectMSB");
+	// myBankSelect16(midiChannel, value);
+	// Serial.println("BankSelectMSB");
 }
 
 FLASHMEM void myCC_No180(uint8_t value)
@@ -3534,11 +3945,12 @@ FLASHMEM void myCC_No182(uint8_t value)
 	{
 		FxPot1value = value;
 		FxPot1Val = value << 1;
-		if (PageNr == 10) {
+		if (PageNr == 10)
+		{
 			printFxValFrame(0);
 			printFxPOT(0, FxPrgNo);
-			printDataValue (1, value);
-			printRedMarker (1, value);
+			printDataValue(1, value);
+			printRedMarker(1, value);
 			myFxSelValue = 0;
 			printFxPotValue(myFxSelValue, value);
 		}
@@ -3551,11 +3963,12 @@ FLASHMEM void myCC_No183(uint8_t value)
 	{
 		FxPot2value = value;
 		FxPot2Val = value << 1;
-		if (PageNr == 10) {
+		if (PageNr == 10)
+		{
 			printFxValFrame(1);
 			printFxPOT(1, FxPrgNo);
-			printDataValue (1, value);
-			printRedMarker (1, value);
+			printDataValue(1, value);
+			printRedMarker(1, value);
 			myFxSelValue = 1;
 			printFxPotValue(myFxSelValue, value);
 		}
@@ -3568,11 +3981,12 @@ FLASHMEM void myCC_No184(uint8_t value)
 	{
 		FxPot3value = value;
 		FxPot3Val = value << 1;
-		if (PageNr == 10) {
+		if (PageNr == 10)
+		{
 			printFxValFrame(2);
 			printFxPOT(2, FxPrgNo);
-			printDataValue (1, value);
-			printRedMarker (1, value);
+			printDataValue(1, value);
+			printRedMarker(1, value);
 			myFxSelValue = 2;
 			printFxPotValue(myFxSelValue, value);
 		}
@@ -3584,115 +3998,121 @@ FLASHMEM void myCC_No185(uint8_t value)
 	if (FxPrgNo >= 1)
 	{
 		FxClkRate = (value * 393.8f) + 10000; // intern value max 255 (cc 127)
-		//FxClkRate = (value * 196.08f) + 10000;
-		analogWriteFrequency (PWM5, FxClkRate);
-		if (PageNr == 10) {
+		// FxClkRate = (value * 196.08f) + 10000;
+		analogWriteFrequency(PWM5, FxClkRate);
+		if (PageNr == 10)
+		{
 			myFxSelValue = 3;
 			printFxValFrame(3);
 			printFxPOT(3, FxPrgNo);
-			printDataValue (1, value);
-			printRedMarker (1, value);
-			tft.fillRoundRect(63,38,65,11,2,ST7735_GREEN);
+			printDataValue(1, value);
+			printRedMarker(1, value);
+			tft.fillRoundRect(63, 38, 65, 11, 2, ST7735_GREEN);
 			tft.setTextColor(ST7735_BLACK);
-			tft.setCursor(65,40);
+			tft.setCursor(65, 40);
 			tft.print("Clk");
 			uint16_t fxRate = (FxClkRate / 1000);
-			tft.setCursor(85,40);
+			tft.setCursor(85, 40);
 			tft.print(fxRate);
 			fxRate = (FxClkRate % 1000);
 			fxRate = (fxRate / 100);
-			tft.setCursor(96,40);
+			tft.setCursor(96, 40);
 			tft.print(".");
-			tft.setCursor(103,40);
+			tft.setCursor(103, 40);
 			tft.print(fxRate);
-			tft.setCursor(110,40);
+			tft.setCursor(110, 40);
 			tft.print("KHz");
 		}
 	}
 }
 
-
 FLASHMEM void myCC_No186(uint8_t value)
 {
 	analogWrite(PWM4, value << 1);
-		FxMixValue = value;
-		if (PageNr == 10) {
-			printDataValue (2, value);
-			printRedMarker (2, value);
-			drawFxGrafic (FxMixValue, FxTimeValue, FxFeedbackValue, FxPot3value);
-		}
+	FxMixValue = value;
+	if (PageNr == 10)
+	{
+		printDataValue(2, value);
+		printRedMarker(2, value);
+		drawFxGrafic(FxMixValue, FxTimeValue, FxFeedbackValue, FxPot3value);
+	}
 }
 
 FLASHMEM void myCC_No187(uint8_t value)
 {
-	if (value != FxPrgNo && value <= 15) {
-			FxPrgNo = value;
-			setFxPrg(value);
-			FxPrgNoChange = true;	// FxPrg if change in main-loop
-			if (PageNr == 10) {
-				if (value == 0) {
-					tft.fillRect(65,27,90,9,ST7735_BLACK);
-					tft.setTextColor(ST7735_RED);
-					tft.setCursor(65,28);
-					tft.print("OFF");
-					tft.fillRect(122, 116, 30, 7, ST7735_BLACK);
-					tft.setTextColor(ST7735_GRAY);
-					tft.setCursor(130,116);
-					tft.print("OFF");
-					analogWrite(PWM4, 0);
-					printFxPotValue(0, 0);
-					printFxPotValue(1, 0);
-					printFxPotValue(2, 0);
-					drawFxGrafic (0, 0, 0, 0);
-					printDataValue (1, 0);
-					printRedMarker (1, 0);
-					printDataValue (2, 0);
-					printRedMarker (2, 0);
-					printRedMarker (3, 0);
-					//setLED(1, false);		// Fx LED is change in main-loop
-					printFxValFrame(99); // clear green Frame
-					tft.fillRect(3,71,155,10,ST7735_BLACK);
-					tft.setCursor(75,72);
-					tft.setTextColor(ST7735_GRAY);
-					tft.print("Time/Feedb.");
-					} else {
-					printDataValue (1, myFxValValue);
-					printRedMarker (1, myFxValValue);
-					printDataValue (2, FxMixValue);
-					printRedMarker (2, FxMixValue);
-					printFxPotValue(0, FxPot1value);
-					printFxPotValue(1, FxPot2value);
-					printFxPotValue(2, FxPot3value);
-					printDataValue (3, value);
-					printRedMarker (3, (value * 8.5));
-					printFxName(value);
-					drawFxGrafic (FxMixValue, FxTimeValue, FxFeedbackValue, FxPot3value);
-					//setLED(1, true);	// Fx LED is change in main-loop
-					printFxValFrame(myFxSelValue); // clear green Frame
-					printFxPOT(myFxSelValue, value);
-				}
-				
+	if (value != FxPrgNo && value <= 15)
+	{
+		FxPrgNo = value;
+		setFxPrg(value);
+		FxPrgNoChange = true; // FxPrg if change in main-loop
+		if (PageNr == 10)
+		{
+			if (value == 0)
+			{
+				tft.fillRect(65, 27, 90, 9, ST7735_BLACK);
+				tft.setTextColor(ST7735_RED);
+				tft.setCursor(65, 28);
+				tft.print("OFF");
+				tft.fillRect(122, 116, 30, 7, ST7735_BLACK);
+				tft.setTextColor(ST7735_GRAY);
+				tft.setCursor(130, 116);
+				tft.print("OFF");
+				analogWrite(PWM4, 0);
+				printFxPotValue(0, 0);
+				printFxPotValue(1, 0);
+				printFxPotValue(2, 0);
+				drawFxGrafic(0, 0, 0, 0);
+				printDataValue(1, 0);
+				printRedMarker(1, 0);
+				printDataValue(2, 0);
+				printRedMarker(2, 0);
+				printRedMarker(3, 0);
+				// setLED(1, false);		// Fx LED is change in main-loop
+				printFxValFrame(99); // clear green Frame
+				tft.fillRect(3, 71, 155, 10, ST7735_BLACK);
+				tft.setCursor(75, 72);
+				tft.setTextColor(ST7735_GRAY);
+				tft.print("Time/Feedb.");
+			}
+			else
+			{
+				printDataValue(1, myFxValValue);
+				printRedMarker(1, myFxValValue);
+				printDataValue(2, FxMixValue);
+				printRedMarker(2, FxMixValue);
+				printFxPotValue(0, FxPot1value);
+				printFxPotValue(1, FxPot2value);
+				printFxPotValue(2, FxPot3value);
+				printDataValue(3, value);
+				printRedMarker(3, (value * 8.5));
+				printFxName(value);
+				drawFxGrafic(FxMixValue, FxTimeValue, FxFeedbackValue, FxPot3value);
+				// setLED(1, true);	// Fx LED is change in main-loop
+				printFxValFrame(myFxSelValue); // clear green Frame
+				printFxPOT(myFxSelValue, value);
 			}
 		}
+	}
 }
 
 FLASHMEM void myCC_No189(uint8_t value)
 {
-	if (value <= 1) {
-			value = 1;
-		}
-		LadderFilterDrive = value; // store value
-		updateLadderFilterDrive(value);
-		printDataValue (3, value);
-		printRedMarker (3, value);
+	if (value <= 1)
+	{
+		value = 1;
+	}
+	LadderFilterDrive = value; // store value
+	updateLadderFilterDrive(value);
+	printDataValue(3, value);
+	printRedMarker(3, value);
 }
 
 FLASHMEM void myCC_No190(uint8_t value)
 {
 	LadderFilterpassbandgain = value; // store value
-		updateLadderFilterPassbandGain(value);
-		printDataValue (3, value);
-		printRedMarker (3, value);
+	updateLadderFilterPassbandGain(value);
+	printDataValue(3, value);
+	printRedMarker(3, value);
 }
 
 FLASHMEM void myCC_No191(uint8_t value)
@@ -3703,281 +4123,329 @@ FLASHMEM void myCC_No191(uint8_t value)
 FLASHMEM void myCC_No193(uint8_t value)
 {
 	uint8_t filter_temp;
-		if (value <= 63) {
-			filter_temp = 1;
-		} else filter_temp = 2;
-		
-		if (myFilter != filter_temp) {
-			myFilter = filter_temp;
-			tft.setTextColor(ST7735_GRAY);
-			tft.fillRect(130,116,17,8,ST7735_BLACK);
-			
-			if (myFilter == 1) {
-				printRedMarker (3, 0);
-				print_String(146,130,116);	// print "STA"
-				filterRes = SVF_filterRes;
-				int i;
-				for (i = 0; i < 40; i++) {
-					StateVariableFilter_connections[i].connect();
-				}
-				for (i = 0; i < 24; i++) {
-					ladderFilter_connections[i].disconnect();
-				}
+	if (value <= 63)
+	{
+		filter_temp = 1;
+	}
+	else
+		filter_temp = 2;
+
+	if (myFilter != filter_temp)
+	{
+		myFilter = filter_temp;
+		tft.setTextColor(ST7735_GRAY);
+		tft.fillRect(130, 116, 17, 8, ST7735_BLACK);
+
+		if (myFilter == 1)
+		{
+			printRedMarker(3, 0);
+			print_String(146, 130, 116); // print "STA"
+			filterRes = SVF_filterRes;
+			int i;
+			for (i = 0; i < 40; i++)
+			{
+				StateVariableFilter_connections[i].connect();
 			}
-			else {
-				printRedMarker (3, 127);
-				print_String(147,130,116);	// print "LAD"
-				filterRes = LAD_filterRes;
-				int i;
-				for (i = 0; i < 24; i++) {
-					ladderFilter_connections[i].connect();
-				}
-				for (i = 0; i < 40; i++) {
-					StateVariableFilter_connections[i].disconnect();
-				}
+			for (i = 0; i < 24; i++)
+			{
+				ladderFilter_connections[i].disconnect();
 			}
-			updateFilterMixer();
-			updateFilterRes();
-			updateFilterFreq();
 		}
+		else
+		{
+			printRedMarker(3, 127);
+			print_String(147, 130, 116); // print "LAD"
+			filterRes = LAD_filterRes;
+			int i;
+			for (i = 0; i < 24; i++)
+			{
+				ladderFilter_connections[i].connect();
+			}
+			for (i = 0; i < 40; i++)
+			{
+				StateVariableFilter_connections[i].disconnect();
+			}
+		}
+		updateFilterMixer();
+		updateFilterRes();
+		updateFilterFreq();
+	}
 }
 
 FLASHMEM void myCC_No206(uint8_t value)
 {
 	pwmRateA = PWMRATE[value];
-		updatePWMRateA();	// PWMOD Osc1
-		if (PageNr == 1 && myPageShiftStatus[1] == false && Osc1WaveBank == 0 && (oscWaveformA == 5
-		|| oscWaveformA == 8 || oscWaveformA == 12)) {
-			ParameterNr = 6;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRoundRect(133,76,22,10,2,ST7735_BLUE);
-			tft.setCursor(135,78);
-			tft.setTextColor(ST7735_WHITE);
-			if (value <= 2) {
-				tft.print("PW");
-				draw_Waveform(oscWaveformA, ST7735_RED);
-			}
-			else if (value <= 6) {
-				tft.print("ENV");
-				tft.setFont(&Picopixel);
-				if (oscWaveformA == 5) {
-					tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
-					tft.setCursor(137,31);
-				}
-				else if (oscWaveformA == 8) {
-					tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
-					tft.setCursor(137,31);
-				}
-				else if (oscWaveformA == 12) {
-					tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
-					tft.setCursor(137,31);
-				}
-				tft.print("ENV");
-				tft.setFont(NULL);
-			}
-			else {
-				value = value - 6;
-				tft.print(value);
-				tft.setFont(&Picopixel);
-				tft.fillRoundRect(135,25,17,9,2,ST7735_DARKGREEN);
-				tft.setCursor(138,31);
-				tft.print("LFO");
-				tft.setFont(NULL);
-			}
+	updatePWMRateA(); // PWMOD Osc1
+	if (PageNr == 1 && myPageShiftStatus[1] == false && Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12))
+	{
+		ParameterNr = 6;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRoundRect(133, 76, 22, 10, 2, ST7735_BLUE);
+		tft.setCursor(135, 78);
+		tft.setTextColor(ST7735_WHITE);
+		if (value <= 2)
+		{
+			tft.print("PW");
+			draw_Waveform(oscWaveformA, ST7735_RED);
 		}
+		else if (value <= 6)
+		{
+			tft.print("ENV");
+			tft.setFont(&Picopixel);
+			if (oscWaveformA == 5)
+			{
+				tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_GRAY);
+				tft.setCursor(137, 31);
+			}
+			else if (oscWaveformA == 8)
+			{
+				tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_GRAY);
+				tft.setCursor(137, 31);
+			}
+			else if (oscWaveformA == 12)
+			{
+				tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_GRAY);
+				tft.setCursor(137, 31);
+			}
+			tft.print("ENV");
+			tft.setFont(NULL);
+		}
+		else
+		{
+			value = value - 6;
+			tft.print(value);
+			tft.setFont(&Picopixel);
+			tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_DARKGREEN);
+			tft.setCursor(138, 31);
+			tft.print("LFO");
+			tft.setFont(NULL);
+		}
+	}
 }
 
 FLASHMEM void myCC_No207(uint8_t value)
 {
-	//Uses combination of PWMRate, PWa and PWb
-		pwmRateB = PWMRATE[value];
-		updatePWMRateB();	// PWMOD Osc2
-		if (PageNr == 2 && myPageShiftStatus[2] == false && Osc2WaveBank == 0 && (oscWaveformB == 5
-		|| oscWaveformB == 8 || oscWaveformB == 12)) {
-			ParameterNr = 6;
-			drawParamterFrame(PageNr, ParameterNr);
-			tft.fillRoundRect(133,76,22,10,2,ST7735_BLUE);
-			tft.setCursor(135,78);
-			tft.setTextColor(ST7735_WHITE);
-			if (value <= 2) {
-				tft.print("PW");
-				draw_Waveform(oscWaveformB, ST7735_RED);
-			}
-			else if (value <= 6) {
-				tft.print("ENV");
-				tft.setFont(&Picopixel);
-				if (oscWaveformB == 5) {
-					tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
-					tft.setCursor(137,31);
-				}
-				else if (oscWaveformB == 8) {
-					tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
-					tft.setCursor(137,31);
-				}
-				else if (oscWaveformB == 12) {
-					tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
-					tft.setCursor(137,31);
-				}
-				tft.print("ENV");
-				tft.setFont(NULL);
-			}
-			else {
-				value = value - 6;
-				tft.print(value);
-				tft.setFont(&Picopixel);
-				tft.fillRoundRect(135,25,17,9,2,ST7735_DARKGREEN);
-				tft.setCursor(138,31);
-				tft.print("LFO");
-				tft.setFont(NULL);
-			}
+	// Uses combination of PWMRate, PWa and PWb
+	pwmRateB = PWMRATE[value];
+	updatePWMRateB(); // PWMOD Osc2
+	if (PageNr == 2 && myPageShiftStatus[2] == false && Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12))
+	{
+		ParameterNr = 6;
+		drawParamterFrame(PageNr, ParameterNr);
+		tft.fillRoundRect(133, 76, 22, 10, 2, ST7735_BLUE);
+		tft.setCursor(135, 78);
+		tft.setTextColor(ST7735_WHITE);
+		if (value <= 2)
+		{
+			tft.print("PW");
+			draw_Waveform(oscWaveformB, ST7735_RED);
 		}
+		else if (value <= 6)
+		{
+			tft.print("ENV");
+			tft.setFont(&Picopixel);
+			if (oscWaveformB == 5)
+			{
+				tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_GRAY);
+				tft.setCursor(137, 31);
+			}
+			else if (oscWaveformB == 8)
+			{
+				tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_GRAY);
+				tft.setCursor(137, 31);
+			}
+			else if (oscWaveformB == 12)
+			{
+				tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_GRAY);
+				tft.setCursor(137, 31);
+			}
+			tft.print("ENV");
+			tft.setFont(NULL);
+		}
+		else
+		{
+			value = value - 6;
+			tft.print(value);
+			tft.setFont(&Picopixel);
+			tft.fillRoundRect(135, 28, 17, 9, 2, ST7735_DARKGREEN);
+			tft.setCursor(138, 31);
+			tft.print("LFO");
+			tft.setFont(NULL);
+		}
+	}
 }
 
 FLASHMEM void myCC_No217(uint8_t value)
 {
 	value = value * 0.51f;
-		if (value >= 63) {
-			value = 63;
+	if (value >= 63)
+	{
+		value = 63;
+	}
+	if (Lfo3Waveform != value)
+	{
+		Lfo3Waveform = value;
+		ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform) + (256 * Lfo3Waveform), AWFREQ); // half sine
+		updateLFO3waveform();
+		if (PageNr == 8)
+		{
+			drawLFOwaveform(Lfo3Waveform, ST7735_MAGENTA);
+			uint8_t frame_no = value % 6;
+			drawLFOframe(frame_no);
+			printDataValue(0, (value + 1));
+			printRedMarker(0, (value * 2));
 		}
-		if (Lfo3Waveform != value) {
-			Lfo3Waveform = value;
-			ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * Lfo3Waveform), AWFREQ); // half sine
-			updateLFO3waveform();
-			if (PageNr == 8) {
-				drawLFOwaveform(Lfo3Waveform, ST7735_MAGENTA);
-				uint8_t frame_no = value % 6;
-				drawLFOframe(frame_no);
-				printDataValue (0, (value + 1));
-				printRedMarker (0, (value * 2));
-			}
-		}
+	}
 }
 
 FLASHMEM void myCC_No218(uint8_t value)
-{	// LFO3 freq. max 25Hz
-	if (value == 0) {
-			value = 1;
-		}
-		Lfo3Rate = LFOMAXRATE2 * POWER[value];
-		updateLfo3Rate();
-		myLFO3RateValue = value;
-		if (PageNr == 8 && myPageShiftStatus[8] == false) {
-			printDataValue (1, value);
-			printRedMarker (1, value);
-		}
+{ // LFO3 freq. max 25Hz
+	if (value == 0)
+	{
+		value = 1;
+	}
+	Lfo3Rate = LFOMAXRATE2 * POWER[value];
+	updateLfo3Rate();
+	myLFO3RateValue = value;
+	if (PageNr == 8 && myPageShiftStatus[8] == false)
+	{
+		printDataValue(1, value);
+		printRedMarker(1, value);
+	}
 }
 
 FLASHMEM void myCC_No219(uint8_t value)
 {
 	Lfo3amt = (DIV127 * value);
-		updateLFO3amt();
-		if (PageNr == 8 && myPageShiftStatus[8] == false) {
-			printDataValue (2, value);
-			printRedMarker (2, value);
-		}
+	updateLFO3amt();
+	if (PageNr == 8 && myPageShiftStatus[8] == false)
+	{
+		printDataValue(2, value);
+		printRedMarker(2, value);
+	}
 }
 
-FLASHMEM void myCC_No230(uint8_t value)
+FLASHMEM void myCC_No230(uint16_t value)
 {
 	SupersawSpreadA = value;
-		updateOsc1Parameter_a(value);
-		if (PageNr == 1 && myPageShiftStatus[1] == 0)
+	updateOsc1Parameter_a(value);
+	if (PageNr == 1 && myPageShiftStatus[1] == 0)
+	{
+		if ((Osc1WaveBank == 0 && oscWaveformA == 3) || (Osc1WaveBank == 15))
 		{
-			if ((Osc1WaveBank == 0 && oscWaveformA == 3) || (Osc1WaveBank == 15))
+			ParameterNr = 5;
+			drawParamterFrame(PageNr, ParameterNr);
+			ParameterNrMem[PageNr] = ParameterNr;
+			tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(135, 59);
+			tft.setTextColor(ST7735_WHITE);
+			if (value >= 999)
 			{
-				ParameterNr = 5;
-				drawParamterFrame(PageNr, ParameterNr);
-				ParameterNrMem[PageNr] = ParameterNr;
-				tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
-				tft.setCursor(135, 59);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print(value);
+				value = 999;
 			}
+			tft.print(value);
 		}
+	}
 }
 
-FLASHMEM void myCC_No231(uint8_t value)
+FLASHMEM void myCC_No231(uint16_t value)
 {
 	SupersawSpreadB = value;
-		updateOsc2Parameter_a(value);
-		if (PageNr == 2 && myPageShiftStatus[2] == 0)
+	updateOsc2Parameter_a(value);
+	if (PageNr == 2 && myPageShiftStatus[2] == 0)
+	{
+		if ((Osc2WaveBank == 0 && oscWaveformB == 3) || (Osc2WaveBank == 15))
 		{
-			if ((Osc2WaveBank == 0 && oscWaveformB == 3) || (Osc2WaveBank == 15))
+			ParameterNr = 5;
+			drawParamterFrame(PageNr, ParameterNr);
+			ParameterNrMem[PageNr] = ParameterNr;
+			tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(135, 59);
+			tft.setTextColor(ST7735_WHITE);
+			if (value >= 999)
 			{
-				ParameterNr = 5;
-				drawParamterFrame(PageNr, ParameterNr);
-				ParameterNrMem[PageNr] = ParameterNr;
-				tft.fillRoundRect(133, 57, 22, 10, 2, ST7735_BLUE);
-				tft.setCursor(135, 59);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print(value);
+				value = 999;
 			}
+			tft.print(value);
 		}
+	}
 }
 
-FLASHMEM void myCC_No232(uint8_t value)
+FLASHMEM void myCC_No232(uint16_t value)
 {
 	SupersawMixA = value;
-		updateOsc1Parameter_b(value);
-		int valA = 127 - value;
-		int valB = value;
-		Supersaw_gain1A = 0.0078f * valA;
-		Supersaw_gain2A = 0.0050f * valB;
-		if (PageNr == 1 && myPageShiftStatus[1] == 0)
+	updateOsc1Parameter_b(value);
+	int valA = 127 - value;
+	int valB = value;
+	Supersaw_gain1A = 0.0078f * valA;
+	Supersaw_gain2A = 0.0050f * valB;
+	if (PageNr == 1 && myPageShiftStatus[1] == 0)
+	{
+		if ((Osc1WaveBank == 0 && oscWaveformA == 3) || (Osc1WaveBank == 15))
 		{
-			if ((Osc1WaveBank == 0 && oscWaveformA == 3) || (Osc1WaveBank == 15))
+			ParameterNr = 6;
+			drawParamterFrame(PageNr, ParameterNr);
+			ParameterNrMem[PageNr] = ParameterNr;
+			tft.fillRoundRect(133, 76, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(135, 78);
+			tft.setTextColor(ST7735_WHITE);
+			if (value >= 999)
 			{
-				ParameterNr = 6;
-				drawParamterFrame(PageNr, ParameterNr);
-				ParameterNrMem[PageNr] = ParameterNr;
-				tft.fillRoundRect(133, 76, 22, 10, 2, ST7735_BLUE);
-				tft.setCursor(135, 78);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print(value);
+				value = 999;
 			}
+			tft.print(value);
 		}
+	}
 }
 
-FLASHMEM void myCC_No233(uint8_t value)
+FLASHMEM void myCC_No233(uint16_t value)
 {
 	SupersawMixB = value;
-		updateOsc2Parameter_b(value);
-		int valA = 127 - value;
-		int valB = value;
-		Supersaw_gain1B = 0.0078f * valA;
-		Supersaw_gain2B = 0.0050f * valB;
-		if (PageNr == 2 && myPageShiftStatus[2] == 0)
+	updateOsc2Parameter_b(value);
+	int valA = 127 - value;
+	int valB = value;
+	Supersaw_gain1B = 0.0078f * valA;
+	Supersaw_gain2B = 0.0050f * valB;
+	if (PageNr == 2 && myPageShiftStatus[2] == 0)
+	{
+		if ((Osc2WaveBank == 0 && oscWaveformB == 3) || (Osc2WaveBank == 15))
 		{
-			if ((Osc2WaveBank == 0 && oscWaveformB == 3) || (Osc2WaveBank == 15))
+			ParameterNr = 6;
+			drawParamterFrame(PageNr, ParameterNr);
+			ParameterNrMem[PageNr] = ParameterNr;
+			tft.fillRoundRect(133, 76, 22, 10, 2, ST7735_BLUE);
+			tft.setCursor(135, 78);
+			tft.setTextColor(ST7735_WHITE);
+			if (value >= 999)
 			{
-				ParameterNr = 6;
-				drawParamterFrame(PageNr, ParameterNr);
-				ParameterNrMem[PageNr] = ParameterNr;
-				tft.fillRoundRect(133, 76, 22, 10, 2, ST7735_BLUE);
-				tft.setCursor(135, 78);
-				tft.setTextColor(ST7735_WHITE);
-				tft.print(value);
+				value = 999;
 			}
+			tft.print(value);
 		}
+	}
 }
 
 FLASHMEM void myCC_No235(uint8_t value)
 {
-	if (pan_value != value) {
-			pan_value = value;
-			update_panorama();
-		}
-		if (PageNr == 5 && myPageShiftStatus[5] == 1) {
-			printDataValue (2, value);
-			printRedMarker (2, value);
-		}
+	if (pan_value != value)
+	{
+		pan_value = value;
+		update_panorama();
+	}
+	if (PageNr == 5 && myPageShiftStatus[5] == 1)
+	{
+		printDataValue(2, value);
+		printRedMarker(2, value);
+	}
 }
 
 //*************************************************************************
 // intern Control Changes Groups 1-4 (CC_No: 0-300)
 //*************************************************************************
-FLASHMEM void myCCgroup1 (byte control, byte value)
+FLASHMEM void myCCgroup1(byte control, uint16_t value_)
 {
+	uint8_t value = value_; 		// convert value to 7bit
+
 	switch (control)
 	{
 	case CCosclfoamt:
@@ -4032,8 +4500,10 @@ FLASHMEM void myCCgroup1 (byte control, byte value)
 		break;
 	}
 }
-FLASHMEM void myCCgroup2 (byte control, byte value)
+FLASHMEM void myCCgroup2(byte control, uint16_t value_)
 {
+	uint8_t value = value_; 		// convert value to 7bit
+
 	switch (control)
 	{
 	case CCfilterlforate:
@@ -4095,10 +4565,12 @@ FLASHMEM void myCCgroup2 (byte control, byte value)
 		break;
 	default:
 		break;
-	}	
+	}
 }
-FLASHMEM void myCCgroup3 (byte control, byte value)
+FLASHMEM void myCCgroup3(byte control, uint16_t value_)
 {
+	uint8_t value = value_; 		// convert value to 7bit
+
 	switch (control)
 	{
 	case CCoscLfoRate:
@@ -4145,10 +4617,12 @@ FLASHMEM void myCCgroup3 (byte control, byte value)
 		break;
 	default:
 		break;
-	}	
+	}
 }
-FLASHMEM void myCCgroup4 (byte control, byte value)
+FLASHMEM void myCCgroup4(byte control, uint16_t value_)
 {
+	uint8_t value = value_; 		// convert value to 7bit
+	uint16_t value16_ = value_; 	// 16bit value its only Osc Menu PRM_A and PRM_B	
 	switch (control)
 	{
 	case CCpitchenvA:
@@ -4180,7 +4654,7 @@ FLASHMEM void myCCgroup4 (byte control, byte value)
 		break;
 	case CCprgChange:
 		myCC_No181(value);
-		break;	
+		break;
 	case CCfxP1:
 		myCC_No182(value);
 		break;
@@ -4227,16 +4701,16 @@ FLASHMEM void myCCgroup4 (byte control, byte value)
 		myCC_No219(value);
 		break;
 	case mySpreadA:
-		myCC_No230(value);
+		myCC_No230(value16_);
 		break;
 	case mySpreadB:
-		myCC_No231(value);
+		myCC_No231(value16_);
 		break;
 	case mySupersawMixA:
-		myCC_No232(value);
+		myCC_No232(value16_);
 		break;
 	case mySupersawMixB:
-		myCC_No233(value);
+		myCC_No233(value16_);
 		break;
 	case myPan_Value:
 		myCC_No235(value);
@@ -4249,19 +4723,25 @@ FLASHMEM void myCCgroup4 (byte control, byte value)
 //*************************************************************************
 // intern CC (intern ControlChanges)
 //*************************************************************************
-FLASHMEM void myControlChange(byte channel, byte control, byte value) {
-	
-	if (midiChannel == channel || midiChannel == 0) {
-		if (control <= 50) {
+FLASHMEM void myControlChange(byte channel, byte control, uint16_t value)
+{
+
+	if (midiChannel == channel || midiChannel == 0)
+	{
+		if (control <= 50)
+		{
 			myCCgroup1(control, value);
 		}
-		else if (control <= 100) {
+		else if (control <= 100)
+		{
 			myCCgroup2(control, value);
 		}
-		else if (control <= 150) {
+		else if (control <= 150)
+		{
 			myCCgroup3(control, value);
 		}
-		else if (control <= 300) {
+		else if (control <= 300)
+		{
 			myCCgroup4(control, value);
 		}
 	}
@@ -4271,7 +4751,8 @@ FLASHMEM void myControlChange(byte channel, byte control, byte value) {
 // PrgChange and Bank select
 //*************************************************************************
 
-FLASHMEM void myProgramChange(byte channel, byte program) {
+FLASHMEM void myProgramChange(byte channel, byte program)
+{
 
 	// save channel and program
 	myPrgChangeChannel = channel;
@@ -4279,14 +4760,18 @@ FLASHMEM void myProgramChange(byte channel, byte program) {
 	myPrgChangeFlag = true;
 }
 
-FLASHMEM void myPrgChange() {
+FLASHMEM void myPrgChange()
+{
 
-	if ((millis() - timer_prgChange) > 980) {
-		
-		if (PrgChangeSW == true && myPrgChangeFlag == true) {
-			if (patchNo != myPrgChangeProgram + 1) {
+	if ((millis() - timer_prgChange) > 980)
+	{
+
+		if (PrgChangeSW == true && myPrgChangeFlag == true)
+		{
+			if (patchNo != myPrgChangeProgram + 1)
+			{
 				patchNo = myPrgChangeProgram + 1;
-				
+
 				Keylock = true;
 				recallPatch(patchNo);
 				Keylock = false;
@@ -4297,46 +4782,53 @@ FLASHMEM void myPrgChange() {
 				storeSoundPatchNo(patchNo);
 				storePatchBankNo(currentPatchBank);
 				*/
-				if (PageNr > 0){
+				if (PageNr > 0)
+				{
 					renderCurrentPatchPage(); // refresh menu page
 				}
 			}
 			myPrgChangeFlag = false;
 			RefreshMainScreenFlag = true;
 			timer_prgChange = millis();
-			
-			//Serial.print("PrgChange: ");
-			//Serial.println(myPrgChangeProgram);
+
+			// Serial.print("PrgChange: ");
+			// Serial.println(myPrgChangeProgram);
 		}
 	}
 }
 
-FLASHMEM void myBankSelectLSB(byte cannel, byte bank) {
+FLASHMEM void myBankSelectLSB(byte cannel, byte bank)
+{
 
-	if (bank >= 15) {
+	if (bank >= 15)
+	{
 		bank = 15;
 	}
-	
+
 	// save channel and program
 	myBankSelectChannel = channel;
 	myBankSelectBank = bank;
 	myBankSelectFlag = true;
-	
-	//Serial.println("BankSelect LSB");
 
+	// Serial.println("BankSelect LSB");
 }
 
-FLASHMEM void myMidiBankSel() {
+FLASHMEM void myMidiBankSel()
+{
 
-	if ((millis() - timer_banksel) > 980) {
-		
-		if (PrgChangeSW == true && myBankSelectFlag == true) {
-			if (currentPatchBank != myBankSelectBank) {
+	if ((millis() - timer_banksel) > 980)
+	{
+
+		if (PrgChangeSW == true && myBankSelectFlag == true)
+		{
+			if (currentPatchBank != myBankSelectBank)
+			{
 				currentPatchBank = myBankSelectBank;
 				recallPatch(patchNo);
 				storeSoundPatchNo(patchNo);
 				storePatchBankNo(currentPatchBank);
-				if (PageNr > 0){
+				if (PageNr > 0)
+				{
 					renderCurrentPatchPage(); // refresh menu page
 				}
 			}
@@ -4488,6 +4980,7 @@ FLASHMEM void set_initPatchData(void)
 		LFO3fadeTime = 0;
 		LFO3releaseTime = 0;
 		Lfo3amt = 0.0f;
+		Lfo3Retrig = 0;
 		AtouchAmt = 0;
 		AtouchPitchAmt = 0;
 		myLFO1RateValue = 58;
@@ -4528,9 +5021,15 @@ FLASHMEM void set_initPatchData(void)
 		ModWheelCutoffAmt = 0.0f;
 		ModWheelHPFamt = 0.0f;
 		last_modwheel_value = 0;
-		hp_filter_sw = false;	// HP-Filter on
-
-		// Update Parameter -------------------------------
+		hp_filter_sw = false; // HP-Filter on
+		SupersawSpreadA = 0;
+		SupersawSpreadB = 0;
+		SupersawMixA = 0;
+		SupersawMixB = 0;
+		updateOsc1Parameter_a(0);
+		updateOsc2Parameter_a(0);
+		updateOsc1Parameter_b(0);
+		updateOsc2Parameter_b(0);
 		updateUnison();
 		updateWaveformA();
 		updateWaveformB();
@@ -4658,53 +5157,60 @@ FLASHMEM void set_initPatchData(void)
 //*************************************************************************
 // recall (load) Patch
 //*************************************************************************
-FLASHMEM void recallPatch(int patchNo) {
-	
+FLASHMEM void recallPatch(int patchNo)
+{
+
 	// get data string
 	String numString = (patchNo);
 	String bankString = char(currentPatchBank + 65);
 	String fileString = (bankString + "/" + numString);
-	
+
 	// get Sound File
 	File patchFile = SD.open(fileString.c_str());
 	// Patch unavailable
-	if (!patchFile) {
+	if (!patchFile)
+	{
 		patchFile.close();
 		set_initPatchData();
-		if (SEQrunStatus == false) {
+		if (SEQrunStatus == false)
+		{
 			initPatternData();
 		}
 	}
-	else {
-		String data[NO_OF_PARAMS]; //Array of data read in
+	else
+	{
+		String data[NO_OF_PARAMS]; // Array of data read in
 		recallPatchData(patchFile, data);
 		setCurrentPatchData(data);
 		patchFile.close();
-		
 	}
 }
 
 //*************************************************************************
 // recall2 (load) Patch
 //*************************************************************************
-FLASHMEM void recallPatch2(int patchNo, int patchBank) {
-	
+FLASHMEM void recallPatch2(int patchNo, int patchBank)
+{
+
 	String numString = (patchNo);
 	String bankString = char(patchBank + 65);
 	String fileString = (bankString + "/" + numString);
 	File patchFile = SD.open(fileString.c_str());
 	// Patch unavailable
-	if (!patchFile) {
+	if (!patchFile)
+	{
 		patchFile.close();
-		//Serial.println(F("File not found"));
-		// load init Patch from Flash
+		// Serial.println(F("File not found"));
+		//  load init Patch from Flash
 		set_initPatchData();
-		if (SEQrunStatus == false) {
+		if (SEQrunStatus == false)
+		{
 			initPatternData();
 		}
 	}
-	else {
-		String data[NO_OF_PARAMS]; //Array of data read in
+	else
+	{
+		String data[NO_OF_PARAMS]; // Array of data read in
 		recallPatchData(patchFile, data);
 		setCurrentPatchData(data);
 		patchFile.close();
@@ -4717,9 +5223,10 @@ FLASHMEM void recallPatch2(int patchNo, int patchBank) {
 FLASHMEM void updateUserPots(void)
 {
 	// If all values are empty then set devault values
-	if (UserPot1 == 0 && UserPot2 == 0 && UserPot3 == 0 && UserPot4 == 0) {
-		UserPot1 = 1;	// default VCF Cutoff
-		UserPot2 = 2;	// default VCF Resonance
+	if (UserPot1 == 0 && UserPot2 == 0 && UserPot3 == 0 && UserPot4 == 0)
+	{
+		UserPot1 = 1; // default VCF Cutoff
+		UserPot2 = 2; // default VCF Resonance
 	}
 	UserPot[0] = UserPot1;
 	UserPot[1] = UserPot2;
@@ -4730,12 +5237,15 @@ FLASHMEM void updateUserPots(void)
 //*************************************************************************
 // convert HPF frequency into 8bit value
 //*************************************************************************
-FLASHMEM uint8_t convert_HPF_frq_to_value() {
-	
+FLASHMEM uint8_t convert_HPF_frq_to_value()
+{
+
 	int Frq = float(HPF_filterFreq);
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < 256; i++)
+	{
 		int frequency = HPF_FILTERFREQS256[i];
-		if (Frq <= frequency){
+		if (Frq <= frequency)
+		{
 			return i;
 		}
 	}
@@ -4745,20 +5255,25 @@ FLASHMEM uint8_t convert_HPF_frq_to_value() {
 //*************************************************************************
 // convert HPF resonancy into 8bit value
 //*************************************************************************
-FLASHMEM uint8_t convert_HPF_res_to_value() {  //!!!!!!!!!!!!
-	
+FLASHMEM uint8_t convert_HPF_res_to_value()
+{ //!!!!!!!!!!!!
+
 	uint8_t hpf_reso = 0;
-	
-	if (HPFRes >= 0.71) {
+
+	if (HPFRes >= 0.71)
+	{
 		float Reso = ((HPFRes - 0.71f) / 14.29f);
-		for (int i = 0; i < 128; i++) {
-//			float myresonance = LINEAR[i];
-			float myresonance = i*0.0078125; //i/128 //!!!!!!!!!!
-			if ((myresonance - Reso) < 0.001f) {
+		for (int i = 0; i < 128; i++)
+		{
+			//			float myresonance = LINEAR[i];
+			float myresonance = i * 0.0078125; // i/128 //!!!!!!!!!!
+			if ((myresonance - Reso) < 0.001f)
+			{
 				hpf_reso = 127;
 			}
-			else {
-				hpf_reso = i-1;
+			else
+			{
+				hpf_reso = i - 1;
 				return hpf_reso;
 			}
 		}
@@ -4769,28 +5284,31 @@ FLASHMEM uint8_t convert_HPF_res_to_value() {  //!!!!!!!!!!!!
 //*************************************************************************
 // set Patch data
 //*************************************************************************
-FLASHMEM void setCurrentPatchData(String data[]) {
-	
+FLASHMEM void setCurrentPatchData(String data[])
+{
 	// load PatchName
 	patchName = data[0];
 	currentPatchName = patchName;
-	
+
 	// load Sequencer indicator
 	SeqSymbol = false;
-	for (uint8_t i = 0; i < 16; i++) {
+	for (uint8_t i = 0; i < 16; i++)
+	{
 		int dataAddr = 175 + i;
 		uint8_t Ncount = data[dataAddr].toInt();
-		if (Ncount > 0) {
+		if (Ncount > 0)
+		{
 			SeqSymbol = true;
 			break;
 		}
 	}
-	
+
 	// stop loading if only show PatchName and Sequencer indicator
-	if (Keylock == true) {
+	if (Keylock == true)
+	{
 		return;
 	}
-	
+
 	// load Patch Parameter
 	oscALevel = data[1].toFloat();
 	oscBLevel = data[2].toFloat();
@@ -4810,43 +5328,48 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	pwmSource = data[16].toInt();
 	pwmAmtA = data[17].toFloat();
 	pwmAmtB = data[18].toFloat();
-	pwmRate = -10.00f;	// old Patch Parameter
+	pwmRate = -10.00f; // old Patch Parameter
 	pwA = data[20].toFloat();
 	pwB = data[21].toFloat();
 	filterRes = data[22].toFloat();
-	resonancePrevValue = filterRes;//Pick-up
+	resonancePrevValue = filterRes; // Pick-up
 	filterFreq = data[23].toFloat();
-	filterfreqPrevValue = filterFreq; //Pick-up on Main-Page
+	filterfreqPrevValue = filterFreq; // Pick-up on Main-Page
 	filterMix = data[24].toFloat();
-	filterMixPrevValue = filterMix; //Pick-up
+	filterMixPrevValue = filterMix; // Pick-up
 	filterEnv = data[25].toFloat();
 	oscLfoAmt = data[26].toFloat();
-	oscLfoAmtPrevValue = oscLfoAmt;//PICK-UP
+	oscLfoAmtPrevValue = oscLfoAmt; // PICK-UP
 	oscLfoRate = data[27].toFloat();
-	oscLfoRatePrevValue = oscLfoRate;//PICK-UP
+	oscLfoRatePrevValue = oscLfoRate; // PICK-UP
 	// calc LFO1 Rate value
 	float LFOfreq = (oscLfoRate / LFOMAXRATE);
-	for (int i = 0; i < 128; i++) {
+	for (int i = 0; i < 128; i++)
+	{
 		float lforate = POWER[i];
-		if (LFOfreq <= lforate){
+		if (LFOfreq <= lforate)
+		{
 			myLFO1RateValue = i;
 			break;
 		}
 	}
 	oscLFOWaveform = data[28].toInt();
 	oscLfoRetrig = data[29].toInt();
-	oscLFOMidiClkSync = data[30].toFloat(); //MIDI CC Only
-	//myFilterLFORateValue = data[31].toInt();
+	oscLFOMidiClkSync = data[30].toFloat(); // MIDI CC Only
+	// myFilterLFORateValue = data[31].toInt();
 	myLFO2RateValue = data[31].toInt();
-	filterLfoRatePrevValue = myLFO2RateValue;//PICK-UP
-	filterLfoRate = LFOMAXRATE * POWER[myLFO2RateValue];	
+	filterLfoRatePrevValue = myLFO2RateValue; // PICK-UP
+	filterLfoRate = LFOMAXRATE * POWER[myLFO2RateValue];
 	filterLfoRetrig = data[32].toInt();
 	filterLFOMidiClkSync = data[33].toInt();
 	filterLfoAmt = data[34].toFloat();
-	filterLfoAmtPrevValue = filterLfoAmt;//PICK-UP
-	if (filterLfoRetrig != 3) {
+	filterLfoAmtPrevValue = filterLfoAmt; // PICK-UP
+	if (filterLfoRetrig != 3)
+	{
 		filterLfoRate = LFOMAXRATE * POWER[myLFO2RateValue];
-	} else filterLfoRate = getLFOTempoRate(myLFO2RateValue);
+	}
+	else
+		filterLfoRate = getLFOTempoRate(myLFO2RateValue);
 	filterLfoWaveform = data[35].toInt();
 	filterAttack = data[36].toFloat();
 	filterDecay = data[37].toFloat();
@@ -4857,9 +5380,9 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	ampSustain = data[42].toFloat();
 	ampRelease = data[43].toFloat();
 	fxAmt = data[44].toFloat();
-	fxAmtPrevValue = fxAmt;//PICK-UP
+	fxAmtPrevValue = fxAmt; // PICK-UP
 	fxMix = data[45].toFloat();
-	fxMixPrevValue = fxMix;//PICK-UP
+	fxMixPrevValue = fxMix; // PICK-UP
 	pitchEnv = data[46].toFloat();
 	velocitySens = data[47].toFloat();
 	chordDetune = data[48].toInt();
@@ -4871,7 +5394,8 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	FxPot3Val = FxPot3value << 1;
 	FxPrgNo = data[52].toInt();
 	FxMixValue = data[53].toInt();
-	if (FxPrgNo == 0) {
+	if (FxPrgNo == 0)
+	{
 		FxMixValue = 0;
 	}
 	_FxMixValue = FxMixValue;
@@ -4885,53 +5409,63 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	myFilVelocity = data[61].toFloat();
 	myAmpVelocity = data[62].toFloat();
 	myUnisono = data[63].toInt();
-	dummy1 = data[64].toInt();			// dummy Data
-	dummy2 = data[65].toInt();			// dummy Data
+	dummy1 = data[64].toInt(); // dummy Data
+	dummy2 = data[65].toInt(); // dummy Data
 	WShaperNo = data[66].toInt();
 	WShaperDrive = data[67].toFloat();
-	if (WShaperDrive == 0) {
+	if (WShaperDrive == 0)
+	{
 		WShaperDrive = 1.0f;
 	}
 	LFO1phase = data[68].toInt();
 	LFO2phase = data[69].toInt();
 	oscDetuneSync = data[107].toInt();
 	oscTranspose = data[108].toInt();
-	if (oscTranspose > 12) {
+	if (oscTranspose > 12)
+	{
 		oscTranspose = 0;
 	}
 	oscMasterTune = data[109].toFloat();
-	if (oscMasterTune < 0.9f) {
+	if (oscMasterTune < 0.9f)
+	{
 		oscMasterTune = 1.0f;
 	}
 	OscVCFMOD = data[110].toFloat();
-	if (OscVCFMOD < 0 || OscVCFMOD > 1) {
+	if (OscVCFMOD < 0 || OscVCFMOD > 1)
+	{
 		OscVCFMOD = 0;
 	}
-	
+
 	// Sequencer data -----------------------------------------------------
 
 	// if sequencer off check Sequencer notes avaible
-	if (SEQrunStatus == false) {
+	if (SEQrunStatus == false)
+	{
 		SeqNotesAvailable = false;
 		SeqSymbol = false;
-		for (uint8_t i = 0; i < 16; i++) {
+		for (uint8_t i = 0; i < 16; i++)
+		{
 			int dataAddr = 175 + i;
 			SeqNoteCount[i] = data[dataAddr].toInt();
-			if (SeqNoteCount[i] > 0) {
+			if (SeqNoteCount[i] > 0)
+			{
 				SeqNotesAvailable = true;
 				SeqSymbol = true;
 				break;
 			}
 		}
 		// load Sequencer data
-		if (SeqNotesAvailable == true) {
-			
-			for (uint8_t i = 0; i < 16; i++) { // 1.Notes
+		if (SeqNotesAvailable == true)
+		{
+
+			for (uint8_t i = 0; i < 16; i++)
+			{ // 1.Notes
 				int x = 70 + i;
 				SeqNote1Buf[i] = data[x].toInt();
 			}
-			for (uint8_t i = 0; i < 16; i++) {
-				int x = 86+i;
+			for (uint8_t i = 0; i < 16; i++)
+			{
+				int x = 86 + i;
 				SeqNoteBufStatus[i] = data[x].toInt();
 			}
 			SEQbpmValue = data[102].toInt();
@@ -4941,72 +5475,87 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 			SEQstepNumbers = data[104].toInt();
 			SEQselectStepNo = 0;
 			SEQGateTime = data[105].toFloat();
-			if (SEQGateTime <= 1.0f || SEQGateTime >= 16.0f) {
+			if (SEQGateTime <= 1.0f || SEQGateTime >= 16.0f)
+			{
 				SEQGateTime = (3.94f); // Pot Value 32
 			}
 			Interval = SEQclkRate;
 			gateTime = (float)(SEQclkRate / SEQGateTime);
-			
+
 			SEQdirection = data[106].toInt();
 			SEQdirectionFlag = false;
-			
+
 			// Sequencer Velocity data
-			for (uint8_t i = 0; i < 16; i++) {
+			for (uint8_t i = 0; i < 16; i++)
+			{
 				int dataAddr = i + 111;
 				SeqVeloBuf[i] = data[dataAddr].toInt();
 			}
-			
+
 			// Sequencer Noten Buffer 2.Note, 3.Note, 4.Note
-			for (uint8_t i = 0; i < 48; i++) {
+			for (uint8_t i = 0; i < 48; i++)
+			{
 				int bufAddr = i + 16;
 				int dataAddr = i + 127;
 				SeqNote1Buf[bufAddr] = data[dataAddr].toInt();
 			}
 			// Sequencer Noten counts
-			for (uint8_t i = 0; i < 16; i++) {
+			for (uint8_t i = 0; i < 16; i++)
+			{
 				int dataAddr = 175 + i;
 				SeqNoteCount[i] = data[dataAddr].toInt();
 			}
-			} else if (SEQrunStatus == false) {
+		}
+		else if (SEQrunStatus == false)
+		{
 			initPatternData();
 		}
-		
+
 		// Sequencer function
 		SEQmode = data[191].toInt();
-		if (SEQmode == 2) {
-			SEQmode = 0;  // Key mode
+		if (SEQmode == 2)
+		{
+			SEQmode = 0; // Key mode
 		}
 		SEQselectStepNo = 0;
-		SEQMidiClkSwitch = 0;//data[192].toInt();
+		SEQMidiClkSwitch = 0; // data[192].toInt();
 	}
-	
+
 	// Ladder Filter --------------------------------------------------
 	LadderFilterpassbandgain = data[193].toInt();
 	LadderFilterDrive = data[194].toInt();
-	if (LadderFilterDrive < 1) {	// old Patches
+	if (LadderFilterDrive < 1)
+	{ // old Patches
 		LadderFilterDrive = 64;
 	}
-	
+
 	// EnvelopeTyp ---------------------------------------------------
 	envelopeType1 = data[195].toInt();
 	envelopeType2 = data[196].toInt();
-	
+
 	// other parameters
 	cutoffPickupFlag = false;
 	cutoffScreenFlag = false;
 	RefreshMainScreenFlag = true;
-	if (data[197] == "") {
+	if (data[197] == "")
+	{
 		PitchWheelAmt = 0.27f;
-		} else {
+	}
+	else
+	{
 		PitchWheelAmt = data[197].toFloat();
 	}
-	if (data[198] == "") {
+	if (data[198] == "")
+	{
 		MODWheelAmt = 0.27f;
-		} else {
+	}
+	else
+	{
 		MODWheelAmt = data[198].toFloat();
-	}	
+	}
 	myFilter = data[199].toInt();
-	if (myFilter < 1) {
+	if (myFilter < 1)
+	{
 		myFilter = 1;
 	}
 	pwmRateA = data[200].toFloat();
@@ -5017,9 +5566,12 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	filterFM2 = data[205].toFloat();
 	LFO2fadeTime = data[206].toFloat();
 	LFO2releaseTime = data[207].toFloat();
-	if (data[208] == "") {
+	if (data[208] == "")
+	{
 		Osc1ModAmt = 1.0f;
-		} else {
+	}
+	else
+	{
 		Osc1ModAmt = data[208].toFloat();
 	}
 	LFO1envCurve = data[209].toInt();
@@ -5028,7 +5580,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	lfo1oneShoot = LFO1mode;
 	LFO2mode = data[212].toInt();
 	lfo2oneShoot = LFO2mode;
-	LFO3envCurve  = data[213].toInt();
+	LFO3envCurve = data[213].toInt();
 	LFO3mode = data[214].toInt();
 	lfo3oneShoot = LFO3mode;
 	LFO3fadeTime = data[215].toFloat();
@@ -5068,19 +5620,22 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	SupersawMixA = data[246].toInt();
 	SupersawMixB = data[247].toInt();
 	// The new version only has two Unison Modes and 5 Voice_mode
-	if (unison > 1) {
+	if (unison > 1)
+	{
 		unison = 1;
 		Voice_mode = 5;
-	} else
+	}
+	else
 	{
 		Voice_mode = data[248].toInt();
-		if (Voice_mode >= 5) {
+		if (Voice_mode >= 5)
+		{
 			Voice_mode = 5;
 		}
 	}
 	pan_value = data[249].toInt();
 	ModWheelCutoffAmt = data[250].toFloat();
-	ModWheelHPFamt	 = data[251].toFloat();
+	ModWheelHPFamt = data[251].toFloat();
 	last_modwheel_value = 0;
 	ccModwheelHPFamt = 0;
 
@@ -5098,16 +5653,15 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	filterEnvOsc2PrmAAmt = data[262].toInt();
 	filterEnvOsc2PrmBAmt = data[263].toInt();
 	hp_filter_sw = data[264].toInt(); // hp_filter off = true
+	Lfo3Retrig = data[265].toInt();
 
-
-	
-	for (uint8_t i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].parameter_a(SupersawSpreadA);
 		waveformModa[i].parameter_b(SupersawMixA);
 		waveformModb[i].parameter_a(SupersawSpreadB);
 		waveformModb[i].parameter_b(SupersawMixB);
 	}
-
 
 	// init Osc ParameterA/B modulation off
 	for (size_t i = 0; i < 8; i++)
@@ -5129,8 +5683,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 		Osc_Prm_mixer_C[i].gain(3, 0.0f);
 		Osc_Prm_mixer_D[i].gain(3, 0.0f);
 	}
-	
-	
+
 	// Update parameter ---------------------------------------------------
 	updateOscFX();
 	int oscFX_temp = oscFX;
@@ -5159,45 +5712,53 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updatePWMRateA();
 	updatePWMRateB();
 	updateNoiseLevel();
-		
+
 	// calc Cutoff frequency
 	int cutoff_value = 0; //!!!!!
 	int Frq = float(filterFreq);
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < 256; i++)
+	{
 		int frequency = FILTERFREQS256[i];
-		if (Frq <= frequency){
+		if (Frq <= frequency)
+		{
 			cutoff_value = i;
 			break;
 		}
 	}
 	updateFilterSweeb(cutoff_value);
 	updateFilterRes();
-		
-	// set Filter	
+
+	// set Filter
 	int i;
-	if (myFilter < 2) {
-		for (i = 0; i < 40; i++) {
+	if (myFilter < 2)
+	{
+		for (i = 0; i < 40; i++)
+		{
 			StateVariableFilter_connections[i].connect();
 		}
-		for (i = 0; i < 24; i++) {
+		for (i = 0; i < 24; i++)
+		{
 			ladderFilter_connections[i].disconnect();
 		}
 	}
-	else {	// Ladder Filter
-		for (i = 0; i < 24; i++) {
+	else
+	{ // Ladder Filter
+		for (i = 0; i < 24; i++)
+		{
 			ladderFilter_connections[i].connect();
 		}
-		for (i = 0; i < 40; i++) {
+		for (i = 0; i < 40; i++)
+		{
 			StateVariableFilter_connections[i].disconnect();
 		}
 		updateLadderFilterPassbandGain(LadderFilterpassbandgain);
 		updateLadderFilterDrive(LadderFilterDrive);
 	}
-		
+
 	updateFilterMixer();
 	updateHPFFilterFreq();
 	updateHPFFilterRes();
-	
+
 	updateKeyTracking();
 	updateOscLFOAmt();
 	updatePitchLFORate();
@@ -5217,13 +5778,13 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateDecay();
 	updateSustain();
 	updateRelease();
-	
-	//updateLFOsyn();
+
+	// updateLFOsyn();
 	updateLFO1delay();
-	updateLFO1fade ();		// LFO1 FADE-IN
-	updateLFO2release();	// LFO1 FADE-OUT
-	updateLFO2fade ();		// LFO2 FADE-IN
-	updateLFO1release();	// LFO2 FADE-OUT
+	updateLFO1fade();	 // LFO1 FADE-IN
+	updateLFO2release(); // LFO1 FADE-OUT
+	updateLFO2fade();	 // LFO2 FADE-IN
+	updateLFO1release(); // LFO2 FADE-OUT
 	update_hp_filter_connect();
 	updateLFO1EnvelopeType();
 	updateLFO2EnvelopeType();
@@ -5233,11 +5794,11 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	updateLFO3release();
 	updateLFO3amt();
 	LFO3EnvelopeAmp.setEnvType(LFO3envCurve);
-	pitchLfo.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * oscLFOWaveform), AWFREQ); // half sine
+	pitchLfo.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform) + (256 * oscLFOWaveform), AWFREQ); // half sine
 	updateLFO1waveform();
-	filterLfo.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * filterLfoWaveform), AWFREQ); // half sine
+	filterLfo.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform) + (256 * filterLfoWaveform), AWFREQ); // half sine
 	updateLFO2waveform();
-	ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t*>(LFOwaveform) + (256 * Lfo3Waveform), AWFREQ); // half sine
+	ModLfo3.arbitraryWaveform(reinterpret_cast<const int16_t *>(LFOwaveform) + (256 * Lfo3Waveform), AWFREQ); // half sine
 	updateLFO3waveform();
 	updateModLFORetrig();
 	update_PWM_LFO();
@@ -5260,9 +5821,7 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 	update_filterEnv_Osc2_PRMA_mod();
 	update_filterEnv_Osc2_PRMB_mod();
 	update_MODWHEEL_value(0);
-	
-	
-	
+
 	// send Prg.Data to USB
 	usbMIDI.sendControlChange(14, Osc1WaveBank, channel);
 	usbMIDI.sendControlChange(15, Osc2WaveBank, channel);
@@ -5277,116 +5836,88 @@ FLASHMEM void setCurrentPatchData(String data[]) {
 //*************************************************************************
 // load Patch data
 //*************************************************************************
-FLASHMEM String getCurrentPatchData() {
-	
+FLASHMEM String getCurrentPatchData()
+{
 	// Parameter
-	return patchName
-	+ "," + String(oscALevel) + "," + String(oscBLevel) + "," + String(noiseLevel) + "," + String(unison) + "," +
-	String(oscFX) + "," + String(detune, 5) + "," + String(lfoSyncFreq) + "," + String(midiClkTimeInterval) + "," +
-	String(lfoTempoValue) + "," + String(keytrackingAmount, 4) + "," + String(glideSpeed, 5) + "," + String(oscPitchA) + "," +
-	String(oscPitchB) + "," + String(oscWaveformA) + "," + String(oscWaveformB) + "," +String(pwmSource) + "," +
-	String(pwmAmtA) + "," + String(pwmAmtB) + "," + String(pwmRate) + "," + String(pwA) + "," + String(pwB) + "," +
-	String(filterRes) + "," + String(filterFreq) + "," + String(filterMix) + "," + String(filterEnv) + "," +
-	String(oscLfoAmt, 6) + "," + String(oscLfoRate, 5) + "," + String(oscLFOWaveform) + "," + String(oscLfoRetrig) + "," +
-	String(oscLFOMidiClkSync) + "," + String(myLFO2RateValue) + "," +	String(filterLfoRetrig) + "," + String(filterLFOMidiClkSync) + "," +
-	String(filterLfoAmt,6) + "," + String(filterLfoWaveform) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," +
-	String(filterRelease) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(fxAmt) + "," +
-	String(fxMix) + "," + String(pitchEnv) + "," + String(velocitySens) + "," + String(chordDetune) + "," + String(FxPot1value) + "," +
-	String(FxPot2value) + "," + String(FxPot3value) + "," + String(FxPrgNo) + "," + String(FxMixValue) + "," + String(FxClkRate) + "," +
-	String(Osc1WaveBank) + "," + String(Osc2WaveBank) + "," + String(myBoost) + "," + String(pitchEnvA, 5) + "," +
-	String(pitchEnvB, 5) + "," + String(driveLevel, 3) + "," + String(myFilVelocity, 4) + "," + String(myAmpVelocity, 4) + "," +
-	String(myUnisono) + "," + String(dummy1) + "," + String(dummy2) + "," + String(WShaperNo) + "," +
-	String(WShaperDrive,3) + "," + String(LFO1phase) + "," + String(LFO2phase)
-	// Sequencer Pattern
-	+ "," + String(SeqNote1Buf[0]) + "," + String(SeqNote1Buf[1]) + "," + String(SeqNote1Buf[2]) + "," + String(SeqNote1Buf[3])
-	+ "," + String(SeqNote1Buf[4]) + "," + String(SeqNote1Buf[5]) + "," + String(SeqNote1Buf[6]) + "," + String(SeqNote1Buf[7])
-	+ "," + String(SeqNote1Buf[8]) + "," + String(SeqNote1Buf[9]) + "," + String(SeqNote1Buf[10]) + "," + String(SeqNote1Buf[11])
-	+ "," + String(SeqNote1Buf[12]) + "," + String(SeqNote1Buf[13]) + "," + String(SeqNote1Buf[14]) + "," + String(SeqNote1Buf[15])
-	+ "," + String(SeqNoteBufStatus[0]) + "," + String(SeqNoteBufStatus[1])	+ "," + String(SeqNoteBufStatus[2]) + "," + String(SeqNoteBufStatus[3])
-	+ "," + String(SeqNoteBufStatus[4]) + "," + String(SeqNoteBufStatus[5])	+ "," + String(SeqNoteBufStatus[6]) + "," + String(SeqNoteBufStatus[7])
-	+ "," + String(SeqNoteBufStatus[8]) + "," + String(SeqNoteBufStatus[9])	+ "," + String(SeqNoteBufStatus[10]) + "," + String(SeqNoteBufStatus[11])
-	+ "," + String(SeqNoteBufStatus[12]) + "," + String(SeqNoteBufStatus[13])	+ "," + String(SeqNoteBufStatus[14]) + "," + String(SeqNoteBufStatus[15])
-	+ "," + String(SEQbpmValue) + "," + String(SEQdivValue,8) + "," + String(SEQstepNumbers) + "," + String(SEQGateTime,6)
-	+ "," + String(SEQdirection)  + "," + String(oscDetuneSync)  + "," + String(oscTranspose)  + "," + String(oscMasterTune,6)
-	+ "," + String(OscVCFMOD,6)
-	+ "," + String(SeqVeloBuf[0]) + "," + String(SeqVeloBuf[1]) + "," + String(SeqVeloBuf[2]) + "," + String(SeqVeloBuf[3]) + "," + String(SeqVeloBuf[4])
-	+ "," + String(SeqVeloBuf[5]) + "," + String(SeqVeloBuf[6]) + "," + String(SeqVeloBuf[7]) + "," + String(SeqVeloBuf[8]) + "," + String(SeqVeloBuf[9])
-	+ "," + String(SeqVeloBuf[10]) + "," + String(SeqVeloBuf[11]) + "," + String(SeqVeloBuf[12]) + "," + String(SeqVeloBuf[13]) + "," + String(SeqVeloBuf[14])
-	+ "," + String(SeqVeloBuf[15])
-	+ "," + String(SeqNote1Buf[16]) + "," + String(SeqNote1Buf[17]) + "," + String(SeqNote1Buf[18]) + "," + String(SeqNote1Buf[19])
-	+ "," + String(SeqNote1Buf[20]) + "," + String(SeqNote1Buf[21]) + "," + String(SeqNote1Buf[22]) + "," + String(SeqNote1Buf[23])
-	+ "," + String(SeqNote1Buf[24]) + "," + String(SeqNote1Buf[25]) + "," + String(SeqNote1Buf[26]) + "," + String(SeqNote1Buf[27])
-	+ "," + String(SeqNote1Buf[28]) + "," + String(SeqNote1Buf[29]) + "," + String(SeqNote1Buf[30]) + "," + String(SeqNote1Buf[31])
-	+ "," + String(SeqNote1Buf[32]) + "," + String(SeqNote1Buf[33]) + "," + String(SeqNote1Buf[34]) + "," + String(SeqNote1Buf[35])
-	+ "," + String(SeqNote1Buf[36]) + "," + String(SeqNote1Buf[37]) + "," + String(SeqNote1Buf[38]) + "," + String(SeqNote1Buf[39])
-	+ "," + String(SeqNote1Buf[40]) + "," + String(SeqNote1Buf[41]) + "," + String(SeqNote1Buf[42]) + "," + String(SeqNote1Buf[43])
-	+ "," + String(SeqNote1Buf[44]) + "," + String(SeqNote1Buf[45]) + "," + String(SeqNote1Buf[46]) + "," + String(SeqNote1Buf[47])
-	+ "," + String(SeqNote1Buf[48]) + "," + String(SeqNote1Buf[49]) + "," + String(SeqNote1Buf[50]) + "," + String(SeqNote1Buf[51])
-	+ "," + String(SeqNote1Buf[52]) + "," + String(SeqNote1Buf[53]) + "," + String(SeqNote1Buf[54]) + "," + String(SeqNote1Buf[55])
-	+ "," + String(SeqNote1Buf[56]) + "," + String(SeqNote1Buf[57]) + "," + String(SeqNote1Buf[58]) + "," + String(SeqNote1Buf[59])
-	+ "," + String(SeqNote1Buf[60]) + "," + String(SeqNote1Buf[61]) + "," + String(SeqNote1Buf[62]) + "," + String(SeqNote1Buf[63])
-	+ "," + String(SeqNoteCount[0]) + "," + String(SeqNoteCount[1]) + "," + String(SeqNoteCount[2]) + "," + String(SeqNoteCount[3])
-	+ "," + String(SeqNoteCount[4]) + "," + String(SeqNoteCount[5]) + "," + String(SeqNoteCount[6]) + "," + String(SeqNoteCount[7])
-	+ "," + String(SeqNoteCount[8]) + "," + String(SeqNoteCount[9]) + "," + String(SeqNoteCount[10]) + "," + String(SeqNoteCount[11])
-	+ "," + String(SeqNoteCount[12]) + "," + String(SeqNoteCount[13]) + "," + String(SeqNoteCount[14]) + "," + String(SeqNoteCount[15])
-	+ "," + String(SEQmode) + "," + String(SEQMidiClkSwitch)
-	// Parameter
-	+ "," + String(LadderFilterpassbandgain) + "," + String(LadderFilterDrive) + "," + String(envelopeType1) + "," + String(envelopeType2)
-	+ "," + String(PitchWheelAmt,6) + "," + String(MODWheelAmt,6) + "," + String(myFilter) + "," + String(pwmRateA,6) + "," + String(pwmRateB,6)
-	+ "," + String(LFO1fadeTime) + "," + String(LFO1releaseTime)+ "," + String(filterFM,6) + "," + String(filterFM2,6) + "," + String(LFO2fadeTime)
-	+ "," + String(LFO2releaseTime) + "," + String(Osc1ModAmt,6) + "," + String(LFO1envCurve) + "," + String(LFO2envCurve)
-	+ "," + String(LFO1mode) + "," + String(LFO2mode)  + "," + String(LFO3envCurve) + "," + String(LFO3mode) + "," + String(LFO3fadeTime)
-	+ "," + String(LFO3releaseTime) + "," + String(Lfo3amt,6) + "," + String(AtouchAmt) + "," + String(AtouchPitchAmt) + "," + String(Lfo3Waveform)
-	+ "," + String(myLFO3RateValue) + "," + String(LFO3phase) + "," + String(AtouchLFO1Amt) + "," + String(AtouchLFO2Amt) + "," + String(AtouchLFO3Amt)
-	+ "," + String(FxPot1amt) + "," + String(FxPot2amt) + "," + String(FxPot3amt) + "," + String(FxCLKamt) + "," + String(FxMIXamt)
-	+ "," + String(AtouchFxP1Amt) + "," + String(AtouchFxP2Amt) + "," + String(AtouchFxP3Amt) + "," + String(AtouchFxClkAmt) + "," + String(AtouchFxMixAmt)
-	+ "," + String(PWMaShape) + "," + String(PWMbShape) + "," + String(HPF_filterFreq) + "," + String(UserPot1) + "," + String(UserPot2)
-	+ "," + String(UserPot3) + "," + String(UserPot4) + "," + String(HPFRes) + "," + String(SupersawSpreadA) + "," + String(SupersawSpreadB)
-	+ "," + String(SupersawMixA) + "," + String(SupersawMixB) + "," + String(Voice_mode) + "," + String(pan_value) + "," + String(ModWheelCutoffAmt,6)
-	+ "," + String(ModWheelHPFamt,6) + "," + String(Lfo2Osc1PrmAAmt) + "," + String(Lfo2Osc1PrmBAmt) + "," + String(Lfo2Osc2PrmAAmt)
-	+ "," + String(Lfo2Osc2PrmBAmt) + "," + String(Lfo3Osc1PrmAAmt) + "," + String(Lfo3Osc1PrmBAmt) + "," + String(Lfo3Osc2PrmAAmt)
-	+ "," + String(Lfo3Osc2PrmBAmt) + "," + String(filterEnvOsc1PrmAAmt) + "," + String(filterEnvOsc1PrmBAmt) + "," + String(filterEnvOsc2PrmAAmt)
-	+ "," + String(filterEnvOsc2PrmBAmt) + "," + String(hp_filter_sw);
+	return patchName + "," + String(oscALevel) + "," + String(oscBLevel) + "," + String(noiseLevel) + "," + String(unison) + "," +
+		   String(oscFX) + "," + String(detune, 5) + "," + String(lfoSyncFreq) + "," + String(midiClkTimeInterval) + "," +
+		   String(lfoTempoValue) + "," + String(keytrackingAmount, 4) + "," + String(glideSpeed, 5) + "," + String(oscPitchA) + "," +
+		   String(oscPitchB) + "," + String(oscWaveformA) + "," + String(oscWaveformB) + "," + String(pwmSource) + "," +
+		   String(pwmAmtA) + "," + String(pwmAmtB) + "," + String(pwmRate) + "," + String(pwA) + "," + String(pwB) + "," +
+		   String(filterRes) + "," + String(filterFreq) + "," + String(filterMix) + "," + String(filterEnv) + "," +
+		   String(oscLfoAmt, 6) + "," + String(oscLfoRate, 5) + "," + String(oscLFOWaveform) + "," + String(oscLfoRetrig) + "," +
+		   String(oscLFOMidiClkSync) + "," + String(myLFO2RateValue) + "," + String(filterLfoRetrig) + "," + String(filterLFOMidiClkSync) + "," +
+		   String(filterLfoAmt, 6) + "," + String(filterLfoWaveform) + "," + String(filterAttack) + "," + String(filterDecay) + "," + String(filterSustain) + "," +
+		   String(filterRelease) + "," + String(ampAttack) + "," + String(ampDecay) + "," + String(ampSustain) + "," + String(ampRelease) + "," + String(fxAmt) + "," +
+		   String(fxMix) + "," + String(pitchEnv) + "," + String(velocitySens) + "," + String(chordDetune) + "," + String(FxPot1value) + "," +
+		   String(FxPot2value) + "," + String(FxPot3value) + "," + String(FxPrgNo) + "," + String(FxMixValue) + "," + String(FxClkRate) + "," +
+		   String(Osc1WaveBank) + "," + String(Osc2WaveBank) + "," + String(myBoost) + "," + String(pitchEnvA, 5) + "," +
+		   String(pitchEnvB, 5) + "," + String(driveLevel, 3) + "," + String(myFilVelocity, 4) + "," + String(myAmpVelocity, 4) + "," +
+		   String(myUnisono) + "," + String(dummy1) + "," + String(dummy2) + "," + String(WShaperNo) + "," +
+		   String(WShaperDrive, 3) + "," + String(LFO1phase) + "," + String(LFO2phase) + "," + 
+		   // Sequencer Pattern
+		   String(SeqNote1Buf[0]) + "," + String(SeqNote1Buf[1]) + "," + String(SeqNote1Buf[2]) + "," + String(SeqNote1Buf[3]) +  "," + 
+		   String(SeqNote1Buf[4]) + "," + String(SeqNote1Buf[5]) + "," + String(SeqNote1Buf[6]) + "," + String(SeqNote1Buf[7]) + "," + 
+		   String(SeqNote1Buf[8]) + "," + String(SeqNote1Buf[9]) + "," + String(SeqNote1Buf[10]) + "," + String(SeqNote1Buf[11]) + "," + 
+		   String(SeqNote1Buf[12]) + "," + String(SeqNote1Buf[13]) + "," + String(SeqNote1Buf[14]) + "," + String(SeqNote1Buf[15]) + "," + 
+		   String(SeqNoteBufStatus[0]) + "," + String(SeqNoteBufStatus[1]) + "," + String(SeqNoteBufStatus[2]) + "," + 
+		   String(SeqNoteBufStatus[3]) + "," + String(SeqNoteBufStatus[4]) + "," + String(SeqNoteBufStatus[5]) + "," + 
+		   String(SeqNoteBufStatus[6]) + "," + String(SeqNoteBufStatus[7]) + "," + String(SeqNoteBufStatus[8]) + "," + 
+		   String(SeqNoteBufStatus[9]) + "," + String(SeqNoteBufStatus[10]) + "," + String(SeqNoteBufStatus[11]) + "," + 
+		   String(SeqNoteBufStatus[12]) + "," + String(SeqNoteBufStatus[13]) + "," + String(SeqNoteBufStatus[14]) + "," + 
+		   String(SeqNoteBufStatus[15]) + "," + String(SEQbpmValue) + "," + String(SEQdivValue, 8) + "," + String(SEQstepNumbers) + "," + 
+		   String(SEQGateTime, 6) + "," + String(SEQdirection) + "," + String(oscDetuneSync) + "," + String(oscTranspose) + "," + 
+		   String(oscMasterTune, 6) + "," + String(OscVCFMOD, 6) + "," + String(SeqVeloBuf[0]) + "," + String(SeqVeloBuf[1]) + "," + 
+		   String(SeqVeloBuf[2]) + "," + String(SeqVeloBuf[3]) + "," + String(SeqVeloBuf[4]) + "," + String(SeqVeloBuf[5]) + "," + 
+		   String(SeqVeloBuf[6]) + "," + String(SeqVeloBuf[7]) + "," + String(SeqVeloBuf[8]) + "," + String(SeqVeloBuf[9]) + "," + 
+		   String(SeqVeloBuf[10]) + "," + String(SeqVeloBuf[11]) + "," + String(SeqVeloBuf[12]) + "," + String(SeqVeloBuf[13]) + "," + 
+		   String(SeqVeloBuf[14]) + "," + String(SeqVeloBuf[15]) + "," + String(SeqNote1Buf[16]) + "," + String(SeqNote1Buf[17]) + "," + 
+		   String(SeqNote1Buf[18]) + "," + String(SeqNote1Buf[19]) + "," + String(SeqNote1Buf[20]) + "," + String(SeqNote1Buf[21]) + "," + 
+		   String(SeqNote1Buf[22]) + "," + String(SeqNote1Buf[23]) + "," + String(SeqNote1Buf[24]) + "," + String(SeqNote1Buf[25]) + "," + 
+		   String(SeqNote1Buf[26]) + "," + String(SeqNote1Buf[27]) + "," + String(SeqNote1Buf[28]) + "," + String(SeqNote1Buf[29]) + "," + 
+		   String(SeqNote1Buf[30]) + "," + String(SeqNote1Buf[31]) + "," + String(SeqNote1Buf[32]) + "," + String(SeqNote1Buf[33]) + "," + 
+		   String(SeqNote1Buf[34]) + "," + String(SeqNote1Buf[35]) + "," + String(SeqNote1Buf[36]) + "," + String(SeqNote1Buf[37]) + "," + 
+		   String(SeqNote1Buf[38]) + "," + String(SeqNote1Buf[39]) + "," + String(SeqNote1Buf[40]) + "," + String(SeqNote1Buf[41]) + "," + 
+		   String(SeqNote1Buf[42]) + "," + String(SeqNote1Buf[43]) + "," + String(SeqNote1Buf[44]) + "," + String(SeqNote1Buf[45]) + "," + 
+		   String(SeqNote1Buf[46]) + "," + String(SeqNote1Buf[47]) + "," + String(SeqNote1Buf[48]) + "," + String(SeqNote1Buf[49]) + "," + 
+		   String(SeqNote1Buf[50]) + "," + String(SeqNote1Buf[51]) + "," + String(SeqNote1Buf[52]) + "," + String(SeqNote1Buf[53]) + "," + 
+		   String(SeqNote1Buf[54]) + "," + String(SeqNote1Buf[55]) + "," + String(SeqNote1Buf[56]) + "," + String(SeqNote1Buf[57]) + "," + 
+		   String(SeqNote1Buf[58]) + "," + String(SeqNote1Buf[59]) + "," + String(SeqNote1Buf[60]) + "," + String(SeqNote1Buf[61]) + "," + 
+		   String(SeqNote1Buf[62]) + "," + String(SeqNote1Buf[63]) + "," + String(SeqNoteCount[0]) + "," + String(SeqNoteCount[1]) + "," + 
+		   String(SeqNoteCount[2]) + "," + String(SeqNoteCount[3]) + "," + String(SeqNoteCount[4]) + "," + String(SeqNoteCount[5]) + "," + 
+		   String(SeqNoteCount[6]) + "," + String(SeqNoteCount[7]) + "," + String(SeqNoteCount[8]) + "," + String(SeqNoteCount[9]) + "," + 
+		   String(SeqNoteCount[10]) + "," + String(SeqNoteCount[11]) + "," + String(SeqNoteCount[12]) + "," + String(SeqNoteCount[13]) + "," + 
+		   String(SeqNoteCount[14]) + "," + String(SeqNoteCount[15]) + "," + String(SEQmode) + "," + String(SEQMidiClkSwitch) + "," + 
+		   // Parameter
+		   String(LadderFilterpassbandgain) + "," + String(LadderFilterDrive) + "," + String(envelopeType1) + "," + String(envelopeType2) + "," + 
+		   String(PitchWheelAmt, 6) + "," + String(MODWheelAmt, 6) + "," + String(myFilter) + "," + String(pwmRateA, 6) + "," + 
+		   String(pwmRateB, 6) + "," + String(LFO1fadeTime) + "," + String(LFO1releaseTime) + "," + String(filterFM, 6) + "," + 
+		   String(filterFM2, 6) + "," + String(LFO2fadeTime) + "," + String(LFO2releaseTime) + "," + String(Osc1ModAmt, 6) + "," + 
+		   String(LFO1envCurve) + "," + String(LFO2envCurve) + "," + String(LFO1mode) + "," + String(LFO2mode) + "," + 
+		   String(LFO3envCurve) + "," + String(LFO3mode) + "," + String(LFO3fadeTime) + "," + String(LFO3releaseTime) + "," + 
+		   String(Lfo3amt, 6) + "," + String(AtouchAmt) + "," + String(AtouchPitchAmt) + "," + String(Lfo3Waveform) + "," + 
+		   String(myLFO3RateValue) + "," + String(LFO3phase) + "," + String(AtouchLFO1Amt) + "," + String(AtouchLFO2Amt) + "," + 
+		   String(AtouchLFO3Amt) + "," + String(FxPot1amt) + "," + String(FxPot2amt) + "," + String(FxPot3amt) + "," + 
+		   String(FxCLKamt) + "," + String(FxMIXamt) + "," + String(AtouchFxP1Amt) + "," + String(AtouchFxP2Amt) + "," + 
+		   String(AtouchFxP3Amt) + "," + String(AtouchFxClkAmt) + "," + String(AtouchFxMixAmt) + "," + String(PWMaShape) + "," + 
+		   String(PWMbShape) + "," + String(HPF_filterFreq) + "," + String(UserPot1) + "," + String(UserPot2) + "," + 
+		   String(UserPot3) + "," + String(UserPot4) + "," + String(HPFRes) + "," + String(SupersawSpreadA) + "," + 
+		   String(SupersawSpreadB) + "," + String(SupersawMixA) + "," + String(SupersawMixB) + "," + String(Voice_mode) + "," + 
+		   String(pan_value) + "," + String(ModWheelCutoffAmt, 6) + "," + String(ModWheelHPFamt, 6) + "," + 
+		   String(Lfo2Osc1PrmAAmt) + "," + String(Lfo2Osc1PrmBAmt) + "," + String(Lfo2Osc2PrmAAmt) + "," + 
+		   String(Lfo2Osc2PrmBAmt) + "," + String(Lfo3Osc1PrmAAmt) + "," + String(Lfo3Osc1PrmBAmt) + "," + 
+		   String(Lfo3Osc2PrmAAmt) + "," + String(Lfo3Osc2PrmBAmt) + "," + String(filterEnvOsc1PrmAAmt) + "," + 
+		   String(filterEnvOsc1PrmBAmt) + "," + String(filterEnvOsc2PrmAAmt) + "," + String(filterEnvOsc2PrmBAmt) + "," + 
+		   String(hp_filter_sw) + "," + String(Lfo3Retrig);
 }
 //************************************************************************
 // load Sequencer Patch data
 //************************************************************************
-FLASHMEM String getCurrentPatternData() {
-	
-	return patternName
-	+ "," + String(SeqNote1Buf[0]) + "," + String(SeqNote1Buf[1]) + "," + String(SeqNote1Buf[2]) + "," + String(SeqNote1Buf[3])
-	+ "," + String(SeqNote1Buf[4]) + "," + String(SeqNote1Buf[5]) + "," + String(SeqNote1Buf[6]) + "," + String(SeqNote1Buf[7])
-	+ "," + String(SeqNote1Buf[8]) + "," + String(SeqNote1Buf[9]) + "," + String(SeqNote1Buf[10]) + "," + String(SeqNote1Buf[11])
-	+ "," + String(SeqNote1Buf[12]) + "," + String(SeqNote1Buf[13]) + "," + String(SeqNote1Buf[14]) + "," + String(SeqNote1Buf[15])
-	+ "," + String(SeqNoteBufStatus[0]) + "," + String(SeqNoteBufStatus[1])	+ "," + String(SeqNoteBufStatus[2]) + "," + String(SeqNoteBufStatus[3])
-	+ "," + String(SeqNoteBufStatus[4]) + "," + String(SeqNoteBufStatus[5])	+ "," + String(SeqNoteBufStatus[6]) + "," + String(SeqNoteBufStatus[7])
-	+ "," + String(SeqNoteBufStatus[8]) + "," + String(SeqNoteBufStatus[9])	+ "," + String(SeqNoteBufStatus[10]) + "," + String(SeqNoteBufStatus[11])
-	+ "," + String(SeqNoteBufStatus[12]) + "," + String(SeqNoteBufStatus[13])	+ "," + String(SeqNoteBufStatus[14]) + "," + String(SeqNoteBufStatus[15])
-	+ "," + String(SEQbpmValue) + "," + String(SEQdivValue,8) + "," + String(SEQstepNumbers) + "," + String(SEQGateTime,6)
-	+ "," + String(SEQdirection)
-	+ "," + String(SeqVeloBuf[0]) + "," + String(SeqVeloBuf[1]) + "," + String(SeqVeloBuf[2]) + "," + String(SeqVeloBuf[3]) + "," + String(SeqVeloBuf[4])
-	+ "," + String(SeqVeloBuf[5]) + "," + String(SeqVeloBuf[6]) + "," + String(SeqVeloBuf[7]) + "," + String(SeqVeloBuf[8]) + "," + String(SeqVeloBuf[9])
-	+ "," + String(SeqVeloBuf[10]) + "," + String(SeqVeloBuf[11]) + "," + String(SeqVeloBuf[12]) + "," + String(SeqVeloBuf[13]) + "," + String(SeqVeloBuf[14])
-	+ "," + String(SeqVeloBuf[15])
-	+ "," + String(SeqNote1Buf[16]) + "," + String(SeqNote1Buf[17]) + "," + String(SeqNote1Buf[18]) + "," + String(SeqNote1Buf[19])
-	+ "," + String(SeqNote1Buf[20]) + "," + String(SeqNote1Buf[21]) + "," + String(SeqNote1Buf[22]) + "," + String(SeqNote1Buf[23])
-	+ "," + String(SeqNote1Buf[24]) + "," + String(SeqNote1Buf[25]) + "," + String(SeqNote1Buf[26]) + "," + String(SeqNote1Buf[27])
-	+ "," + String(SeqNote1Buf[28]) + "," + String(SeqNote1Buf[29]) + "," + String(SeqNote1Buf[30]) + "," + String(SeqNote1Buf[31])
-	+ "," + String(SeqNote1Buf[32]) + "," + String(SeqNote1Buf[33]) + "," + String(SeqNote1Buf[34]) + "," + String(SeqNote1Buf[35])
-	+ "," + String(SeqNote1Buf[36]) + "," + String(SeqNote1Buf[37]) + "," + String(SeqNote1Buf[38]) + "," + String(SeqNote1Buf[39])
-	+ "," + String(SeqNote1Buf[40]) + "," + String(SeqNote1Buf[41]) + "," + String(SeqNote1Buf[42]) + "," + String(SeqNote1Buf[43])
-	+ "," + String(SeqNote1Buf[44]) + "," + String(SeqNote1Buf[45]) + "," + String(SeqNote1Buf[46]) + "," + String(SeqNote1Buf[47])
-	+ "," + String(SeqNote1Buf[48]) + "," + String(SeqNote1Buf[49]) + "," + String(SeqNote1Buf[50]) + "," + String(SeqNote1Buf[51])
-	+ "," + String(SeqNote1Buf[52]) + "," + String(SeqNote1Buf[53]) + "," + String(SeqNote1Buf[54]) + "," + String(SeqNote1Buf[55])
-	+ "," + String(SeqNote1Buf[56]) + "," + String(SeqNote1Buf[57]) + "," + String(SeqNote1Buf[58]) + "," + String(SeqNote1Buf[59])
-	+ "," + String(SeqNote1Buf[60]) + "," + String(SeqNote1Buf[61]) + "," + String(SeqNote1Buf[62]) + "," + String(SeqNote1Buf[63])
-	+ "," + String(SeqNoteCount[0]) + "," + String(SeqNoteCount[1]) + "," + String(SeqNoteCount[2]) + "," + String(SeqNoteCount[3])
-	+ "," + String(SeqNoteCount[4]) + "," + String(SeqNoteCount[5]) + "," + String(SeqNoteCount[6]) + "," + String(SeqNoteCount[7])
-	+ "," + String(SeqNoteCount[8]) + "," + String(SeqNoteCount[9]) + "," + String(SeqNoteCount[10]) + "," + String(SeqNoteCount[11])
-	+ "," + String(SeqNoteCount[12]) + "," + String(SeqNoteCount[13]) + "," + String(SeqNoteCount[14]) + "," + String(SeqNoteCount[15]);
+FLASHMEM String getCurrentPatternData()
+{
+
+	return patternName + "," + String(SeqNote1Buf[0]) + "," + String(SeqNote1Buf[1]) + "," + String(SeqNote1Buf[2]) + "," + String(SeqNote1Buf[3]) + "," + String(SeqNote1Buf[4]) + "," + String(SeqNote1Buf[5]) + "," + String(SeqNote1Buf[6]) + "," + String(SeqNote1Buf[7]) + "," + String(SeqNote1Buf[8]) + "," + String(SeqNote1Buf[9]) + "," + String(SeqNote1Buf[10]) + "," + String(SeqNote1Buf[11]) + "," + String(SeqNote1Buf[12]) + "," + String(SeqNote1Buf[13]) + "," + String(SeqNote1Buf[14]) + "," + String(SeqNote1Buf[15]) + "," + String(SeqNoteBufStatus[0]) + "," + String(SeqNoteBufStatus[1]) + "," + String(SeqNoteBufStatus[2]) + "," + String(SeqNoteBufStatus[3]) + "," + String(SeqNoteBufStatus[4]) + "," + String(SeqNoteBufStatus[5]) + "," + String(SeqNoteBufStatus[6]) + "," + String(SeqNoteBufStatus[7]) + "," + String(SeqNoteBufStatus[8]) + "," + String(SeqNoteBufStatus[9]) + "," + String(SeqNoteBufStatus[10]) + "," + String(SeqNoteBufStatus[11]) + "," + String(SeqNoteBufStatus[12]) + "," + String(SeqNoteBufStatus[13]) + "," + String(SeqNoteBufStatus[14]) + "," + String(SeqNoteBufStatus[15]) + "," + String(SEQbpmValue) + "," + String(SEQdivValue, 8) + "," + String(SEQstepNumbers) + "," + String(SEQGateTime, 6) + "," + String(SEQdirection) + "," + String(SeqVeloBuf[0]) + "," + String(SeqVeloBuf[1]) + "," + String(SeqVeloBuf[2]) + "," + String(SeqVeloBuf[3]) + "," + String(SeqVeloBuf[4]) + "," + String(SeqVeloBuf[5]) + "," + String(SeqVeloBuf[6]) + "," + String(SeqVeloBuf[7]) + "," + String(SeqVeloBuf[8]) + "," + String(SeqVeloBuf[9]) + "," + String(SeqVeloBuf[10]) + "," + String(SeqVeloBuf[11]) + "," + String(SeqVeloBuf[12]) + "," + String(SeqVeloBuf[13]) + "," + String(SeqVeloBuf[14]) + "," + String(SeqVeloBuf[15]) + "," + String(SeqNote1Buf[16]) + "," + String(SeqNote1Buf[17]) + "," + String(SeqNote1Buf[18]) + "," + String(SeqNote1Buf[19]) + "," + String(SeqNote1Buf[20]) + "," + String(SeqNote1Buf[21]) + "," + String(SeqNote1Buf[22]) + "," + String(SeqNote1Buf[23]) + "," + String(SeqNote1Buf[24]) + "," + String(SeqNote1Buf[25]) + "," + String(SeqNote1Buf[26]) + "," + String(SeqNote1Buf[27]) + "," + String(SeqNote1Buf[28]) + "," + String(SeqNote1Buf[29]) + "," + String(SeqNote1Buf[30]) + "," + String(SeqNote1Buf[31]) + "," + String(SeqNote1Buf[32]) + "," + String(SeqNote1Buf[33]) + "," + String(SeqNote1Buf[34]) + "," + String(SeqNote1Buf[35]) + "," + String(SeqNote1Buf[36]) + "," + String(SeqNote1Buf[37]) + "," + String(SeqNote1Buf[38]) + "," + String(SeqNote1Buf[39]) + "," + String(SeqNote1Buf[40]) + "," + String(SeqNote1Buf[41]) + "," + String(SeqNote1Buf[42]) + "," + String(SeqNote1Buf[43]) + "," + String(SeqNote1Buf[44]) + "," + String(SeqNote1Buf[45]) + "," + String(SeqNote1Buf[46]) + "," + String(SeqNote1Buf[47]) + "," + String(SeqNote1Buf[48]) + "," + String(SeqNote1Buf[49]) + "," + String(SeqNote1Buf[50]) + "," + String(SeqNote1Buf[51]) + "," + String(SeqNote1Buf[52]) + "," + String(SeqNote1Buf[53]) + "," + String(SeqNote1Buf[54]) + "," + String(SeqNote1Buf[55]) + "," + String(SeqNote1Buf[56]) + "," + String(SeqNote1Buf[57]) + "," + String(SeqNote1Buf[58]) + "," + String(SeqNote1Buf[59]) + "," + String(SeqNote1Buf[60]) + "," + String(SeqNote1Buf[61]) + "," + String(SeqNote1Buf[62]) + "," + String(SeqNote1Buf[63]) + "," + String(SeqNoteCount[0]) + "," + String(SeqNoteCount[1]) + "," + String(SeqNoteCount[2]) + "," + String(SeqNoteCount[3]) + "," + String(SeqNoteCount[4]) + "," + String(SeqNoteCount[5]) + "," + String(SeqNoteCount[6]) + "," + String(SeqNoteCount[7]) + "," + String(SeqNoteCount[8]) + "," + String(SeqNoteCount[9]) + "," + String(SeqNoteCount[10]) + "," + String(SeqNoteCount[11]) + "," + String(SeqNoteCount[12]) + "," + String(SeqNoteCount[13]) + "," + String(SeqNoteCount[14]) + "," + String(SeqNoteCount[15]);
 }
-
-
 
 //*************************************************************************
 // update sysex Patch
@@ -5418,7 +5949,8 @@ FLASHMEM void updateSysExPatch(void)
 	updateNoiseLevel();
 	updateFilterFreq();
 	updateFilterRes();
-	if (myFilter == 2) {		// Ladder Filter
+	if (myFilter == 2)
+	{ // Ladder Filter
 		updateLadderFilterPassbandGain(LadderFilterpassbandgain);
 		updateLadderFilterDrive(LadderFilterDrive);
 	}
@@ -5441,10 +5973,10 @@ FLASHMEM void updateSysExPatch(void)
 	updateSustain();
 	updateRelease();
 	updateLFO1delay();
-	updateLFO1fade ();		// LFO1 FADE-IN
-	updateLFO2release();	// LFO1 FADE-OUT
-	updateLFO2fade ();		// LFO2 FADE-IN
-	updateLFO1release();	// LFO2 FADE-OUT
+	updateLFO1fade();	 // LFO1 FADE-IN
+	updateLFO2release(); // LFO1 FADE-OUT
+	updateLFO2fade();	 // LFO2 FADE-IN
+	updateLFO1release(); // LFO2 FADE-OUT
 	updateLFO1EnvelopeType();
 	updateLFO2EnvelopeType();
 	updateFilterFM();
@@ -5459,7 +5991,6 @@ FLASHMEM void updateSysExPatch(void)
 	KeyLED2State = true;
 	KeyLED3State = true;
 	KeyLED4State = true;
-	
 }
 //*************************************************************************
 // seleced Paramter
@@ -5467,42 +5998,51 @@ FLASHMEM void updateSysExPatch(void)
 FLASHMEM int selecdParameter(uint8_t PageNr, uint8_t ParameterNr)
 {
 	int parameter = 0;
-	
-	if (PageNr == 1){
-		
+
+	if (PageNr == 1)
+	{
+
 		// Osc1 main page
-		if (myPageShiftStatus[PageNr] == false) {	// Osc1 main menu
-			switch (ParameterNr){
-				case 0:
+		if (myPageShiftStatus[PageNr] == false)
+		{ // Osc1 main menu
+			switch (ParameterNr)
+			{
+			case 0:
 				parameter = CCoscwaveformA;
 				break;
-				case 1:
+			case 1:
 				parameter = CCpitchA;
 				break;
-				case 2:
+			case 2:
 				parameter = CCpitchenvA;
 				break;
-				case 3:
+			case 3:
 				parameter = CCglide;
 				break;
-				case 4:
-				parameter = myDrive;			// LEVEL
+			case 4:
+				parameter = myDrive; // LEVEL
 				break;
-				case 5:
-				if ((oscWaveformA == 3 && Osc1WaveBank == 0) || (Osc1WaveBank == 15 && oscWaveformA > 0)) {
-					parameter = mySpreadA;		// Supersaw spread/Braids Osc PRM_A
-					} else if (Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12)) {
-					parameter = CCpwA;			// PWAMT
+			case 5:
+				if ((oscWaveformA == 3 && Osc1WaveBank == 0) || (Osc1WaveBank == 15 && oscWaveformA > 0))
+				{
+					parameter = mySpreadA; // Supersaw spread/Braids Osc PRM_A
+				}
+				else if (Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12))
+				{
+					parameter = CCpwA; // PWAMT
 				}
 				break;
-				case 6:
-				if ((oscWaveformA == 3 && Osc1WaveBank == 0) || (Osc1WaveBank == 15  && oscWaveformA > 0)) {
-					parameter = mySupersawMixA;	// SupersawMix/Braids Osc PRM_B
-					}  else if (Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12)) {
-					parameter = CCpwmRateA;		// PWMOD
+			case 6:
+				if ((oscWaveformA == 3 && Osc1WaveBank == 0) || (Osc1WaveBank == 15 && oscWaveformA > 0))
+				{
+					parameter = mySupersawMixA; // SupersawMix/Braids Osc PRM_B
+				}
+				else if (Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12))
+				{
+					parameter = CCpwmRateA; // PWMOD
 				}
 				break;
-				case 7:
+			case 7:
 				parameter = myOscMix;
 				break;
 			}
@@ -5510,69 +6050,79 @@ FLASHMEM int selecdParameter(uint8_t PageNr, uint8_t ParameterNr)
 		// Osc1 sub page
 		else
 		{
-			switch (ParameterNr){
-				case 0:
+			switch (ParameterNr)
+			{
+			case 0:
 				parameter = myWaveshaperTable;
 				break;
-				case 1:
+			case 1:
 				parameter = myWaveshaperDrive;
 				break;
-				case 2:
+			case 2:
 				parameter = myOscSync;
 				break;
-				case 3:
+			case 3:
 				parameter = myTranspose;
 				break;
-				case 4:
+			case 4:
 				parameter = myMasterTune;
 				break;
-				case 5:
+			case 5:
 				parameter = CCnoiseLevel;
 				break;
-				case 6:
+			case 6:
 				parameter = CCoscfx;
 				break;
-				case 7:
+			case 7:
 				parameter = myOsc1ModAmt;
 				break;
 			}
 		}
 	}
-	
+
 	// Osc2 main page
-	else if (PageNr == 2){
-		if (myPageShiftStatus[PageNr] == false) {	// shift key disabled
-			switch (ParameterNr){
-				case 0:
+	else if (PageNr == 2)
+	{
+		if (myPageShiftStatus[PageNr] == false)
+		{ // shift key disabled
+			switch (ParameterNr)
+			{
+			case 0:
 				parameter = CCoscwaveformB;
 				break;
-				case 1:
+			case 1:
 				parameter = CCpitchB;
 				break;
-				case 2:
+			case 2:
 				parameter = CCpitchenvB;
 				break;
-				case 3:
+			case 3:
 				parameter = CCdetune;
 				break;
-				case 4:
+			case 4:
 				parameter = myDrive;
 				break;
-				case 5:
-				if ((oscWaveformB == 3 && Osc2WaveBank == 0) || (Osc2WaveBank == 15 && oscWaveformB > 0)) {
-					parameter = mySpreadB;		// Supersaw spread/Braids Osc PRM_A
-					}  else if (Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12)) {
-					parameter = CCpwB;			// PWAMT
+			case 5:
+				if ((oscWaveformB == 3 && Osc2WaveBank == 0) || (Osc2WaveBank == 15 && oscWaveformB > 0))
+				{
+					parameter = mySpreadB; // Supersaw spread/Braids Osc PRM_A
+				}
+				else if (Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12))
+				{
+					parameter = CCpwB; // PWAMT
 				}
 				break;
-				case 6:
-				if ((oscWaveformB == 3 && Osc2WaveBank == 0) || (Osc2WaveBank == 15 && oscWaveformB > 0)) {
-					parameter = mySupersawMixB;	// SupersawMix/Braids Osc PRM_B
-					}   else if (Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12)) {
-					parameter = CCpwmRateB;		// PWMOD
+			case 6:
+				if ((oscWaveformB == 3 && Osc2WaveBank == 0) || (Osc2WaveBank == 15 && oscWaveformB > 0))
+				{
+					parameter = mySupersawMixB; // SupersawMix/Braids Osc PRM_B
+				}
+				else if (Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12))
+				{
+					parameter = CCpwmRateB; // PWMOD
 				}
 				break;
-				case 7:
+			case 7:
 				parameter = myOscMix;
 				break;
 			}
@@ -5580,87 +6130,92 @@ FLASHMEM int selecdParameter(uint8_t PageNr, uint8_t ParameterNr)
 		// Osc2 sub page
 		else
 		{
-			switch (ParameterNr){
-				case 0:
+			switch (ParameterNr)
+			{
+			case 0:
 				parameter = myWaveshaperTable;
 				break;
-				case 1:
+			case 1:
 				parameter = myWaveshaperDrive;
 				break;
-				case 2:
+			case 2:
 				parameter = myOscSync;
 				break;
-				case 3:
+			case 3:
 				parameter = myTranspose;
 				break;
-				case 4:
+			case 4:
 				parameter = myMasterTune;
 				break;
-				case 5:
+			case 5:
 				parameter = CCnoiseLevel;
 				break;
-				case 6:
+			case 6:
 				parameter = CCoscfx;
 				break;
-				case 7:
+			case 7:
 				parameter = myOsc1ModAmt;
 				break;
 			}
 		}
 	}
-	
+
 	// System main page
-	else if (PageNr == 12 && myPageShiftStatus[PageNr] == false){
-		switch (ParameterNr){
-			case 0:
+	else if (PageNr == 12 && myPageShiftStatus[PageNr] == false)
+	{
+		switch (ParameterNr)
+		{
+		case 0:
 			parameter = myMidiCha;
 			break;
-			case 1:
+		case 1:
 			parameter = myVelocity;
 			break;
-			case 2:
+		case 2:
 			parameter = myPickup;
 			break;
-			case 3:
+		case 3:
 			parameter = myMidiSyncSwitch;
 			break;
-			case 4:
+		case 4:
 			parameter = myPRGChange;
 			break;
-			case 5:
+		case 5:
 			parameter = myUserPot1;
 			break;
-			case 6:
+		case 6:
 			parameter = myUserPot2;
 			break;
-			case 7:
+		case 7:
 			parameter = myUserPot3;
 			break;
-			case 8:
+		case 8:
 			parameter = myUserPot4;
 			break;
-			case 9:
+		case 9:
 			parameter = myVoiceMode; // 234
 			break;
 		}
 	}
-	
+
 	// System sub page
-	else if (PageNr == 12 && myPageShiftStatus[PageNr] == true){
-		switch (ParameterNr){
-			case 0:
+	else if (PageNr == 12 && myPageShiftStatus[PageNr] == true)
+	{
+		switch (ParameterNr)
+		{
+		case 0:
 			parameter = mysysexDest;
 			break;
-			case 1:
+		case 1:
 			parameter = mysysexTyp;
 			break;
-			case 2:
+		case 2:
 			parameter = mysysexBank;
 			break;
-			case 3:
+		case 3:
 			parameter = mysysexSource;
 			break;
-			case 4:
+		case 4:
 			parameter = mysysexDump;
 			break;
 		}
@@ -5672,412 +6227,548 @@ FLASHMEM int selecdParameter(uint8_t PageNr, uint8_t ParameterNr)
 //*************************************************************************
 // set pick up parameter
 //*************************************************************************
-FLASHMEM void Set_parameters_1(uint8_t pot, uint8_t midiChannel, uint8_t myCC, int value)
+FLASHMEM void Set_parameters_1(uint8_t pot, uint8_t midiChannel, uint8_t myCC, uint16_t value)
 {
 	pot -= 1;
-	int value_2 = 0;
+	uint16_t value_2 = 0;
 	boolean temp_pickupFlag = pickupFlag;
-	
-	if (PageNr == 0) {
+
+	if (PageNr == 0)
+	{
 		pickupFlag = true;
 	}
-	
-	
+
 	// change max value
-	if (myCC == CCfilterfreq || myCC == CCHPFfilter) {
-		value_2 = value / 15.75f;		// max 255
-		if (value_2 >= 255) {
+	if (myCC == CCfilterfreq || myCC == CCHPFfilter)
+	{
+		value_2 = value / 15.75f; // max 255
+		if (value_2 >= 255)
+		{
 			value_2 = 255;
 		}
 	}
-	else {
-		//value_2 = value >> 5;			// max 127
-		value_2 = value / 31.6f;		// max 127
-		if (value_2 >= 127) {
+	else
+	{
+		// value_2 = value >> 5;			// max 127
+		value_2 = value / 31.6f; // max 127
+		if (value_2 >= 127)
+		{
 			value_2 = 127;
 		}
 	}
-	
-	//value >>= 5;						// Pickup max 127
-	value = value / 31.6f;				// Pickup max 127
-	if (value >= 127) {
+
+	// value >>= 5;						// Pickup max 127
+	value = value / 31.6f; // Pickup max 127
+	if (value >= 127)
+	{
 		value = 127;
 	}
-	
-	
-	if (PrevFlag[pot] == false && value >= (PrevValue[pot] - Prev_Factor) && value <= (PrevValue[pot] + Prev_Factor)) {
+
+	if (PrevFlag[pot] == false && value >= (PrevValue[pot] - Prev_Factor) && value <= (PrevValue[pot] + Prev_Factor))
+	{
 		PrevFlag[pot] = true;
 		PrevValue[pot] = value;
 	}
-	else if (PrevFlag[pot] == true) {
+	else if (PrevFlag[pot] == true)
+	{
 		myControlChange(midiChannel, myCC, value_2);
 	}
-	
-	if (myCC == CCfilterfreq || myCC == CCfilterres || myCC == CCLadderFilterDrive || myCC == CCkeytracking || myCC == myFilterVelo
-	|| myCC == myLFO1amt || myCC == myLFO2amt || myCC == myLFO3amt || myCC == myLFO1rate || myCC == myLFO2rate || myCC == myLFO3rate
-	|| myCC == CCHPFfilter || myCC == CCHPFres || myCC == CCLadderFilterPassbandGain || myCC == myAmplifierVelo){
-		printPickupValue(pot, PrevValue[pot], value, PrevFlag[pot]);}
-		
-	else if (myCC == myFilterEnvCurve || myCC == myAmpEnvCurve){
-		printPickupInt8(pot, PrevValue[pot], value, PrevFlag[pot]);}
-	else if (myCC == CCfilterenv){
-		printPickupInt64(pot, PrevValue[pot], value, PrevFlag[pot]);}
-	else if (myCC == CCfiltermixer){
-		printPickupVCFTyp(pot, PrevValue[pot], value, PrevFlag[pot]);}
+
+	if (myCC == CCfilterfreq || myCC == CCfilterres || myCC == CCLadderFilterDrive || myCC == CCkeytracking || myCC == myFilterVelo || myCC == myLFO1amt || myCC == myLFO2amt || myCC == myLFO3amt || myCC == myLFO1rate || myCC == myLFO2rate || myCC == myLFO3rate || myCC == CCHPFfilter || myCC == CCHPFres || myCC == CCLadderFilterPassbandGain || myCC == myAmplifierVelo)
+	{
+		printPickupValue(pot, PrevValue[pot], value, PrevFlag[pot]);
+	}
+
+	else if (myCC == myFilterEnvCurve || myCC == myAmpEnvCurve)
+	{
+		printPickupInt8(pot, PrevValue[pot], value, PrevFlag[pot]);
+	}
+	else if (myCC == CCfilterenv)
+	{
+		printPickupInt64(pot, PrevValue[pot], value, PrevFlag[pot]);
+	}
+	else if (myCC == CCfiltermixer)
+	{
+		printPickupVCFTyp(pot, PrevValue[pot], value, PrevFlag[pot]);
+	}
 
 	pickupFlag = temp_pickupFlag;
 }
 
-
 //*************************************************************************
 // Set parameters in the menu
 //*************************************************************************
-FLASHMEM void set_menu_parameter (uint8_t index, int value)
+FLASHMEM void set_menu_parameter(uint8_t index, uint16_t value)
 {
 	switch (PageNr)
 	{
-		// PageNo 0: Main page --------------------------------------------
-		case 0:
+	// PageNo 0: Main page --------------------------------------------
+	case 0:
 		// Main Menu
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 4) {		// Pot 4 : Bank
-				renderCurrentParameter(PageNr,setPatchBank,(value >> 8));
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 4)
+			{ // Pot 4 : Bank
+				renderCurrentParameter(PageNr, setPatchBank, (value >> 8));
 			}
 		}
 		// Main Sub Menu
-		else {
-			if (index == 1) {		// Pot 1 : Parameter
-				if (UserPot[0] == 1) {
+		else
+		{
+			if (index == 1)
+			{ // Pot 1 : Parameter
+				if (UserPot[0] == 1)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterfreq, value);
 				}
-				else if (UserPot[0] == 2) {
+				else if (UserPot[0] == 2)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterres, value);
 				}
-				else if (UserPot[0] == 3) {
+				else if (UserPot[0] == 3)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1amt, value);
 				}
-				else if (UserPot[0] == 4) {
+				else if (UserPot[0] == 4)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2amt, value);
 				}
-				else if (UserPot[0] == 5) {
+				else if (UserPot[0] == 5)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3amt, value);
 				}
-				else if (UserPot[0] == 6) {
+				else if (UserPot[0] == 6)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1rate, value);
 				}
-				else if (UserPot[0] == 7) {
+				else if (UserPot[0] == 7)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2rate, value);
 				}
-				else if (UserPot[0] == 8) {
+				else if (UserPot[0] == 8)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3rate, value);
 				}
-				else if (UserPot[0] == 9) {
+				else if (UserPot[0] == 9)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFfilter, value);
 				}
-				else if (UserPot[0] == 10) {
+				else if (UserPot[0] == 10)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFres, value);
 				}
 			}
-			else if (index == 2) {	// Pot 2 : Parameter
-				
-				if (UserPot[1] == 1) {
+			else if (index == 2)
+			{ // Pot 2 : Parameter
+
+				if (UserPot[1] == 1)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterfreq, value);
 				}
-				else if (UserPot[1] == 2) {
+				else if (UserPot[1] == 2)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterres, value);
 				}
-				else if (UserPot[1] == 3) {
+				else if (UserPot[1] == 3)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1amt, value);
 				}
-				else if (UserPot[1] == 4) {
+				else if (UserPot[1] == 4)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2amt, value);
 				}
-				else if (UserPot[1] == 5) {
+				else if (UserPot[1] == 5)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3amt, value);
 				}
-				else if (UserPot[1] == 6) {
+				else if (UserPot[1] == 6)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1rate, value);
 				}
-				else if (UserPot[1] == 7) {
+				else if (UserPot[1] == 7)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2rate, value);
 				}
-				else if (UserPot[1] == 8) {
+				else if (UserPot[1] == 8)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3rate, value);
 				}
-				else if (UserPot[1] == 9) {
+				else if (UserPot[1] == 9)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFfilter, value);
 				}
-				else if (UserPot[1] == 10) {
+				else if (UserPot[1] == 10)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFres, value);
 				}
 			}
-			else if (index == 3) {	// Pot 3 : Parameter
-				
-				if (UserPot[2] == 1) {
+			else if (index == 3)
+			{ // Pot 3 : Parameter
+
+				if (UserPot[2] == 1)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterfreq, value);
 				}
-				else if (UserPot[2] == 2) {
+				else if (UserPot[2] == 2)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterres, value);
 				}
-				else if (UserPot[2] == 3) {
+				else if (UserPot[2] == 3)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1amt, value);
 				}
-				else if (UserPot[2] == 4) {
+				else if (UserPot[2] == 4)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2amt, value);
 				}
-				else if (UserPot[2] == 5) {
+				else if (UserPot[2] == 5)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3amt, value);
 				}
-				else if (UserPot[2] == 6) {
+				else if (UserPot[2] == 6)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1rate, value);
 				}
-				else if (UserPot[2] == 7) {
+				else if (UserPot[2] == 7)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2rate, value);
 				}
-				else if (UserPot[2] == 8) {
+				else if (UserPot[2] == 8)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3rate, value);
 				}
-				else if (UserPot[2] == 9) {
+				else if (UserPot[2] == 9)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFfilter, value);
 				}
-				else if (UserPot[2] == 10) {
+				else if (UserPot[2] == 10)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFres, value);
 				}
 			}
-			else if (index == 4) {	// Pot 3 : Parameter
-				
-				if (UserPot[3] == 1) {
+			else if (index == 4)
+			{ // Pot 3 : Parameter
+
+				if (UserPot[3] == 1)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterfreq, value);
 				}
-				else if (UserPot[3] == 2) {
+				else if (UserPot[3] == 2)
+				{
 					Set_parameters_1(index, midiChannel, CCfilterres, value);
 				}
-				else if (UserPot[3] == 3) {
+				else if (UserPot[3] == 3)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1amt, value);
 				}
-				else if (UserPot[3] == 4) {
+				else if (UserPot[3] == 4)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2amt, value);
 				}
-				else if (UserPot[3] == 5) {
+				else if (UserPot[3] == 5)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3amt, value);
 				}
-				else if (UserPot[3] == 6) {
+				else if (UserPot[3] == 6)
+				{
 					Set_parameters_1(index, midiChannel, myLFO1rate, value);
 				}
-				else if (UserPot[3] == 7) {
+				else if (UserPot[3] == 7)
+				{
 					Set_parameters_1(index, midiChannel, myLFO2rate, value);
 				}
-				else if (UserPot[3] == 8) {
+				else if (UserPot[3] == 8)
+				{
 					Set_parameters_1(index, midiChannel, myLFO3rate, value);
 				}
-				else if (UserPot[3] == 9) {
+				else if (UserPot[3] == 9)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFfilter, value);
 				}
-				else if (UserPot[3] == 10) {
+				else if (UserPot[3] == 10)
+				{
 					Set_parameters_1(index, midiChannel, CCHPFres, value);
 				}
 			}
 		}
 
 		break;
-		
-		// PageNo 1: Osc1 -------------------------------------------------
-		case 1:
+
+	// PageNo 1: Osc1 -------------------------------------------------
+	case 1:
 		// Osc1 Main Menu
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {			// Pot 1 : select
-				uint16_t tempParameterNr = (0.062f * (value >> 5));	// 8 rows
-				if (ParameterNr != tempParameterNr){
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{														// Pot 1 : select
+				uint16_t tempParameterNr = (0.062f * (value >> 5)); // 8 rows
+				if (ParameterNr != tempParameterNr)
+				{
 					ParameterNr = tempParameterNr;
 					drawParamterFrame(PageNr, ParameterNr);
 					ParameterNrMem[PageNr] = ParameterNr;
 					ParmSelectFlag = false;
 				}
 			}
-			else if (index == 2) {		// Pot 2 : value
-				renderCurrentParameter(PageNr,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : value
+				renderCurrentParameter(PageNr, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 				// value for CCoscwaveform max 63
-				if (selecdParameter(PageNr, ParameterNr) == CCoscwaveformA) {
-					value = value >> 1;
+				if (selecdParameter(PageNr, ParameterNr) == CCoscwaveformA)
+				{
 					if (Osc1WaveBank == 15)
+					{
+						value = value * 0.165f;	// 21x Braids waveforms
+					}
+					else
 					{
 						value = value >> 1;
 					}
+					myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 				}
-				myControlChange(midiChannel,(selecdParameter(PageNr, ParameterNr)), (value >> 5));
+				else if ((Osc1WaveBank == 15 && selecdParameter(PageNr, ParameterNr) == mySpreadA) || 
+				(Osc1WaveBank == 15 && selecdParameter(PageNr, ParameterNr) == mySupersawMixA))
+				{
+					myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 2));					
+				}
+				else
+				{
+					myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
+				}
+				
 			}
-			else if (index == 3) {		// Pot 3 : Waveform Bank
-				if (ParameterNr == 0){
-					myCCgroup1 (CCosc1WaveBank, (value >> 8));
+			else if (index == 3)
+			{ // Pot 3 : Waveform Bank
+				if (ParameterNr == 0)
+				{
+					myCCgroup1(CCosc1WaveBank, (value >> 8));
 				}
 			}
 		}
 		// Osc Sub Menu
-		else {
-			if (index == 1) {		// Pot 1
-				uint16_t tempParameterNr = (0.062f * (value >> 5));	// 8 rows
-				if (ParameterNr != tempParameterNr){
+		else
+		{
+			if (index == 1)
+			{														// Pot 1
+				uint16_t tempParameterNr = (0.062f * (value >> 5)); // 8 rows
+				if (ParameterNr != tempParameterNr)
+				{
 					ParameterNr = tempParameterNr;
 					drawParamterFrame(PageNr, ParameterNr);
 					ParameterNrMem[3] = ParameterNr;
 					ParmSelectFlag = false;
 				}
 			}
-			else if (index == 2) {	// Pot 2
-				renderCurrentParameter(PageNr,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
-				myControlChange(midiChannel,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
+			else if (index == 2)
+			{ // Pot 2
+				renderCurrentParameter(PageNr, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
+				myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 			}
 		}
 		break;
-		
-		// PageNo 2: Osc2 -------------------------------------------------
-		case 2:
+
+	// PageNo 2: Osc2 -------------------------------------------------
+	case 2:
 		// Osc 2 Main Menu
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : select
-				uint8_t tempParameterNr = (0.062f * (value >> 5));	// 8 rows
-				if (ParameterNr != tempParameterNr){
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{													   // Pot 1 : select
+				uint8_t tempParameterNr = (0.062f * (value >> 5)); // 8 rows
+				if (ParameterNr != tempParameterNr)
+				{
 					ParameterNr = tempParameterNr;
 					drawParamterFrame(PageNr, ParameterNr);
 					ParameterNrMem[PageNr] = ParameterNr;
 					ParmSelectFlag = false;
 				}
 			}
-			else if (index == 2) {	// Pot 2 : value
-				renderCurrentParameter(PageNr,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : value
+				renderCurrentParameter(PageNr, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 				// value for CCoscwaveform max 63
-				if (selecdParameter(PageNr, ParameterNr) == CCoscwaveformB) {
-					value = value >> 1;
+				if (selecdParameter(PageNr, ParameterNr) == CCoscwaveformB)
+				{
 					if (Osc2WaveBank == 15)
 					{
-						value = value >> 2;
+						value = value * 0.165f;	// 21x Braids waveforms
 					}
+					else
+					{
+						value = value >> 1;
+					}
+					myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 				}
-				myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)),(value >> 5));
+				else if ((Osc2WaveBank == 15 && selecdParameter(PageNr, ParameterNr) == mySpreadB) || 
+				(Osc2WaveBank == 15 && selecdParameter(PageNr, ParameterNr) == mySupersawMixB))
+				{
+					myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 2));
+					
+				}
+				else
+				{
+					myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
+				}
 			}
-			else if (index == 3) {	// Pot 3 : Waveform Bank
-				if (ParameterNr == 0){
-					myCCgroup1 (CCosc2WaveBank, (value >> 8));
+			else if (index == 3)
+			{ // Pot 3 : Waveform Bank
+				if (ParameterNr == 0)
+				{
+					myCCgroup1(CCosc2WaveBank, (value >> 8));
 				}
 			}
 			break;
 		}
 		// Osc Sub Menu
-		else {
-			if (index == 1) {		// Pot 1 : select
-				uint16_t tempParameterNr = (0.062f * (value >> 5));	// 8 rows
-				if (ParameterNr != tempParameterNr){
+		else
+		{
+			if (index == 1)
+			{														// Pot 1 : select
+				uint16_t tempParameterNr = (0.062f * (value >> 5)); // 8 rows
+				if (ParameterNr != tempParameterNr)
+				{
 					ParameterNr = tempParameterNr;
 					drawParamterFrame(PageNr, ParameterNr);
 					ParameterNrMem[3] = ParameterNr;
 					ParmSelectFlag = false;
 				}
 			}
-			else if (index == 2) {	// Pot 2
-				renderCurrentParameter(PageNr,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
+			else if (index == 2)
+			{ // Pot 2
+				renderCurrentParameter(PageNr, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 				myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 			}
 			break;
 		}
-		
-		// PageNo 3: Filter -----------------------------------------------
-		case 3:
+
+	// PageNo 3: Filter -----------------------------------------------
+	case 3:
 		// Filter 1 Main Menu (State Variable Filter)
-		if (myFilter == 1 && myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Cutoff
-				myControlChange(midiChannel, CCfilterfreq,(value >> 4));	// Value 0...255
+		if (myFilter == 1 && myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{															  // Pot 1 : Cutoff
+				myControlChange(midiChannel, CCfilterfreq, (value >> 4)); // Value 0...255
 			}
-			else if (index == 2) {	// Pot 2 : Resonance
-				myControlChange(midiChannel, CCfilterres,(value >> 5));		// Value 0...127
+			else if (index == 2)
+			{															 // Pot 2 : Resonance
+				myControlChange(midiChannel, CCfilterres, (value >> 5)); // Value 0...127
 			}
-			else if (index == 3) {	// Pot 3 : Filter Envelope
-				myControlChange(midiChannel, CCfilterenv,(value >> 5));		// Value -63...+63
+			else if (index == 3)
+			{															 // Pot 3 : Filter Envelope
+				myControlChange(midiChannel, CCfilterenv, (value >> 5)); // Value -63...+63
 			}
-			else if (index == 4) {	// Pot 4 : Typ
+			else if (index == 4)
+			{ // Pot 4 : Typ
 				FilterMix = (value >> 5);
-				myControlChange(midiChannel, CCfiltermixer,(value >> 5));   // Value 0...127 (LP/HP/BP)
+				myControlChange(midiChannel, CCfiltermixer, (value >> 5)); // Value 0...127 (LP/HP/BP)
 			}
 		}
 
 		// Filter 1 Sub Menu1 (State Variable Filter)
-		else if (myFilter == 1 && myPageShiftStatus[PageNr] == true) {
-			if (index == 1) {		// Pot 1 : Key tracking
-				myControlChange(midiChannel, CCkeytracking,(value >> 5));	// Value 0...127
+		else if (myFilter == 1 && myPageShiftStatus[PageNr] == true)
+		{
+			if (index == 1)
+			{															   // Pot 1 : Key tracking
+				myControlChange(midiChannel, CCkeytracking, (value >> 5)); // Value 0...127
 			}
-			else if (index == 2) {	// Pot 2 : Velocity
-				myControlChange(midiChannel, myFilterVelo,(value >> 5));	// Value 0...127
+			else if (index == 2)
+			{															  // Pot 2 : Velocity
+				myControlChange(midiChannel, myFilterVelo, (value >> 5)); // Value 0...127
 			}
-			else if (index == 3) {	// Pot 3 : LFO2 Amt
-				myControlChange(midiChannel, myLFO2amt,(value >> 5));		// Value 0...127
+			else if (index == 3)
+			{														   // Pot 3 : LFO2 Amt
+				myControlChange(midiChannel, myLFO2amt, (value >> 5)); // Value 0...127
 			}
 		}
 		// HPF Filter  Sub Menu2
-		else if (myPageShiftStatus[PageNr] == 2) {
-			if (index == 1) {		// Pot 1 : HPF filter frequency
-				myControlChange(midiChannel, CCHPFfilter,(value >> 4));		// Value 0...255
+		else if (myPageShiftStatus[PageNr] == 2)
+		{
+			if (index == 1)
+			{															 // Pot 1 : HPF filter frequency
+				myControlChange(midiChannel, CCHPFfilter, (value >> 4)); // Value 0...255
 			}
-			else if (index == 2) {	// Pot 2 : Resonance
-				myControlChange(midiChannel, CCHPFres,(value >> 5));		// Value 0...127
+			else if (index == 2)
+			{														  // Pot 2 : Resonance
+				myControlChange(midiChannel, CCHPFres, (value >> 5)); // Value 0...127
 			}
-			else if (index == 4) {		// Pot 4 : filter switch
-				myControlChange(midiChannel, myFilterSwitch,(value >> 5));	// Value 0...127
+			else if (index == 4)
+			{																// Pot 4 : filter switch
+				myControlChange(midiChannel, myFilterSwitch, (value >> 5)); // Value 0...127
 			}
 		}
 
 		// Filter 2 (Ladder) Main Menu
-		else if (myFilter == 2 && myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Cutoff
-				myControlChange(midiChannel, CCfilterfreq,(value >> 4));	// Value 0...255
+		else if (myFilter == 2 && myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{															  // Pot 1 : Cutoff
+				myControlChange(midiChannel, CCfilterfreq, (value >> 4)); // Value 0...255
 			}
-			else if (index == 2) {	// Pot 2 : Resonance
-				myControlChange(midiChannel, CCfilterres,(value >> 5));		// Value 0...127
+			else if (index == 2)
+			{															 // Pot 2 : Resonance
+				myControlChange(midiChannel, CCfilterres, (value >> 5)); // Value 0...127
 			}
-			else if (index == 3) {	// Pot 3 : Filter Envelope
-				myControlChange(midiChannel, CCfilterenv,(value >> 5));		// Value -63...+63
+			else if (index == 3)
+			{															 // Pot 3 : Filter Envelope
+				myControlChange(midiChannel, CCfilterenv, (value >> 5)); // Value -63...+63
 			}
-			else if (index == 4) {	// Pot 4
-				myControlChange(midiChannel, CCLadderFilterDrive,(value >> 5));	// Value 0...127
+			else if (index == 4)
+			{																	 // Pot 4
+				myControlChange(midiChannel, CCLadderFilterDrive, (value >> 5)); // Value 0...127
 			}
 		}
-		
+
 		// Filter 2 (Ladder) Sub Menu
-		else if (myFilter == 2 && myPageShiftStatus[PageNr] == true) {
-			if (index == 1) {		// Pot 1 : Key tracking
-				myControlChange(midiChannel, CCkeytracking,(value >> 5));	// Value 0...127
+		else if (myFilter == 2 && myPageShiftStatus[PageNr] == true)
+		{
+			if (index == 1)
+			{															   // Pot 1 : Key tracking
+				myControlChange(midiChannel, CCkeytracking, (value >> 5)); // Value 0...127
 			}
-			else if (index == 2) {	// Pot 2 : Filter Velocity
-				myControlChange(midiChannel, myFilterVelo,(value >> 5));	// Value 0...127
+			else if (index == 2)
+			{															  // Pot 2 : Filter Velocity
+				myControlChange(midiChannel, myFilterVelo, (value >> 5)); // Value 0...127
 			}
-			else if (index == 3) {	// Pot 4 : LFO 2 Amt
-				myControlChange(midiChannel, myLFO2amt,(value >> 5));		// Value 0...127
+			else if (index == 3)
+			{														   // Pot 4 : LFO 2 Amt
+				myControlChange(midiChannel, myLFO2amt, (value >> 5)); // Value 0...127
 			}
-			else if (index == 4) {	// Pot 3 : PassbandGain
-				myControlChange(midiChannel, CCLadderFilterPassbandGain,(value >> 5));		// Value 0...127
+			else if (index == 4)
+			{																			// Pot 3 : PassbandGain
+				myControlChange(midiChannel, CCLadderFilterPassbandGain, (value >> 5)); // Value 0...127
 			}
 		}
 		break;
 
-		// PageNo 4: Filter Envelope --------------------------------------
-		case 4:
+	// PageNo 4: Filter Envelope --------------------------------------
+	case 4:
 		// VCF Envelope Main Menu
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Attack
-				myControlChange(midiChannel, CCfilterattack,(value >> 5));
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{ // Pot 1 : Attack
+				myControlChange(midiChannel, CCfilterattack, (value >> 5));
 			}
-			else if (index == 2) {	// Pot 2 : Decay
-				myControlChange(midiChannel, CCfilterdecay,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Decay
+				myControlChange(midiChannel, CCfilterdecay, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Sustain
-				myControlChange(midiChannel, CCfiltersustain,(value >> 5));
+			else if (index == 3)
+			{ // Pot 3 : Sustain
+				myControlChange(midiChannel, CCfiltersustain, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Release
-				myControlChange(midiChannel, CCfilterrelease,(value >> 5));
+			else if (index == 4)
+			{ // Pot 4 : Release
+				myControlChange(midiChannel, CCfilterrelease, (value >> 5));
 			}
 		}
-		
+
 		// VCF Envelope Sub Menu
-		if (myPageShiftStatus[PageNr] == true) {
-			if (index == 1) {		// Pot 1 : Curve
+		if (myPageShiftStatus[PageNr] == true)
+		{
+			if (index == 1)
+			{ // Pot 1 : Curve
 				envelopeType1 = ((value >> 5) / 7.48f) - 8;
 				Set_parameters_1(index, midiChannel, myFilterEnvCurve, value);
 				updateFilterEnvelopeType();
@@ -6085,149 +6776,191 @@ FLASHMEM void set_menu_parameter (uint8_t index, int value)
 			}
 		}
 		break;
-		
-		// PageNo 5: AMP Envelope -----------------------------------------
-		case 5:
+
+	// PageNo 5: AMP Envelope -----------------------------------------
+	case 5:
 		// AMP Envelope Main Menu
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Attack
-				myControlChange(midiChannel, CCampattack,(value >> 5));
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{ // Pot 1 : Attack
+				myControlChange(midiChannel, CCampattack, (value >> 5));
 			}
-			else if (index == 2) {	// Pot 2 : Decay
-				myControlChange(midiChannel, CCampdecay,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Decay
+				myControlChange(midiChannel, CCampdecay, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Sustain
-				myControlChange(midiChannel, CCampsustain,(value >> 5));
+			else if (index == 3)
+			{ // Pot 3 : Sustain
+				myControlChange(midiChannel, CCampsustain, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Release
-				myControlChange(midiChannel, CCamprelease,(value >> 5));
+			else if (index == 4)
+			{ // Pot 4 : Release
+				myControlChange(midiChannel, CCamprelease, (value >> 5));
 			}
 		}
-		
+
 		// AMP Envelope Sub Menu
-		if (myPageShiftStatus[PageNr] == true) {
-			if (index == 1) {		// Pot 1 : Curve
+		if (myPageShiftStatus[PageNr] == true)
+		{
+			if (index == 1)
+			{ // Pot 1 : Curve
 				envelopeType2 = ((value >> 5) / 7.48f) - 8;
 				Set_parameters_1(index, midiChannel, myAmpEnvCurve, value);
 				updateAmpEnvelopeType();
 				drawEnvCurve(Env2Atk, Env2Dcy, Env2Sus, Env2Rel);
 			}
-			else if (index == 2) {	// Pot 2 : Velocity
+			else if (index == 2)
+			{ // Pot 2 : Velocity
 				myControlChange(midiChannel, myAmplifierVelo, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Pan
+			else if (index == 3)
+			{ // Pot 3 : Pan
 				myControlChange(midiChannel, myPan_Value, (value >> 5));
 			}
 		}
 		break;
-		
-		// PageNo 6: LFO1 -------------------------------------------------
-		case 6:
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Shape
-				myControlChange(midiChannel, myLFO1shape,(value >> 5));
+
+	// PageNo 6: LFO1 -------------------------------------------------
+	case 6:
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{ // Pot 1 : Shape
+				myControlChange(midiChannel, myLFO1shape, (value >> 5));
 			}
-			else if (index == 2) {	// Pot 2 : Rate
-				myControlChange(midiChannel, myLFO1rate,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Rate
+				myControlChange(midiChannel, myLFO1rate, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Amt
-				myControlChange(midiChannel, myLFO1amt,(value >> 5));
+			else if (index == 3)
+			{ // Pot 3 : Amt
+				myControlChange(midiChannel, myLFO1amt, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Sync
-				renderCurrentParameter(PageNr,myLFO1syn,(value >> 4));
+			else if (index == 4)
+			{ // Pot 4 : Sync
+				renderCurrentParameter(PageNr, myLFO1syn, (value >> 4));
 			}
 		}
 		// LFO1 Sub Menu
-		else {
-			if (index == 1) {		// Pot 1 : Mode
-				renderCurrentParameter(PageNr,myLFO1mode,(value >> 4));
+		else
+		{
+			if (index == 1)
+			{ // Pot 1 : Mode
+				renderCurrentParameter(PageNr, myLFO1mode, (value >> 4));
 			}
-			else if (index == 2) {	// Pot 2 : Fade In
-				renderCurrentParameter(PageNr,myLFO1fade,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Fade In
+				renderCurrentParameter(PageNr, myLFO1fade, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Fade Out
-				renderCurrentParameter(PageNr,myLFO1fadeOut,(value >> 5));
+			else if (index == 3)
+			{ // Pot 3 : Fade Out
+				renderCurrentParameter(PageNr, myLFO1fadeOut, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Curve
-				renderCurrentParameter(PageNr,myLFO1envCurve,(value >> 5));
+			else if (index == 4)
+			{ // Pot 4 : Curve
+				renderCurrentParameter(PageNr, myLFO1envCurve, (value >> 5));
 			}
 		}
 		break;
-		
-		// PageNo 7: LFO2 -------------------------------------------------
-		case 7:
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Shape
-				myControlChange(midiChannel, myLFO2shape,(value >> 5));
+
+	// PageNo 7: LFO2 -------------------------------------------------
+	case 7:
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{ // Pot 1 : Shape
+				myControlChange(midiChannel, myLFO2shape, (value >> 5));
 			}
-			else if (index == 2) {	// Pot 2 : Rate
-				myControlChange(midiChannel, myLFO2rate,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Rate
+				myControlChange(midiChannel, myLFO2rate, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Amt
+			else if (index == 3)
+			{ // Pot 3 : Amt
 				myControlChange(midiChannel, myLFO2amt, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Sync
-				renderCurrentParameter(PageNr,myLFO2syn,(value >> 4));
+			else if (index == 4)
+			{ // Pot 4 : Sync
+				renderCurrentParameter(PageNr, myLFO2syn, (value >> 4));
 			}
 		}
 		// LFO2 Sub Menu
-		else {
-			if (index == 1) {		// Pot 1 : Mode
-				renderCurrentParameter(PageNr,myLFO2mode,(value >> 4));
+		else
+		{
+			if (index == 1)
+			{ // Pot 1 : Mode
+				renderCurrentParameter(PageNr, myLFO2mode, (value >> 4));
 			}
-			else if (index == 2) {	// Pot 2 : Fade In
-				renderCurrentParameter(PageNr,myLFO2fade,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Fade In
+				renderCurrentParameter(PageNr, myLFO2fade, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Fade Out
-				renderCurrentParameter(PageNr,myLFO2fadeOut,(value >> 5));
+			else if (index == 3)
+			{ // Pot 3 : Fade Out
+				renderCurrentParameter(PageNr, myLFO2fadeOut, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Curve
-				renderCurrentParameter(PageNr,myLFO2envCurve,(value >> 5));
+			else if (index == 4)
+			{ // Pot 4 : Curve
+				renderCurrentParameter(PageNr, myLFO2envCurve, (value >> 5));
 			}
 		}
 		break;
-		
-		// PageNo 8: LFO3 -------------------------------------------------
-		case 8:
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Shape
-				myControlChange(midiChannel, myLFO3shape,(value >> 5));
+
+	// PageNo 8: LFO3 -------------------------------------------------
+	case 8:
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{ // Pot 1 : Shape
+				myControlChange(midiChannel, myLFO3shape, (value >> 5));
 			}
-			else if (index == 2) {	// Pot 2 : Rate
-				myControlChange(midiChannel, myLFO3rate,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Rate
+				myControlChange(midiChannel, myLFO3rate, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Amt
+			else if (index == 3)
+			{ // Pot 3 : Amt
 				myControlChange(midiChannel, myLFO3amt, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Sync
-				renderCurrentParameter(PageNr,myLFO3syn,(value >> 4));
+			else if (index == 4)
+			{ // Pot 4 : Sync
+				renderCurrentParameter(PageNr, myLFO3syn, (value >> 4));
 			}
 		}
 		// LFO3 Sub Menu
-		else {
-			if (index == 1) {		// Pot 1 : Mode
-				renderCurrentParameter(PageNr,myLFO3mode,(value >> 4));
+		else
+		{
+			if (index == 1)
+			{ // Pot 1 : Mode
+				renderCurrentParameter(PageNr, myLFO3mode, (value >> 4));
 			}
-			else if (index == 2) {	// Pot 2 : Fade In
-				renderCurrentParameter(PageNr,myLFO3fade,(value >> 5));
+			else if (index == 2)
+			{ // Pot 2 : Fade In
+				renderCurrentParameter(PageNr, myLFO3fade, (value >> 5));
 			}
-			else if (index == 3) {	// Pot 3 : Fade Out
-				renderCurrentParameter(PageNr,myLFO3fadeOut,(value >> 5));
+			else if (index == 3)
+			{ // Pot 3 : Fade Out
+				renderCurrentParameter(PageNr, myLFO3fadeOut, (value >> 5));
 			}
-			else if (index == 4) {	// Pot 4 : Curve
-				renderCurrentParameter(PageNr,myLFO3envCurve,(value >> 5));
+			else if (index == 4)
+			{ // Pot 4 : Curve
+				renderCurrentParameter(PageNr, myLFO3envCurve, (value >> 5));
 			}
 		}
 		break;
-		
-		// PageNo 9: Modulation -------------------------------------------
-		case 9:
-		if (index == 1) {		// Pot 1
+
+	// PageNo 9: Modulation -------------------------------------------
+	case 9:
+		if (index == 1)
+		{ // Pot 1
 			uint8_t tempParameterNr = (0.28f * (value >> 5));
-			if (tempParameterNr >= 35) {
+			if (tempParameterNr >= 35)
+			{
 				tempParameterNr = 35;
 			}
-			if (ParameterNr != tempParameterNr){
+			if (ParameterNr != tempParameterNr)
+			{
 				ParameterNr = tempParameterNr;
 				uint8_t ParNo = ParameterNr % 4;
 				printModParameter(ParameterNr);
@@ -6237,150 +6970,184 @@ FLASHMEM void set_menu_parameter (uint8_t index, int value)
 				ParmSelectFlag = false;
 			}
 		}
-		else if (index == 2) {	// Pot 2
+		else if (index == 2)
+		{ // Pot 2
 			renderModParameter(ParameterNr, (value >> 5));
 		}
 		break;
-		
-		// PageNo 10: FX DSP ----------------------------------------------
-		case 10:
-		if (index == 1) {		// Pot 1 : Select
-			renderCurrentParameter(PageNr,myFxSel,(value >> 5));
+
+	// PageNo 10: FX DSP ----------------------------------------------
+	case 10:
+		if (index == 1)
+		{ // Pot 1 : Select
+			renderCurrentParameter(PageNr, myFxSel, (value >> 5));
 		}
-		else if (index == 2) {	// Pot 2 : Value
-			renderCurrentParameter(PageNr,myFxVal,(value >> 4));
+		else if (index == 2)
+		{ // Pot 2 : Value
+			renderCurrentParameter(PageNr, myFxVal, (value >> 4));
 		}
-		else if (index == 3) {	// Pot 3 : Mix
-			renderCurrentParameter(PageNr,myFxMix,(value >> 4));
+		else if (index == 3)
+		{ // Pot 3 : Mix
+			renderCurrentParameter(PageNr, myFxMix, (value >> 4));
 		}
-		else if (index == 4) {	// Pot 4 : PRG
-			renderCurrentParameter(PageNr,myFxPrg,(value >> 8));
+		else if (index == 4)
+		{ // Pot 4 : PRG
+			renderCurrentParameter(PageNr, myFxPrg, (value >> 8));
 		}
-		else if (index == 5) {	// Pot X : Clock Rate
-			renderCurrentParameter(PageNr,myFxClkrate,(value >> 5));
+		else if (index == 5)
+		{ // Pot X : Clock Rate
+			renderCurrentParameter(PageNr, myFxClkrate, (value >> 5));
 		}
 		break;
-		
-		
-		// PageNo 9: Sequencer --------------------------------------------
-		case 11:
-		if (myPageShiftStatus[PageNr] == false) {
-			if (index == 1) {		// Pot 1 : Step
-				renderCurrentParameter(PageNr,mySEQStep,(value >> 4));
+
+	// PageNo 9: Sequencer --------------------------------------------
+	case 11:
+		if (myPageShiftStatus[PageNr] == false)
+		{
+			if (index == 1)
+			{ // Pot 1 : Step
+				renderCurrentParameter(PageNr, mySEQStep, (value >> 4));
 			}
-			else if (index == 2) {	// Pot 2 : Pitch
-				renderCurrentParameter(PageNr,mySEQPitch,(value >> 4));
+			else if (index == 2)
+			{ // Pot 2 : Pitch
+				renderCurrentParameter(PageNr, mySEQPitch, (value >> 4));
 			}
-			else if (index == 3) {	// Pot 3 : Rate
-				renderCurrentParameter(PageNr,mySEQRate,(value >> 4));
+			else if (index == 3)
+			{ // Pot 3 : Rate
+				renderCurrentParameter(PageNr, mySEQRate, (value >> 4));
 			}
-			else if (index == 4) {	// Pot 4 : Div
-				renderCurrentParameter(PageNr,mySEQdiv,(value >> 4));
+			else if (index == 4)
+			{ // Pot 4 : Div
+				renderCurrentParameter(PageNr, mySEQdiv, (value >> 4));
 			}
 		}
 		// Sequencer Sub Menu
-		else {
-			if (index == 1) {		// Pot 1 : Len
-				renderCurrentParameter(PageNr, mySEQLen,(value >> 4));
+		else
+		{
+			if (index == 1)
+			{ // Pot 1 : Len
+				renderCurrentParameter(PageNr, mySEQLen, (value >> 4));
 			}
-			else if (index == 2) {	// Pot 2 : Time
-				renderCurrentParameter(PageNr,mySEQGateTime,(value >> 4));
+			else if (index == 2)
+			{ // Pot 2 : Time
+				renderCurrentParameter(PageNr, mySEQGateTime, (value >> 4));
 			}
-			else if (index == 3) {	// Pot 3 : Dir
-				renderCurrentParameter(PageNr,mySEQdir,(value >> 4));
+			else if (index == 3)
+			{ // Pot 3 : Dir
+				renderCurrentParameter(PageNr, mySEQdir, (value >> 4));
 			}
-			else if (index == 4) {	// Pot 4 : Mode
-				renderCurrentParameter(PageNr,mySEQmode,(value >> 4));
+			else if (index == 4)
+			{ // Pot 4 : Mode
+				renderCurrentParameter(PageNr, mySEQmode, (value >> 4));
 			}
 		}
 		break;
-		
-		// PageNo 12: System ----------------------------------------------
-		case 12:
-		if (index == 1) {		// Pot 1
-			
+
+	// PageNo 12: System ----------------------------------------------
+	case 12:
+		if (index == 1)
+		{ // Pot 1
+
 			// System Main menu
-			if (myPageShiftStatus[PageNr] == false) {						// Main page
-				
-				uint8_t tempParameterNr = (0.0393f * (value >> 4));	// Sub page (5 rows)
-				if (ParameterNr != tempParameterNr){
-					if (tempParameterNr >= 9) {
+			if (myPageShiftStatus[PageNr] == false)
+			{ // Main page
+
+				uint8_t tempParameterNr = (0.0393f * (value >> 4)); // Sub page (5 rows)
+				if (ParameterNr != tempParameterNr)
+				{
+					if (tempParameterNr >= 9)
+					{
 						tempParameterNr = 9;
 					}
 					ParameterNr = tempParameterNr;
-					if (ParameterNr <= 4) {
+					if (ParameterNr <= 4)
+					{
 						drawParamterFrame(PageNr, ParameterNr);
-						//if (ParameterNr == 4){
+						// if (ParameterNr == 4){
 						drawSystemPar1();
 						//}
-						} else {
+					}
+					else
+					{
 						drawParamterFrame(PageNr, ParameterNr - 5);
-						//if (ParameterNr == 5){
+						// if (ParameterNr == 5){
 						drawSystemPar2();
 						//}
 					}
-					ParameterNrMem[PageNr] = ParameterNr;	// Main page
+					ParameterNrMem[PageNr] = ParameterNr; // Main page
 					ParmSelectFlag = false;
 				}
-				
 			}
-			
+
 			// System Sub menu (SysEx Dump)
-			else {
-				uint8_t tempParameterNr = (0.0393f * (value >> 5));	// Sub page (5 rows)
-				if (ParameterNr != tempParameterNr){
+			else
+			{
+				uint8_t tempParameterNr = (0.0393f * (value >> 5)); // Sub page (5 rows)
+				if (ParameterNr != tempParameterNr)
+				{
 					ParameterNr = tempParameterNr;
 					drawParamterFrame(PageNr, ParameterNr);
-					ParameterNrMem[PageNr+1] = ParameterNr; // Sub page
+					ParameterNrMem[PageNr + 1] = ParameterNr; // Sub page
 					ParmSelectFlag = false;
 				}
 			}
 		}
-		else if (index == 2) {	// Pot 2 : value
-			if (myPageShiftStatus[PageNr] == false) {						// Main page
-				renderCurrentParameter(PageNr,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
-				myControlChange(midiChannel,(selecdParameter(PageNr, ParameterNr)), (value >> 5));
-				} else {														// Sub page
-				renderCurrentParameter(PageNr,(selecdParameter(PageNr, ParameterNr)),(value >> 5));
-				myControlChange(midiChannel,(selecdParameter(PageNr, ParameterNr)), (value >> 5));
+		else if (index == 2)
+		{ // Pot 2 : value
+			if (myPageShiftStatus[PageNr] == false)
+			{ // Main page
+				renderCurrentParameter(PageNr, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
+				myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
 			}
-			
+			else
+			{ // Sub page
+				renderCurrentParameter(PageNr, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
+				myControlChange(midiChannel, (selecdParameter(PageNr, ParameterNr)), (value >> 5));
+			}
 		}
 		break;
 
-		// PageNo 97: Load Sequencer Pattern ------------------------------
-		case 97:
-		if (index == 1) {		// Pot 1 : PatternNo
-			renderCurrentParameter(PageNr,myPatternNo,(value >> 6));
+	// PageNo 97: Load Sequencer Pattern ------------------------------
+	case 97:
+		if (index == 1)
+		{ // Pot 1 : PatternNo
+			renderCurrentParameter(PageNr, myPatternNo, (value >> 6));
 		}
 		break;
 
-		// PageNo 98: Save Sequencer Pattern ------------------------------
-		case 98:
-		if (index == 1) {		// Pot 1 : PatternNo
-			renderCurrentParameter(PageNr,myPatternNo,(value >> 6));
+	// PageNo 98: Save Sequencer Pattern ------------------------------
+	case 98:
+		if (index == 1)
+		{ // Pot 1 : PatternNo
+			renderCurrentParameter(PageNr, myPatternNo, (value >> 6));
 		}
-		else if (index == 2) {	// Pot 2 : Char
-			renderCurrentParameter(PageNr,myChar,(value >> 5));
+		else if (index == 2)
+		{ // Pot 2 : Char
+			renderCurrentParameter(PageNr, myChar, (value >> 5));
 		}
-		else if (index == 3) {	// Pot 3 : Cursor
-			renderCurrentParameter(PageNr,myCursor,(value >> 5));
+		else if (index == 3)
+		{ // Pot 3 : Cursor
+			renderCurrentParameter(PageNr, myCursor, (value >> 5));
 		}
 		break;
-		
-		// PageNo 99: Save Patch ------------------------------------------
-		case 99:
-		if (index == 1) {		// Pot 1 : Bank select
-			renderCurrentParameter(PageNr,myBankSelect,(value >> 8));
+
+	// PageNo 99: Save Patch ------------------------------------------
+	case 99:
+		if (index == 1)
+		{ // Pot 1 : Bank select
+			renderCurrentParameter(PageNr, myBankSelect, (value >> 8));
 		}
-		else if (index == 2) {	// Pot 2 : PatchNo
-			renderCurrentParameter(PageNr, myPatchNo,(value >> 5));
+		else if (index == 2)
+		{ // Pot 2 : PatchNo
+			renderCurrentParameter(PageNr, myPatchNo, (value >> 5));
 		}
-		else if (index == 3) {	// Pot 3 : Char
-			renderCurrentParameter(PageNr,myChar,(value >> 5));
+		else if (index == 3)
+		{ // Pot 3 : Char
+			renderCurrentParameter(PageNr, myChar, (value >> 5));
 		}
-		else if (index == 4) {	// Pot 4 : Cursor
-			renderCurrentParameter(PageNr,myCursor,(value >> 5));
+		else if (index == 4)
+		{ // Pot 4 : Cursor
+			renderCurrentParameter(PageNr, myCursor, (value >> 5));
 		}
 		break;
 	}
@@ -6389,35 +7156,41 @@ FLASHMEM void set_menu_parameter (uint8_t index, int value)
 //*************************************************************************
 // Potentiometer Query
 //*************************************************************************
-FLASHMEM void checkPots(void) {
-	
+FLASHMEM void checkPots(void)
+{
+
 	int mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
 	int mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
 	int mux3Read = MCP_adc.read(MCP3208::Channel::SINGLE_2);
 	int mux4Read = MCP_adc.read(MCP3208::Channel::SINGLE_3);
 	int mux5Read = MCP_adc.read(MCP3208::Channel::SINGLE_4);
-	
-	if (mux1Read > (mux1ValuesPrev + QUANTISE_FACTOR) || mux1Read < (mux1ValuesPrev - QUANTISE_FACTOR)) {
+
+	if (mux1Read > (mux1ValuesPrev + QUANTISE_FACTOR) || mux1Read < (mux1ValuesPrev - QUANTISE_FACTOR))
+	{
 		mux1ValuesPrev = mux1Read;
 		set_menu_parameter(1, mux1Read);
 	}
-	
-	if (mux2Read > (mux2ValuesPrev + QUANTISE_FACTOR) || mux2Read < (mux2ValuesPrev - QUANTISE_FACTOR)) {
+
+	if (mux2Read > (mux2ValuesPrev + QUANTISE_FACTOR) || mux2Read < (mux2ValuesPrev - QUANTISE_FACTOR))
+	{
 		mux2ValuesPrev = mux2Read;
 		set_menu_parameter(2, mux2Read);
 	}
-	
-	if (mux3Read > (mux3ValuesPrev + QUANTISE_FACTOR) || mux3Read < (mux3ValuesPrev - QUANTISE_FACTOR)) {
+
+	if (mux3Read > (mux3ValuesPrev + QUANTISE_FACTOR) || mux3Read < (mux3ValuesPrev - QUANTISE_FACTOR))
+	{
 		mux3ValuesPrev = mux3Read;
 		set_menu_parameter(3, mux3Read);
 	}
-	
-	if (mux4Read > (mux4ValuesPrev + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev - QUANTISE_FACTOR)) {
+
+	if (mux4Read > (mux4ValuesPrev + QUANTISE_FACTOR) || mux4Read < (mux4ValuesPrev - QUANTISE_FACTOR))
+	{
 		mux4ValuesPrev = mux4Read;
 		set_menu_parameter(4, mux4Read);
 	}
-	
-	if (mux5Read > (mux5ValuesPrev + QUANTISE_FACTOR) || mux5Read < (mux5ValuesPrev - QUANTISE_FACTOR)) {
+
+	if (mux5Read > (mux5ValuesPrev + QUANTISE_FACTOR) || mux5Read < (mux5ValuesPrev - QUANTISE_FACTOR))
+	{
 		mux5ValuesPrev = mux5Read;
 		set_menu_parameter(5, mux5Read);
 	}
@@ -6426,62 +7199,39 @@ FLASHMEM void checkPots(void) {
 //*************************************************************************
 // check Switches every 5ms
 //*************************************************************************
-FLASHMEM void checkSwitches(void) {
-	
-	if ((micros() - timer_keyquery) > 530){
+FLASHMEM void checkSwitches(void)
+{
+
+	if ((micros() - timer_keyquery) > 530)
+	{
 		timer_keyquery = micros();
 		uint8_t parameter = 0;
 		static int Debounce = 20;
 		static uint16_t Debounce_less;
 		static int waitnext = 320; // 2.menu page on load/save key
 		// static uint8_t oldkeyvalue = 0;
-		uint8_t value = 0;
-		
-		// Encoder switch -----------------------------------------------------
-		if (btnBouncer.update()) {
-			if (btnBouncer.fallingEdge() == true && Keylock == false) {
-				
-				// Main Page
-				if (PAGE_SW_Status == false) {
-					PAGE_SW_Status = true;
-					if (PageNr < 1) {
-						PageNr = 1;
-					}
-					LastPageNr = PageNr;
-					PageNr = 0;
-					RefreshMainScreenFlag = true;
-					clearScreenFlag = true;
-					renderCurrentPatchPage();
-				}
-				// Parameter Pages
-				else {
-					PAGE_SW_Status = false;
-					PageNr = LastPageNr;
-					if (PageNr < 1) {
-						PageNr = 1;
-					}
-					renderCurrentPatchPage();
-				}
-			}
-		}
-
+		uint8_t value;
 		// read key value
 		value = MCP_adc.read(MCP3208::Channel::SINGLE_7) >> 5;
-		
+
 		// Key S2 "UNISONO" ----------------------------------------
-		if (value < (S2 + hysteresis) && value > (S2 - hysteresis)) {
+		if (value < (S2 + hysteresis) && value > (S2 - hysteresis))
+		{
 			KeyDebounce++;
-			if (KeyDebounce == Debounce && KeyStatus == 0) {
+			if (KeyDebounce == Debounce && KeyStatus == 0)
+			{
 				KeyStatus = 1;
 				Debounce_less = 50;
 				parameter = CCunison;
 				value = 0;
-				if (unison == 0) {
+				if (unison == 0)
+				{
 					unison = 1;
 					NoteStack_ptr = 0;
 					printVoiceMode();
 				}
-				else if (unison == 1) {
+				else if (unison == 1)
+				{
 					unison = 0;
 					NoteStack_ptr = 0;
 					printVoiceMode();
@@ -6489,30 +7239,35 @@ FLASHMEM void checkSwitches(void) {
 				myControlChange(midiChannel, parameter, unison);
 			}
 		}
-		
+
 		// Key S3 "SEQ" --------------------------------------------
-		else if (value < (S3 + hysteresis) && value > (S3 - hysteresis)) {
+		else if (value < (S3 + hysteresis) && value > (S3 - hysteresis))
+		{
 			KeyDebounce++;
-			if (KeyDebounce == Debounce && KeyStatus == 0 && Keylock == false) {
+			if (KeyDebounce == Debounce && KeyStatus == 0 && Keylock == false)
+			{
 				KeyStatus = 1;
 				Debounce_less = 50;
 				parameter = myARPSEQ;
-				if (SEQrunStatus == false && SeqNotesAvailable == true && SEQMidiClkSwitch == false) {	// run sequencer
+				if (SEQrunStatus == false && SeqNotesAvailable == true && SEQMidiClkSwitch == false)
+				{ // run sequencer
 					SEQselectStepNo = 0;
 					SeqTranspose = 0;
 					Interval = SEQclkRate;
-					gateTime = (float)(SEQclkRate / SEQGateTime);	// set Interval and gateTime
+					gateTime = (float)(SEQclkRate / SEQGateTime); // set Interval and gateTime
 					timer_intMidiClk = micros();
 					timer_intMidiClk -= SEQclkRate;
 					SEQdirectionFlag = false;
 					SEQrunStatus = true;
 				}
-				else {		// stop Sequencer
+				else
+				{ // stop Sequencer
 					SEQrunStatus = false;
-					if (SEQselectStepNo > 0) {
+					if (SEQselectStepNo > 0)
+					{
 						SEQselectStepNo--;
 					}
-					//myMIDIClockStop();
+					// myMIDIClockStop();
 					allNotesOff();
 					SeqRecNoteCount = 0;
 					SEQselectStepNo = 0;
@@ -6520,166 +7275,202 @@ FLASHMEM void checkSwitches(void) {
 				}
 			}
 		}
-		
+
 		// Key S4 "MUTE/PANIC" -------------------------------
-		else if (value < (S4 + hysteresis) && value > (S4 - hysteresis)) {
+		else if (value < (S4 + hysteresis) && value > (S4 - hysteresis))
+		{
 			KeyDebounce++;
-			if (KeyDebounce == Debounce && KeyStatus == 0 && Keylock == false) {
+			if (KeyDebounce == Debounce && KeyStatus == 0 && Keylock == false)
+			{
 				KeyStatus = 1;
 				Debounce_less = 50;
-				if (PageNr == 11 && SEQrunStatus == false && SEQmode == 2) {
-					if (SeqNoteBufStatus[SEQselectStepNo] == 1) {
-						SeqNoteBufStatus[SEQselectStepNo] = 0;	// mute note
+				if (PageNr == 11 && SEQrunStatus == false && SEQmode == 2)
+				{
+					if (SeqNoteBufStatus[SEQselectStepNo] == 1)
+					{
+						SeqNoteBufStatus[SEQselectStepNo] = 0; // mute note
 						drawSEQpitchValue2(SEQselectStepNo);
 						SEQselectStepNo++;
-						if (SEQselectStepNo > SEQstepNumbers) {
+						if (SEQselectStepNo > SEQstepNumbers)
+						{
 							SEQselectStepNo = 0;
 						}
 						drawSEQStepFrame(SEQselectStepNo);
 					}
-					else {
-						SeqNoteBufStatus[SEQselectStepNo] = 1;	// note on
+					else
+					{
+						SeqNoteBufStatus[SEQselectStepNo] = 1; // note on
 						drawSEQpitchValue2(SEQselectStepNo);
 						SEQselectStepNo++;
-						if (SEQselectStepNo > SEQstepNumbers) {
+						if (SEQselectStepNo > SEQstepNumbers)
+						{
 							SEQselectStepNo = 0;
 						}
 						drawSEQStepFrame(SEQselectStepNo);
 					}
 				}
 			}
-			if (KeyDebounce == waitnext && KeyStatus == 1 && PageNr == 11 && SEQrunStatus == false) {  // init Sequencer
+			if (KeyDebounce == waitnext && KeyStatus == 1 && PageNr == 11 && SEQrunStatus == false)
+			{ // init Sequencer
 				clrSEQflag = true;
 			}
-			else if (KeyDebounce == waitnext && KeyStatus == 1 && PageNr !=11 && SEQrunStatus == false) {  // Panic all notes off
+			else if (KeyDebounce == waitnext && KeyStatus == 1 && PageNr != 11 && SEQrunStatus == false)
+			{ // Panic all notes off
 				allNotesOff();
 			}
 		}
-		
+
 		// Key S5 "BOOST" -------------------------------------
-		else if (value < (S5 + hysteresis) && value > (S5 - hysteresis)) {
+		else if (value < (S5 + hysteresis) && value > (S5 - hysteresis))
+		{
 			KeyDebounce++;
-			if (KeyDebounce == Debounce && KeyStatus == 0) {
+			if (KeyDebounce == Debounce && KeyStatus == 0)
+			{
 				KeyStatus = 1;
 				Debounce_less = 50;
-				if (BassBoostStatus == 0) {
+				if (BassBoostStatus == 0)
+				{
 					BassBoostStatus = 1;
 					myBoost = 1;
-					digitalWrite(BassBoost,LOW);  // Boost on
+					digitalWrite(BassBoost, LOW); // Boost on
 					KeyLED4State = true;
 				}
-				else {
+				else
+				{
 					BassBoostStatus = 0;
 					myBoost = 0;
-					digitalWrite(BassBoost,HIGH);  // Boost off
+					digitalWrite(BassBoost, HIGH); // Boost off
 					KeyLED4State = true;
 				}
 			}
 		}
 
 		// Key S6 "SHIFT" -------------------------------------------------
-		else if (value < (S6 + hysteresis) && value > (S6 - hysteresis)) {
+		else if (value < (S6 + hysteresis) && value > (S6 - hysteresis))
+		{
 			KeyDebounce++;
-			if (KeyDebounce == Debounce && KeyStatus == 0 && PageNr > 0) {
+			if (KeyDebounce == Debounce && KeyStatus == 0 && PageNr > 0)
+			{
 				KeyStatus = 1;
 				Debounce_less = 50;
-				if (Keylock == true) {
+				if (Keylock == true)
+				{
 					Keylock = false;
 					S7KeyStatus = 0;
 					PageNr = PageNr_old;
-					if (PageNr == 0) {
+					if (PageNr == 0)
+					{
 						clearScreenFlag = true;
 						RefreshMainScreenFlag = true;
 					}
-					renderCurrentPatchPage();	// draw old screen
+					renderCurrentPatchPage(); // draw old screen
 				}
-				else if (PageNr != 3) {
-					if (myPageShiftStatus[PageNr] == false) {
+				else if (PageNr != 3)
+				{
+					if (myPageShiftStatus[PageNr] == false)
+					{
 						myPageShiftStatus[PageNr] = true;
 					}
-					else {
+					else
+					{
 						myPageShiftStatus[PageNr] = false;
 					}
 					renderCurrentPatchPage();
 					blinkiTime = 250;
 					blink = true;
 				}
-				else if (PageNr == 3) {
-					if (myPageShiftStatus[3] == 0) {
+				else if (PageNr == 3)
+				{
+					if (myPageShiftStatus[3] == 0)
+					{
 						myPageShiftStatus[3] = 1;
 					}
-					else if (myPageShiftStatus[3] == 1) {
+					else if (myPageShiftStatus[3] == 1)
+					{
 						myPageShiftStatus[3] = 2;
 					}
-					else {
+					else
+					{
 						myPageShiftStatus[3] = false;
 					}
 					renderCurrentPatchPage();
 					blinkiTime = 250;
 					blink = true;
 				}
-				
 			}
-			if (KeyDebounce == Debounce && KeyStatus == 0 && PageNr == 0) {
+			if (KeyDebounce == Debounce && KeyStatus == 0 && PageNr == 0)
+			{
 				PrgSelShift = true;
 				Debounce_less = 50;
-				if (myPageShiftStatus[0] == false) {
+				if (myPageShiftStatus[0] == false)
+				{
 					myPageShiftStatus[0] = true;
 					RefreshMainScreenFlag = true;
 				}
-				else {
+				else
+				{
 					myPageShiftStatus[0] = false;
 				}
 			}
-			
 		}
-		
+
 		// Key S7 "LOAD/SAVE" ----------------------------------------
-		else if (value < (S7 + hysteresis) && value > (S7 - hysteresis) && Debounce_less == 0) {
+		else if (value < (S7 + hysteresis) && value > (S7 - hysteresis) && Debounce_less == 0)
+		{
 			KeyDebounce++;
-			if (KeyDebounce == Debounce && KeyStatus == 0) {
+			if (KeyDebounce == Debounce && KeyStatus == 0)
+			{
 				KeyStatus = 1;
 				Debounce_less = 50;
-				if (S7KeyStatus == 0) {
+				if (S7KeyStatus == 0)
+				{
 					S7KeyStatus = 1;
 					PageNr_old = PageNr;
-					if (PageNr < 11 || (PageNr == 12 && myPageShiftStatus[PageNr] == false)) {
-						PageNr = 99;				// save Patch data
+					if (PageNr < 11 || (PageNr == 12 && myPageShiftStatus[PageNr] == false))
+					{
+						PageNr = 99; // save Patch data
 						newPatchNo = patchNo;
 						Keylock = true;
 						SEQrunStatus = false;
-						renderCurrentPatchPage();	// draw "Save" screen
+						renderCurrentPatchPage(); // draw "Save" screen
 					}
 					// Transmit / Receive SysEx Data
-					else if (PageNr == 12 && myPageShiftStatus[PageNr] == true && sendSysExFlag == false) {
+					else if (PageNr == 12 && myPageShiftStatus[PageNr] == true && sendSysExFlag == false)
+					{
 						Keylock = false;
 						S7KeyStatus = 0;
 						Debounce_less = 50;
-						if (ParameterNrMem[13] == 4) {
-							if (sysexDump == 0 && sendSysExFlag == false) {
+						if (ParameterNrMem[13] == 4)
+						{
+							if (sysexDump == 0 && sendSysExFlag == false)
+							{
 								sendSysExFlag = true;
 								sysexRecTimeStatus = true;
 								sysexInit = true;
 							}
-							else if (sysexDump == 1 && sysexRecTimeStatus == false) {
+							else if (sysexDump == 1 && sysexRecTimeStatus == false)
+							{
 								sysexRecTimeStatus = true;
 								sysexInit = true;
 							}
 						}
 					}
 					// --------------------------------------------------
-					else {
+					else
+					{
 						PageNr = 97;
 						Keylock = true;
 						SEQrunStatus = false;
 						allNotesOff();
 						SEQselectStepNo = 0;
 						NoteStack_ptr = 0;
-						renderCurrentPatchPage();	// draw "Load Pattern" screen
+						renderCurrentPatchPage(); // draw "Load Pattern" screen
 					}
 				}
-				else if (S7KeyStatus == 1) {
-					if (PageNr == 99) {				// save init Patch Data
+				else if (S7KeyStatus == 1)
+				{
+					if (PageNr == 99)
+					{ // save init Patch Data
 						patchName = oldPatchName;
 						currentPatchName = oldPatchName;
 						newPatchName = oldPatchName;
@@ -6694,34 +7485,38 @@ FLASHMEM void checkSwitches(void) {
 						recallPatch(patchNo);
 						Keylock = false;
 					}
-					else if (PageNr == 98) {			// save Sequencer Pattern
+					else if (PageNr == 98)
+					{ // save Sequencer Pattern
 						patternName = newPatternName;
 						String numString = (SEQPatternNo);
-						String folderString = "SEQ";					// Folder name
+						String folderString = "SEQ"; // Folder name
 						String fileString = (folderString + "/" + numString);
 						savePattern(String(fileString).c_str(), getCurrentPatternData());
 						Keylock = false;
 					}
-					else if (PageNr == 97) {				// load Sequencer Pattern
+					else if (PageNr == 97)
+					{ // load Sequencer Pattern
 						Keylock = false;
 						SEQMidiClkSwitch = false;
 						recallPattern(SEQPatternNo);
 						SEQselectStepNo = 0;
 						SeqTranspose = 0;
 						Interval = SEQclkRate;
-						gateTime = (float)(SEQclkRate / SEQGateTime);	// set Interval and gateTime
+						gateTime = (float)(SEQclkRate / SEQGateTime); // set Interval and gateTime
 						timer_intMidiClk = micros();
 						timer_intMidiClk -= SEQclkRate;
 						SEQdirectionFlag = false;
 						NoteStack_ptr = 0;
 						SeqNotesAvailable = true;
-						SEQrunStatus = true;					// start Sequencer
+						SEQrunStatus = true; // start Sequencer
 					}
-					else if (PageNr == 96) {					// init Patch
+					else if (PageNr == 96)
+					{ // init Patch
 						Keylock = false;
 						set_initPatchData();
-						if (PageNr_old == 0) {					// if Init Patch is called on the main page, 						
-							patchName = oldPatchName;			// then save patch data directly to SD card
+						if (PageNr_old == 0)
+						{							  // if Init Patch is called on the main page,
+							patchName = oldPatchName; // then save patch data directly to SD card
 							currentPatchName = oldPatchName;
 							newPatchName = oldPatchName;
 							patchNo = newPatchNo;
@@ -6735,44 +7530,50 @@ FLASHMEM void checkSwitches(void) {
 							recallPatch(patchNo);
 							Keylock = false;
 						}
-						
 					}
 					S7KeyStatus = 0;
 					Keylock = false;
 					PageNr = PageNr_old;
-					if (PageNr == 0) {
+					if (PageNr == 0)
+					{
 						PageNr = 99;
-						renderCurrentPatchPage();	// Draw page again because of graphic error
+						renderCurrentPatchPage(); // Draw page again because of graphic error
 						clearScreenFlag = true;
 						RefreshMainScreenFlag = true;
 						PageNr = 0;
 					}
-					renderCurrentPatchPage();	// return last menu page
+					renderCurrentPatchPage(); // return last menu page
 				}
 			}
-			
+
 			// long press LOAD/SAVE Key ---------------------------------
-			if (KeyDebounce == waitnext && KeyStatus == 1) {
+			if (KeyDebounce == waitnext && KeyStatus == 1)
+			{
 				Debounce_less = 50;
-				if (PageNr == 97) {
-					PageNr = 98;				// draw "Save Pattern" Menu
+				if (PageNr == 97)
+				{
+					PageNr = 98; // draw "Save Pattern" Menu
 					renderCurrentPatchPage();
 				}
-				else if (PageNr == 99) {
+				else if (PageNr == 99)
+				{
 					PageNr = 96;
-					renderCurrentPatchPage();	// draw "init Patch" Menu
+					renderCurrentPatchPage(); // draw "init Patch" Menu
 				}
 			}
 		}
-		
+
 		// Debounce ----------------------------------------------------
-		else {
-			if (Debounce_less == 0) {
+		else
+		{
+			if (Debounce_less == 0)
+			{
 				KeyDebounce = 0;
 				KeyStatus = 0;
 				PrgSelShift = false;
 			}
-			else Debounce_less--;
+			else
+				Debounce_less--;
 		}
 	}
 }
@@ -6780,15 +7581,17 @@ FLASHMEM void checkSwitches(void) {
 //*************************************************************************
 // set FxPrg into 74HC595 Register
 //*************************************************************************
-FLASHMEM void setFxPrg (uint8_t PrgNo)
+FLASHMEM void setFxPrg(uint8_t PrgNo)
 {
-	int myPrg[16] = {5,0,1,2,3,4,6,7,8,9,10,11,12,13,14,15};
-	uint8_t data =  myPrg[PrgNo];
+	int myPrg[16] = {5, 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+	uint8_t data = myPrg[PrgNo];
 	data = data << 4;
-	if (PrgNo >= 8) {
+	if (PrgNo >= 8)
+	{
 		HC595Register &= 0b10001111;
 	}
-	else HC595Register &= 0b00001111;
+	else
+		HC595Register &= 0b00001111;
 	HC595Register |= data;
 	SPI.transfer(HC595Register);
 	digitalWrite(CS_HC595, LOW);
@@ -6799,13 +7602,13 @@ FLASHMEM void setFxPrg (uint8_t PrgNo)
 //*************************************************************************
 // init PWM for Fx
 //*************************************************************************
-FLASHMEM void initPWMFx (void)
+FLASHMEM void initPWMFx(void)
 {
-	analogWriteFrequency (PWM1, 100000);
-	analogWriteFrequency (PWM2, 100000);
-	analogWriteFrequency (PWM3, 100000);
-	analogWriteFrequency (PWM4, 100000);
-	analogWriteFrequency (PWM5, 60000);		// Fx clock
+	analogWriteFrequency(PWM1, 100000);
+	analogWriteFrequency(PWM2, 100000);
+	analogWriteFrequency(PWM3, 100000);
+	analogWriteFrequency(PWM4, 100000);
+	analogWriteFrequency(PWM5, 60000); // Fx clock
 	analogWrite(PWM1, 0);
 	analogWrite(PWM2, 0);
 	analogWrite(PWM3, 0);
@@ -6813,11 +7616,10 @@ FLASHMEM void initPWMFx (void)
 	analogWrite(PWM5, 127);
 }
 
-
 //*************************************************************************
 // init 74HC595 LED Driver
 //*************************************************************************
-FLASHMEM void initHC595 (void)
+FLASHMEM void initHC595(void)
 {
 	HC595Register = 0;
 	SPI.transfer(HC595Register);
@@ -6826,14 +7628,14 @@ FLASHMEM void initHC595 (void)
 	SPI.endTransaction();
 }
 
-
 //*************************************************************************
 // init Potentiometer
 //*************************************************************************
-FLASHMEM void initPotentiometers (void)
+FLASHMEM void initPotentiometers(void)
 {
 	// init Pots for first time
-	if (initStatus == 1) {
+	if (initStatus == 1)
+	{
 		int mux1Read = MCP_adc.read(MCP3208::Channel::SINGLE_0);
 		int mux2Read = MCP_adc.read(MCP3208::Channel::SINGLE_1);
 		int mux3Read = MCP_adc.read(MCP3208::Channel::SINGLE_2);
@@ -6850,15 +7652,15 @@ FLASHMEM void initPotentiometers (void)
 // Encoder query
 //*************************************************************************
 FLASHMEM void checkEncoder(void)
-{
+{ /*
 	// if no encoder data or Load/Save function active than return
 	if (encoderflag == false || Keylock == true) {
 		return;
 	}
-	
+
 	int encRead = encValue;
 	encoderflag = false;
-	
+
 	// selected Parameter Pages -----------------------------------------
 	if (PageNr > 0) {
 		//long encRead = encoder.read();
@@ -6876,7 +7678,7 @@ FLASHMEM void checkEncoder(void)
 			}
 			encPrevious = encRead;
 		}
-		
+
 		else if ((encCW && encRead < encPrevious) || (!encCW && encRead > encPrevious)) {
 			PageNr--;
 			if (PageNr > Pages){
@@ -6887,7 +7689,7 @@ FLASHMEM void checkEncoder(void)
 			}
 			if (oldPageNr != PageNr) {
 				renderCurrentPatchPage();
-				
+
 			}
 			encPrevious = encRead;
 		}
@@ -6935,7 +7737,7 @@ FLASHMEM void checkEncoder(void)
 					patchNo = 1;
 					currentPatchBank = 0;
 				}
-				
+
 			}
 			if (oldpatchNo != patchNo) {
 				mute_before_load_patch();
@@ -6948,16 +7750,18 @@ FLASHMEM void checkEncoder(void)
 			encPrevious = encRead;
 		}
 	}
+	*/
 }
-
 
 //*************************************************************************
 // Midi out
 //*************************************************************************
-FLASHMEM void midiCCOut(byte cc, byte value) {
-	if (midiOutCh > 0) {
+FLASHMEM void midiCCOut(byte cc, byte value)
+{
+	if (midiOutCh > 0)
+	{
 		// usbMIDI.sendControlChange(cc, value, midiOutCh);
-		//midi1.sendControlChange(cc, value, midiOutCh);
+		// midi1.sendControlChange(cc, value, midiOutCh);
 	}
 }
 
@@ -6966,7 +7770,8 @@ FLASHMEM void midiCCOut(byte cc, byte value) {
 //*************************************************************************
 FLASHMEM void Init_Patch(void)
 {
-	if (Init_flag == true){
+	if (Init_flag == true)
+	{
 		Init_flag = false;
 		patchNo = getSoundPachNo();
 		newPatchNo = patchNo;
@@ -6979,84 +7784,94 @@ FLASHMEM void Init_Patch(void)
 //*************************************************************************
 // CPU Monitor
 //*************************************************************************
-FLASHMEM void printCPUmon(void) {
-	tft.fillRect(54,57,22,10,ST7735_BLACK);
-	tft.setCursor(56,59);		// print LOAD:xx%
+FLASHMEM void printCPUmon(void)
+{
+	tft.fillRect(54, 57, 22, 10, ST7735_BLACK);
+	tft.setCursor(56, 59); // print LOAD:xx%
 	tft.setTextColor(ST7735_GRAY);
 	tft.setTextSize(1);
 	tft.print(CPUaudioMem);
 	tft.print("%");
-	tft.fillRect(50,95,29,10,ST7735_BLACK);
+	tft.fillRect(50, 95, 29, 10, ST7735_BLACK);
 	tft.setTextColor(ST7735_GRAY);
 	tft.setTextSize(1);
-	
+
 	// calc CPU Mem Block
 	// MemBlock = 100% / 256 Blocks
-	uint16_t MemBlock = CPUmem * 0.39062;	
-	if (MemBlock < 100) {
-		tft.setCursor(56, 97);	// print MEM:xx%
-		} else {
+	uint16_t MemBlock = CPUmem * 0.39062;
+	if (MemBlock < 100)
+	{
+		tft.setCursor(56, 97); // print MEM:xx%
+	}
+	else
+	{
 		tft.setCursor(51, 97);
 	}
 	tft.print(MemBlock);
 	tft.print("%");
 }
 
-
 //*************************************************************************
 // print CPU temperatur
 //*************************************************************************
 extern float tempmonGetTemp(void);
 
-FLASHMEM void printTemperature (void)
+FLASHMEM void printTemperature(void)
 {
-	if (PageNr == 12 && myPageShiftStatus[12] == false){
-		tft.fillRoundRect(54,38,22,10,2,ST7735_BLACK);
-		tft.setCursor(55,40);
+	if (PageNr == 12 && myPageShiftStatus[12] == false)
+	{
+		tft.fillRoundRect(54, 38, 22, 10, 2, ST7735_BLACK);
+		tft.setCursor(55, 40);
 		tft.setTextColor(ST7735_GRAY);
 		tft.setTextSize(1);
 		tft.print(CPUdegree);
-		tft.drawPixel(68,40,ST7735_GRAY);
-		print_String(161,70,40);			// print "C"
+		tft.drawPixel(68, 40, ST7735_GRAY);
+		print_String(161, 70, 40); // print "C"
 	}
 }
 
 //*************************************************************************
 // print SD card error
 //*************************************************************************
-FLASHMEM void printError(uint8_t index) {
+FLASHMEM void printError(uint8_t index)
+{
 	enableScope(false);
 	tft.fillScreen(ST7735_BLACK);
-	tft.fillRect(20,20,120,88,ST7735_RED);
+	tft.fillRect(20, 20, 120, 88, ST7735_RED);
 	tft.setTextColor(ST7735_WHITE);
 	tft.setTextSize(0);
-	print_String(159,30,50);			// print "SD card error !"
-	print_String(160,30,70);			// "Press power switch."
+	print_String(159, 30, 50); // print "SD card error !"
+	print_String(160, 30, 70); // "Press power switch."
 	tftUpdate = true;
 }
 
 //*************************************************************************
 // clear Pick up Values
 //*************************************************************************
-FLASHMEM void clr_pickup (void)
+FLASHMEM void clr_pickup(void)
 {
-	for (uint8_t i = 0; i < 4; i++) {
+	for (uint8_t i = 0; i < 4; i++)
+	{
 		PrevValue[i] = 0;
-		if (pickupFlag == false) {
+		if (pickupFlag == false)
+		{
 			PrevFlag[i] = true;
-			} else {
+		}
+		else
+		{
 			PrevFlag[i] = false;
 		}
-		
 	}
 }
 
 //***********************************************************************
 // Midi Clock Start
 //***********************************************************************
-FLASHMEM void myMIDIClockStart() {
-	
-	if (SEQMidiClkSwitch == true) {
+FLASHMEM void myMIDIClockStart()
+{
+
+	if (SEQMidiClkSwitch == true)
+	{
 		MidiClkTiming_Flag = true;
 		SEQselectStepNo = 0;
 		ARPSEQstatus = 0;
@@ -7068,13 +7883,15 @@ FLASHMEM void myMIDIClockStart() {
 //**********************************************************************
 // Midi Clock Stop
 //**********************************************************************
-FLASHMEM void myMIDIClockStop() {
-	
-	if (SEQMidiClkSwitch == true) {
+FLASHMEM void myMIDIClockStop()
+{
+
+	if (SEQMidiClkSwitch == true)
+	{
 		SEQrunStatus = false;
 		ARPSEQstatus = false;
 		SeqTranspose = 0;
-		TempoLEDstate = false;	// set Tempo LED off
+		TempoLEDstate = false; // set Tempo LED off
 		TempoLEDchange = true;
 		PlayFlag = false;
 		MidiClkTiming_Flag = false;
@@ -7089,29 +7906,35 @@ FLASHMEM void myMIDIClockStop() {
 //**********************************************************************
 // receive Midi Clock data
 //**********************************************************************
-FLASHMEM void myMIDIClock(void) {
-	
+FLASHMEM void myMIDIClock(void)
+{
+
 	// running Sequencer with Midi Clock -----------------------------------
-	if (SEQMidiClkSwitch == true && SEQrunStatus == true) {
-		
+	if (SEQMidiClkSwitch == true && SEQrunStatus == true)
+	{
+
 		MidiCLKcount++;
-		
-		if (MidiCLKcount == 1) {
+
+		if (MidiCLKcount == 1)
+		{
 			Sequencer2(true); // note on
 			MidiCLKcountOff = float((16.5f - SEQGateTime) / 3.2f) + 2;
 		}
-		else if (MidiCLKcount == 2) {
+		else if (MidiCLKcount == 2)
+		{
 			// calc note length
-			if (MidiCLKcount >= MidiCLKcountOff) {
+			if (MidiCLKcount >= MidiCLKcountOff)
+			{
 				Sequencer2(false); // note off
 			}
-			
 		}
-		else if (MidiCLKcount >= MidiCLKcountOff) {
+		else if (MidiCLKcount >= MidiCLKcountOff)
+		{
 			Sequencer2(false); // note off
 		}
-		
-		if (MidiCLKcount >= MidiClkDiv) {
+
+		if (MidiCLKcount >= MidiClkDiv)
+		{
 			MidiCLKcount = 0;
 		}
 	}
@@ -7120,80 +7943,107 @@ FLASHMEM void myMIDIClock(void) {
 //*************************************************************************
 // Play sequencer notes from extern midi clock
 //*************************************************************************
-FLASHMEM void Sequencer2 (boolean SEQNoteState) {
-	
-	if (SEQMidiClkSwitch == false || SEQrunStatus == false) {
+FLASHMEM void Sequencer2(boolean SEQNoteState)
+{
+
+	if (SEQMidiClkSwitch == false || SEQrunStatus == false)
+	{
 		return;
 	}
 
-	if (SEQNoteState == true) {
-		if (ARPSEQstatus == 0 && SEQrunStatus == true) {
+	if (SEQNoteState == true)
+	{
+		if (ARPSEQstatus == 0 && SEQrunStatus == true)
+		{
 			ARPSEQstatus = 1;
 			SEQStepStatus = true;
-			if (SeqNoteBufStatus[SEQselectStepNo] == 1) {
+			if (SeqNoteBufStatus[SEQselectStepNo] == 1)
+			{
 				uint8_t velo = SeqVeloBuf[SEQselectStepNo];
-				if (velo <= 0) {
+				if (velo <= 0)
+				{
 					velo = 127;
 				}
 				uint8_t noteCount = SeqNoteCount[SEQselectStepNo];
-				for (uint8_t i = 0; i < noteCount; i++) {
+				for (uint8_t i = 0; i < noteCount; i++)
+				{
 					int bufAddr = (i * 16);
 					int myNote = SeqNote1Buf[SEQselectStepNo + bufAddr];
-					myNoteOn2(1,myNote, velo);
+					myNoteOn2(1, myNote, velo);
 				}
-				if (SEQselectStepNo == 0 || SEQselectStepNo == 4 || SEQselectStepNo == 8 || SEQselectStepNo == 12) {
-					TempoLEDstate = true;	// set Tempo LED on
+				if (SEQselectStepNo == 0 || SEQselectStepNo == 4 || SEQselectStepNo == 8 || SEQselectStepNo == 12)
+				{
+					TempoLEDstate = true; // set Tempo LED on
 					TempoLEDchange = true;
 				}
 			}
 		}
-		} else {
-		if (ARPSEQstatus == true && SEQrunStatus == true) {
+	}
+	else
+	{
+		if (ARPSEQstatus == true && SEQrunStatus == true)
+		{
 			ARPSEQstatus = false;
-			if (SEQselectStepNo == 1 || SEQselectStepNo == 5 || SEQselectStepNo == 9 || SEQselectStepNo == 13) {
-				TempoLEDstate = false;	// set Tempo LED off
+			if (SEQselectStepNo == 1 || SEQselectStepNo == 5 || SEQselectStepNo == 9 || SEQselectStepNo == 13)
+			{
+				TempoLEDstate = false; // set Tempo LED off
 				TempoLEDchange = true;
 			}
-			if (SeqNoteBufStatus[SEQselectStepNo] == 1) {
+			if (SeqNoteBufStatus[SEQselectStepNo] == 1)
+			{
 				uint8_t noteCount = SeqNoteCount[SEQselectStepNo];
-				for (uint8_t i = 0; i < noteCount; i++) {
+				for (uint8_t i = 0; i < noteCount; i++)
+				{
 					myNoteOff(midiChannel, SeqNote1Buf[(SEQselectStepNo + (i * 16))], 0);
 				}
 			}
-			if (SEQrunOneNote == false) {
+			if (SEQrunOneNote == false)
+			{
 				// Direction ----------------------------------------------
-				if (SEQdirection == 0) {  // ">"
+				if (SEQdirection == 0)
+				{ // ">"
 					SEQselectStepNo++;
-					if (SEQselectStepNo > SEQstepNumbers) {
+					if (SEQselectStepNo > SEQstepNumbers)
+					{
 						SEQselectStepNo = 0;
 					}
 				}
-				else if (SEQdirection == 1) {	// "<"
+				else if (SEQdirection == 1)
+				{ // "<"
 					SEQselectStepNo--;
-					if (SEQselectStepNo < 0) {
+					if (SEQselectStepNo < 0)
+					{
 						SEQselectStepNo = SEQstepNumbers;
 					}
 				}
-				else if (SEQdirection == 2 && SEQstepNumbers > 0) {	// "<>"
-					if (SEQdirectionFlag == false) {
+				else if (SEQdirection == 2 && SEQstepNumbers > 0)
+				{ // "<>"
+					if (SEQdirectionFlag == false)
+					{
 						SEQselectStepNo++;
-						if (SEQselectStepNo > (SEQstepNumbers -1)) {
+						if (SEQselectStepNo > (SEQstepNumbers - 1))
+						{
 							SEQstepNumbers = SEQstepNumbers;
 							SEQdirectionFlag = true;
 						}
-						} else {
+					}
+					else
+					{
 						SEQselectStepNo--;
-						if (SEQselectStepNo == 0) {
+						if (SEQselectStepNo == 0)
+						{
 							SEQselectStepNo = 0;
 							SEQdirectionFlag = false;
 						}
 					}
 				}
-				else if (SEQdirection == 2 && SEQstepNumbers == 0) {	// "<>"
+				else if (SEQdirection == 2 && SEQstepNumbers == 0)
+				{ // "<>"
 					SEQselectStepNo = 0;
 					SEQdirectionFlag = false;
 				}
-				else if (SEQdirection == 3) {	// "RND"
+				else if (SEQdirection == 3)
+				{ // "RND"
 					SEQselectStepNo = random(SEQstepNumbers + 1);
 				}
 			}
@@ -7201,11 +8051,10 @@ FLASHMEM void Sequencer2 (boolean SEQNoteState) {
 	}
 }
 
-
 //*************************************************************************
 // draw Sequencer recording Notes
 //*************************************************************************
-FLASHMEM void drawSEQRecNotes (void)
+FLASHMEM void drawSEQRecNotes(void)
 {
 	drawSEQStepFrame(SEQselectStepNo); // draw yellow frame
 	drawSEQpitchValue2(SEQselectStepNo);
@@ -7214,29 +8063,31 @@ FLASHMEM void drawSEQRecNotes (void)
 //*************************************************************************
 // Update Lfo3 Fx Modulation
 //*************************************************************************
-FLASHMEM void updateLfo3FxMod (void) {
-	
+FLASHMEM void updateLfo3FxMod(void)
+{
+
 	uint8_t val2;
 	uint16_t val3;
-	
+
 	// convert LFO3 output level to uint 8Bit
 	val2 = Lfo3Modoutput - 128;
-	
+
 	// Fx Pot1 Parameter
-	val3 = (val2 *(DIV255 * (FxPot1amt * 2))) + FxPot1Val + (AtouchFxP1amt * 2);
+	val3 = (val2 * (DIV255 * (FxPot1amt * 2))) + FxPot1Val + (AtouchFxP1amt * 2);
 	analogWrite(PWM1, val3);
-	
+
 	// Fx Pot2 Parameter
-	val3 = (val2 *(DIV255 * (FxPot2amt * 2))) + FxPot2Val + (AtouchFxP2amt * 2);
+	val3 = (val2 * (DIV255 * (FxPot2amt * 2))) + FxPot2Val + (AtouchFxP2amt * 2);
 	analogWrite(PWM2, val3);
-	
+
 	// Fx Pot3 Parameter
-	val3 = (val2 *(DIV255 * (FxPot3amt * 2))) + FxPot3Val + (AtouchFxP3amt * 2);
+	val3 = (val2 * (DIV255 * (FxPot3amt * 2))) + FxPot3Val + (AtouchFxP3amt * 2);
 	analogWrite(PWM3, val3);
-		
+
 	// FxMIX
-	val3 = (val2 *(DIV255 * (FxMIXamt * 2))) + (FxMixValue * 2) + (AtouchFxMIXamt * 2);
-	if (mute_sound == false) {
+	val3 = (val2 * (DIV255 * (FxMIXamt * 2))) + (FxMixValue * 2) + (AtouchFxMIXamt * 2);
+	if (mute_sound == false)
+	{
 		analogWrite(PWM4, val3);
 	}
 }
@@ -7244,8 +8095,9 @@ FLASHMEM void updateLfo3FxMod (void) {
 //*************************************************************************
 // update SupersawMix
 //*************************************************************************
-FLASHMEM void updateSupersawMix (void) {
-	
+FLASHMEM void updateSupersawMix(void)
+{
+
 	int valA = 127 - SupersawMixA;
 	int valB = SupersawMixA;
 	Supersaw_gain1A = 0.0078f * valA;
@@ -7256,30 +8108,36 @@ FLASHMEM void updateSupersawMix (void) {
 	Supersaw_gain2B = 0.0050f * valB;
 }
 
-
 //*************************************************************************
 // update PWM LFO
 //*************************************************************************
-FLASHMEM void update_PWM_LFO (void)
+FLASHMEM void update_PWM_LFO(void)
 {
-	if (PWMaShape == 3) {
+	if (PWMaShape == 3)
+	{
 		pwmLfoA.offset(1.0f);
-	} else pwmLfoA.offset(0.0f);
+	}
+	else
+		pwmLfoA.offset(0.0f);
 	pwmLfoA.begin(PWMWAVEFORMA + PWMaShape);
-	
-	if (PWMbShape == 3) {
+
+	if (PWMbShape == 3)
+	{
 		pwmLfoB.offset(1.0f);
-	} else pwmLfoB.offset(0.0f);
+	}
+	else
+		pwmLfoB.offset(0.0f);
 	pwmLfoB.begin(PWMWAVEFORMB + PWMbShape);
-	
 }
 
 //*************************************************************************
 // update Osc Parameter_A and Osc Parameter_B
 //*************************************************************************
-FLASHMEM void update_osc_paramterAB (void) {
+FLASHMEM void update_osc_paramterAB(void)
+{
 
-	for (uint8_t i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		waveformModa[i].parameter_a(SupersawSpreadA);
 		waveformModa[i].parameter_b(SupersawMixA);
 		waveformModb[i].parameter_a(SupersawSpreadB);
@@ -7290,7 +8148,8 @@ FLASHMEM void update_osc_paramterAB (void) {
 //*************************************************************************
 // get SysEx Dump from USB
 //*************************************************************************
-void getSysexDump(const uint8_t *buffer, uint16_t lenght, boolean last) {
+void getSysexDump(const uint8_t *buffer, uint16_t lenght, boolean last)
+{
 
 	int filenumbers;
 	boolean ProgBar_enabled;
@@ -7299,38 +8158,45 @@ void getSysexDump(const uint8_t *buffer, uint16_t lenght, boolean last) {
 	static int ProgBar_count = 0;
 	static uint8_t numbers = 0;
 	int ProgBar_maxcount;
-	
-	
+
 	// copy 1.dump block into sysex_buffer and return
-	if (last == 0) {
-		for (int i = 0; i < lenght; i++) {
+	if (last == 0)
+	{
+		for (int i = 0; i < lenght; i++)
+		{
 			Syx_Buf[i] = buffer[i];
 		}
-		sysex_buf_pointer = lenght;	// save buffer pointer
+		sysex_buf_pointer = lenght; // save buffer pointer
 		return;
-		} else {
-		for (int i = 0; i < lenght; i++) {
+	}
+	else
+	{
+		for (int i = 0; i < lenght; i++)
+		{
 			Syx_Buf[sysex_buf_pointer + i] = buffer[i];
 		}
 	}
-	
+
 	// check Dump lenght
-	if (NO_OF_SysEx_Data > (sysex_buf_pointer + lenght)) {	// if record dump is too small then add data
+	if (NO_OF_SysEx_Data > (sysex_buf_pointer + lenght))
+	{ // if record dump is too small then add data
 		uint16_t rest = NO_OF_SysEx_Data - (sysex_buf_pointer + lenght);
-		for (uint16_t i = 0; i < rest; i++) {
+		for (uint16_t i = 0; i < rest; i++)
+		{
 			Syx_Buf[(sysex_buf_pointer + lenght - 1) + i] = 0;
 		}
 		Syx_Buf[NO_OF_SysEx_Data - 1] = 0xF7;
 	}
-	if (NO_OF_SysEx_Data < (sysex_buf_pointer + lenght)) { // record dump to long than return;
+	if (NO_OF_SysEx_Data < (sysex_buf_pointer + lenght))
+	{ // record dump to long than return;
 		sysex_buf_pointer = 0;
-		Serial.print("SysEx Dump too large!");	// current 423 Byte via Patch (Firmware 2.78)
+		Serial.print("SysEx Dump too large!"); // current 426 Byte via Patch (Firmware 2.78)
 		return;
 	}
-	
-	
+
 	// check sysex start_byte and end_byte
-	if (Syx_Buf[0] != 0xF0 || Syx_Buf[NO_OF_SysEx_Data - 1] != 0xF7) {
+	if (Syx_Buf[0] != 0xF0 || Syx_Buf[NO_OF_SysEx_Data - 1] != 0xF7)
+	{
 		Serial.println("SysEx data error!");
 		Serial.print("Start_byte: ");
 		Serial.println(Syx_Buf[0]);
@@ -7340,41 +8206,46 @@ void getSysexDump(const uint8_t *buffer, uint16_t lenght, boolean last) {
 		return;
 	}
 	sysex_buf_pointer = 0;
-	
+
 	// save SysEx data ----------------------------------------------------
-	if (PageNr == 12 && myPageShiftStatus[12] == true && sysexDump == true && sysexRecTimeStatus == true) {
-		
+	if (PageNr == 12 && myPageShiftStatus[12] == true && sysexDump == true && sysexRecTimeStatus == true)
+	{
+
 		// get SysEx data
 		get_SysEx_Dump();
-		
+
 		// How many files (one Patch or Patch Bank)
-		if (sysexTyp == false) {
-			filenumbers = 1;		// init counts for one patch file (Patch)
+		if (sysexTyp == false)
+		{
+			filenumbers = 1; // init counts for one patch file (Patch)
 			numbers = 0;
 			ProgBar_enabled = true;
 			ProgBar_style = 2;
 			ProgBar_value = 127;
 			ProgBar_maxcount = 127;
-			} else {
-			filenumbers = 128;		// init counts for 128 patch files (Bank)
-			//numbers = 0;
+		}
+		else
+		{
+			filenumbers = 128; // init counts for 128 patch files (Bank)
+			// numbers = 0;
 			ProgBar_enabled = true;
 			ProgBar_style = 2;
 			ProgBar_value = 1;
 			ProgBar_maxcount = 127;
 		}
-		
-		numbers++;	// inc file numbers
+
+		numbers++; // inc file numbers
 		currentPatchBank = sysexBank;
-		
+
 		// get Patch name for Progressbar info
-		count = 7;														// (0) Patch Name
+		count = 7; // (0) Patch Name
 		String patch_Name = "";
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < 12; i++)
+		{
 			patch_Name += (char)(Syx_Buf[count++]);
 		}
-		//Serial.println(patch_Name);
-		
+		// Serial.println(patch_Name);
+
 		// save patch name for Progressbar info
 		currentPatchName = patch_Name;
 		patchName = patch_Name; // save name in Patch datas
@@ -7382,47 +8253,55 @@ void getSysexDump(const uint8_t *buffer, uint16_t lenght, boolean last) {
 		ProgString = ProgString + patch_Name;
 
 		// set Progressbar values
-		if (sysexInit == true) {
+		if (sysexInit == true)
+		{
 			ProgBar_count = 0;
 			sysexInit = false;
 		}
 		ProgBar_count += ProgBar_value;
-		if (ProgBar_count >= ProgBar_maxcount) {
+		if (ProgBar_count >= ProgBar_maxcount)
+		{
 			ProgBar_count = ProgBar_maxcount;
 		}
 		setProgressbar(ProgBar_enabled, ProgBar_style, ProgBar_count, ProgBar_maxcount, ProgString);
-		
+
 		// Store SysEx data (Patch) on SD card
-		
+
 		uint8_t FNo;
-		if (filenumbers != 1){
+		if (filenumbers != 1)
+		{
 			FNo = numbers;
-			} else {
+		}
+		else
+		{
 			FNo = sysexSource + 1;
 		}
 		String numString = (FNo);
 		String bankString = char(currentPatchBank + 65);
 		String fileString = (bankString + "/" + numString);
 		savePatch(String(fileString).c_str(), getCurrentPatchData());
-		//Serial.println(fileString);
+		// Serial.println(fileString);
 		time_sysexRecStatus = false;
-		//Serial.println("Receive on SDcard ok");	// print ok message
+		// Serial.println("Receive on SDcard ok");	// print ok message
 
 		uint8_t max_patchnumber;
-		
-		if (sysexTyp == false) { // Patch
+
+		if (sysexTyp == false)
+		{ // Patch
 			max_patchnumber = 1;
 			patchNo = sysexSource + 1;
 		}
-		else {
+		else
+		{
 			max_patchnumber = 128; // Bank
 			patchNo = 1;
 		}
 
-		if (numbers == max_patchnumber) {		// end of sysex receive
+		if (numbers == max_patchnumber)
+		{ // end of sysex receive
 			numbers = 0;
 			sysexRecTimeStatus = false;
-			recallPatch(patchNo);				// Set the 1st received patch as current patch
+			recallPatch(patchNo); // Set the 1st received patch as current patch
 			newPatchNo = patchNo;
 			newPatchBank = currentPatchBank;
 			clearScreenFlag = true;
@@ -7436,22 +8315,23 @@ void getSysexDump(const uint8_t *buffer, uint16_t lenght, boolean last) {
 }
 
 //*************************************************************************
-// send Midi system exclusive dump (423 datas)
+// send Midi system exclusive dump (426 datas)
 //*************************************************************************
 FLASHMEM void mySendSysEx(uint8_t PatchNo, uint8_t BankNo)
 {
-	//byte sysexData[512];										// SysEx send buffer
+	// byte sysexData[512];										// SysEx send buffer
 	uint16_t data_len = NO_OF_PARAMS;
 	uint16_t sysexCount = 0;
 	String numString = String(PatchNo + 1);
 	String bankString = char(BankNo + 65);
 	String fileString = (bankString + "/" + numString);
-	
+
 	// get Sound File String
 	File patchFile = SD.open(fileString.c_str());
-	
+
 	// if Patch file not available create new init patch file
-	if (!patchFile) {
+	if (!patchFile)
+	{
 		// Serial.print("Patch Error: ");
 		// Serial.println(fileString);
 		patchFile.close();
@@ -7459,209 +8339,219 @@ FLASHMEM void mySendSysEx(uint8_t PatchNo, uint8_t BankNo)
 		savePatch(String(fileString).c_str(), getCurrentPatchData());
 		patchFile = SD.open(fileString.c_str());
 	}
-	
+
 	// load patch data string
-	String data[data_len]; //Array of data read in
+	String data[data_len]; // Array of data read in
 	recallPatchData(patchFile, data);
 	patchFile.close();
-	
+
 	// convert Patch data into 7bit SysEx format
 	// status data												// Ind. len   value
-	Syx_Buf[sysexCount++] = 0xF0;								// -	1	0	- Start SysEx
-	Syx_Buf[sysexCount++] = 0x00;								// -	1	1	- ID
-	Syx_Buf[sysexCount++] = 0x00;								// -	1	2	- ID
-	Syx_Buf[sysexCount++] = 0x00;								// -	1	3	- ID
-	Syx_Buf[sysexCount++] = 0x00;								// -	1	4	- Device ID 0-64
-	Syx_Buf[sysexCount++] = PatchNo;							// -	1	5	- Patch No
-	Syx_Buf[sysexCount++] = BankNo;								// -	1	6	- Bank No
-	
+	Syx_Buf[sysexCount++] = 0xF0;	 // -	1	0	- Start SysEx
+	Syx_Buf[sysexCount++] = 0x00;	 // -	1	1	- ID
+	Syx_Buf[sysexCount++] = 0x00;	 // -	1	2	- ID
+	Syx_Buf[sysexCount++] = 0x00;	 // -	1	3	- ID
+	Syx_Buf[sysexCount++] = 0x00;	 // -	1	4	- Device ID 0-64
+	Syx_Buf[sysexCount++] = PatchNo; // -	1	5	- Patch No
+	Syx_Buf[sysexCount++] = BankNo;	 // -	1	6	- Bank No
+
 	// copy patchname for progressbar string
 	patchname = data[0];
-	float_to_string(data[0], 12, sysexCount, Syx_Buf);			// (0)	12	7	- Patch Name
-	
+	float_to_string(data[0], 12, sysexCount, Syx_Buf); // (0)	12	7	- Patch Name
+
 	// Parameter data
-	float_to_sysex1Byte(data[1], sysexCount, Syx_Buf);			// (1)	1	19  - oscALevel (0 - 1.00)
-	float_to_sysex1Byte(data[2], sysexCount, Syx_Buf);			// (2)	1	20  - oscBLevel (0 - 1.00)
-	float_to_sysex2Bytes(data[3], sysexCount, Syx_Buf);			// (3)	2	21  - noiseLevel ( -1.00 - +1.00)
-	uint8_to_sysex1Byte(data[4], sysexCount, Syx_Buf);			// (4)	1	23  - unison (0 - 2)
-	uint8_to_sysex1Byte(data[5], sysexCount, Syx_Buf);			// (5)	1	24  - oscFX	(0 - 6)
-	float_to_sysex5Bytes(data[6], sysexCount, Syx_Buf);			// (6)	5 	25  - detune (0 - 1.00000)
+	float_to_sysex1Byte(data[1], sysexCount, Syx_Buf);	// (1)	1	19  - oscALevel (0 - 1.00)
+	float_to_sysex1Byte(data[2], sysexCount, Syx_Buf);	// (2)	1	20  - oscBLevel (0 - 1.00)
+	float_to_sysex2Bytes(data[3], sysexCount, Syx_Buf); // (3)	2	21  - noiseLevel ( -1.00 - +1.00)
+	uint8_to_sysex1Byte(data[4], sysexCount, Syx_Buf);	// (4)	1	23  - unison (0 - 2)
+	uint8_to_sysex1Byte(data[5], sysexCount, Syx_Buf);	// (5)	1	24  - oscFX	(0 - 6)
+	float_to_sysex5Bytes(data[6], sysexCount, Syx_Buf); // (6)	5 	25  - detune (0 - 1.00000)
 	// (7) 			- (not available)
-	float_to_string(data[8], 4, sysexCount, Syx_Buf);			// (8)	4	30	- midiClkTimeInterval
+	float_to_string(data[8], 4, sysexCount, Syx_Buf); // (8)	4	30	- midiClkTimeInterval
 	// (9)			- (not available)
-	float_to_sysex5Bytes(data[10], sysexCount, Syx_Buf);		// (10) 5 	34  - keytrackingAmount (0 - 1.0000)
-	float_to_sysex5Bytes(data[11], sysexCount, Syx_Buf);		// (11)	5	39  - glideSpeed (0 - 1.00000)
-	int8_to_sysex2Bytes(data[12], sysexCount, Syx_Buf);			// (12)	2	44  - oscPitchA (-24 - +24)
-	int8_to_sysex2Bytes(data[13], sysexCount, Syx_Buf);			// (13) 2 	46  - oscPitchB (-24 - +24)
-	uint8_to_sysex1Byte(data[14], sysexCount, Syx_Buf);			// (14) 1 	48  - oscWaveformA (0 - 63)
-	uint8_to_sysex1Byte(data[15], sysexCount, Syx_Buf);			// (15)	1	49	- oscWaveformB (0 - 63)
+	float_to_sysex5Bytes(data[10], sysexCount, Syx_Buf); // (10) 5 	34  - keytrackingAmount (0 - 1.0000)
+	float_to_sysex5Bytes(data[11], sysexCount, Syx_Buf); // (11)	5	39  - glideSpeed (0 - 1.00000)
+	int8_to_sysex2Bytes(data[12], sysexCount, Syx_Buf);	 // (12)	2	44  - oscPitchA (-24 - +24)
+	int8_to_sysex2Bytes(data[13], sysexCount, Syx_Buf);	 // (13) 2 	46  - oscPitchB (-24 - +24)
+	uint8_to_sysex1Byte(data[14], sysexCount, Syx_Buf);	 // (14) 1 	48  - oscWaveformA (0 - 63)
+	uint8_to_sysex1Byte(data[15], sysexCount, Syx_Buf);	 // (15)	1	49	- oscWaveformB (0 - 63)
 	// (16)			- (not available)
-	float_to_sysex1Byte(data[17], sysexCount, Syx_Buf);			// (17) 1   50  - pwmAmtA (0 - 0.99)
-	float_to_sysex1Byte(data[18], sysexCount, Syx_Buf);			// (18) 1   51  - pwmAmtB (0 - 0.99)
+	float_to_sysex1Byte(data[17], sysexCount, Syx_Buf); // (17) 1   50  - pwmAmtA (0 - 0.99)
+	float_to_sysex1Byte(data[18], sysexCount, Syx_Buf); // (18) 1   51  - pwmAmtB (0 - 0.99)
 	// (19)			- (not available)
-	float_to_sysex2Bytes(data[20], sysexCount, Syx_Buf);		// (20) 2 	52  - pwA (-1.00 - +1.00)
-	float_to_sysex2Bytes(data[21], sysexCount, Syx_Buf);		// (21) 2 	54  - pwB (-1.00 - +1.00)
-	float_to_string(data[22], 4, sysexCount, Syx_Buf);			// (22) 4	56  - filterRes (0 - 15.0)
-	uint14_to_sysex2Bytes(data[23], sysexCount, Syx_Buf);		// (23) 2 	60  - filterFreq (18 - 12000)
-	float_to_string(data[24], 4, sysexCount, Syx_Buf);			// (24) 4 	62  - filterMix (0 - -99.0)
-	float_to_sysex2Bytes(data[25], sysexCount, Syx_Buf);		// (25) 2	66  - filterEnv (-1.00 - +1.00)
-	float_to_sysex5Bytes(data[26], sysexCount, Syx_Buf);		// (26) 5	67  - oscLfoAmt (0 - 1.00000)
-	float_to_sysex5Bytes(data[27], sysexCount, Syx_Buf);		// (27) 5 	73  - oscLfoRate (0 - 40.0000)
-	uint8_to_sysex1Byte(data[28], sysexCount, Syx_Buf);			// (28) 1 	78  - oscLFOWaveform (0 - 12)
-	uint8_to_sysex1Byte(data[29], sysexCount, Syx_Buf);			// (29) 1 	79  - oscLfoRetrig (0 - 1)
+	float_to_sysex2Bytes(data[20], sysexCount, Syx_Buf);  // (20) 2 	52  - pwA (-1.00 - +1.00)
+	float_to_sysex2Bytes(data[21], sysexCount, Syx_Buf);  // (21) 2 	54  - pwB (-1.00 - +1.00)
+	float_to_string(data[22], 4, sysexCount, Syx_Buf);	  // (22) 4	56  - filterRes (0 - 15.0)
+	uint14_to_sysex2Bytes(data[23], sysexCount, Syx_Buf); // (23) 2 	60  - filterFreq (18 - 12000)
+	float_to_string(data[24], 4, sysexCount, Syx_Buf);	  // (24) 4 	62  - filterMix (0 - -99.0)
+	float_to_sysex2Bytes(data[25], sysexCount, Syx_Buf);  // (25) 2	66  - filterEnv (-1.00 - +1.00)
+	float_to_sysex5Bytes(data[26], sysexCount, Syx_Buf);  // (26) 5	67  - oscLfoAmt (0 - 1.00000)
+	float_to_sysex5Bytes(data[27], sysexCount, Syx_Buf);  // (27) 5 	73  - oscLfoRate (0 - 40.0000)
+	uint8_to_sysex1Byte(data[28], sysexCount, Syx_Buf);	  // (28) 1 	78  - oscLFOWaveform (0 - 12)
+	uint8_to_sysex1Byte(data[29], sysexCount, Syx_Buf);	  // (29) 1 	79  - oscLfoRetrig (0 - 1)
 	// (30) 	    - (not available)
-	uint8_to_sysex1Byte(data[31], sysexCount, Syx_Buf);			// (31) 1 	80  - myFilterLFORateValue (1 - 127)
-	uint8_to_sysex1Byte(data[32], sysexCount, Syx_Buf);			// (32) 1	81  - filterLfoRetrig (0 - 1)
+	uint8_to_sysex1Byte(data[31], sysexCount, Syx_Buf); // (31) 1 	80  - myFilterLFORateValue (1 - 127)
+	uint8_to_sysex1Byte(data[32], sysexCount, Syx_Buf); // (32) 1	81  - filterLfoRetrig (0 - 1)
 	// (33) 	    - (not available)
-	float_to_sysex5Bytes(data[34], sysexCount, Syx_Buf);		// (34) 5 	82  - filterLfoAmt (0 - 1.00000)
-	uint8_to_sysex1Byte(data[35], sysexCount, Syx_Buf);			// (35) 1	87  - filterLFOWaveform (0 - 12)
-	uint14_to_sysex2Bytes(data[36], sysexCount, Syx_Buf);		// (36) 2	88  - filterAttack (0 - 11880)
-	uint14_to_sysex2Bytes(data[37], sysexCount, Syx_Buf);		// (37) 2 	90  - filterDecay (0 - 11880)
-	float_to_sysex1Byte(data[38], sysexCount, Syx_Buf);			// (38) 1	92  - filterSustain (0 - 1.00)
-	uint14_to_sysex2Bytes(data[39], sysexCount, Syx_Buf);		// (39) 2	94  - filterRelease (0 - 11880)
-	uint14_to_sysex2Bytes(data[40], sysexCount, Syx_Buf);		// (40) 2	96  - ampAttack (0 - 11880)
-	uint14_to_sysex2Bytes(data[41], sysexCount, Syx_Buf);		// (41) 2 	98  - ampDecay (0 - 11880)
-	float_to_sysex1Byte(data[42], sysexCount, Syx_Buf);			// (42) 1	100  - ampSustain (0 - 1.00)
-	uint14_to_sysex2Bytes(data[43], sysexCount, Syx_Buf);		// (43) 2 	101  - ampRelease (0 - 11880)
+	float_to_sysex5Bytes(data[34], sysexCount, Syx_Buf);  // (34) 5 	82  - filterLfoAmt (0 - 1.00000)
+	uint8_to_sysex1Byte(data[35], sysexCount, Syx_Buf);	  // (35) 1	87  - filterLFOWaveform (0 - 12)
+	uint14_to_sysex2Bytes(data[36], sysexCount, Syx_Buf); // (36) 2	88  - filterAttack (0 - 11880)
+	uint14_to_sysex2Bytes(data[37], sysexCount, Syx_Buf); // (37) 2 	90  - filterDecay (0 - 11880)
+	float_to_sysex1Byte(data[38], sysexCount, Syx_Buf);	  // (38) 1	92  - filterSustain (0 - 1.00)
+	uint14_to_sysex2Bytes(data[39], sysexCount, Syx_Buf); // (39) 2	94  - filterRelease (0 - 11880)
+	uint14_to_sysex2Bytes(data[40], sysexCount, Syx_Buf); // (40) 2	96  - ampAttack (0 - 11880)
+	uint14_to_sysex2Bytes(data[41], sysexCount, Syx_Buf); // (41) 2 	98  - ampDecay (0 - 11880)
+	float_to_sysex1Byte(data[42], sysexCount, Syx_Buf);	  // (42) 1	100  - ampSustain (0 - 1.00)
+	uint14_to_sysex2Bytes(data[43], sysexCount, Syx_Buf); // (43) 2 	101  - ampRelease (0 - 11880)
 	// (44) 	    - (not available)
 	// (45) 	    - (not available)
 	// (46) 	    - (not available)
-	uint8_to_sysex1Byte(data[47], sysexCount, Syx_Buf);			// (47) 1	102  - velocitySens (0-4)
-	uint8_to_sysex1Byte(data[48], sysexCount, Syx_Buf);			// (48) 1	103  - chordDetune (0 - 127)
-	uint8_to_sysex1Byte(data[49], sysexCount, Syx_Buf);			// (49) 1	104  - FxPot1value (0 - 127)
-	uint8_to_sysex1Byte(data[50], sysexCount, Syx_Buf);			// (50) 1	105  - FxPot2value (0 - 127)
-	uint8_to_sysex1Byte(data[51], sysexCount, Syx_Buf);			// (51) 1	106  - FxPot3value (0 - 127)
-	uint8_to_sysex1Byte(data[52], sysexCount, Syx_Buf);			// (52) 1	107  - FxPrgNo (0 - 15)
-	uint8_to_sysex1Byte(data[53], sysexCount, Syx_Buf);			// (53) 1	108  - FxMixValue (0 - 127)
-	float_to_sysex5Bytes(data[54], sysexCount, Syx_Buf);		// (54) 5	109  - FxMixValue (10000 - 60000)
-	uint8_to_sysex1Byte(data[55], sysexCount, Syx_Buf);			// (55) 1	114  - Osc1WaveBank (0 - 15)
-	uint8_to_sysex1Byte(data[56], sysexCount, Syx_Buf);			// (56) 1	115  - Osc1WaveBank (0 - 15)
-	uint8_to_sysex1Byte(data[57], sysexCount, Syx_Buf);			// (57) 1	116  - myBoost (0 - 1)
-	float_to_sysex5Bytes(data[58], sysexCount, Syx_Buf);		// (58) 5	117  - pitchEnvA (-1.00 - +1.00)
-	float_to_sysex5Bytes(data[59], sysexCount, Syx_Buf);		// (59) 5	122  - pitchEnvB (-1.00 - +1.00)
-	float_to_sysex2Bytes(data[60], sysexCount, Syx_Buf);		// (60) 2	127  - driveLevel (Osc level) (0.00 - 1.25)
-	float_to_sysex5Bytes(data[61], sysexCount, Syx_Buf);		// (61) 5	129  - myFilVelocity (0 - 1.00)
-	float_to_sysex5Bytes(data[62], sysexCount, Syx_Buf);		// (62) 5	134  - myAmpVelocity (0 - 1.00)
-	uint8_to_sysex1Byte(data[63], sysexCount, Syx_Buf);			// (63) 1	139  - myUnisono (0-2)
+	uint8_to_sysex1Byte(data[47], sysexCount, Syx_Buf);	 // (47) 1	102  - velocitySens (0-4)
+	uint8_to_sysex1Byte(data[48], sysexCount, Syx_Buf);	 // (48) 1	103  - chordDetune (0 - 127)
+	uint8_to_sysex1Byte(data[49], sysexCount, Syx_Buf);	 // (49) 1	104  - FxPot1value (0 - 127)
+	uint8_to_sysex1Byte(data[50], sysexCount, Syx_Buf);	 // (50) 1	105  - FxPot2value (0 - 127)
+	uint8_to_sysex1Byte(data[51], sysexCount, Syx_Buf);	 // (51) 1	106  - FxPot3value (0 - 127)
+	uint8_to_sysex1Byte(data[52], sysexCount, Syx_Buf);	 // (52) 1	107  - FxPrgNo (0 - 15)
+	uint8_to_sysex1Byte(data[53], sysexCount, Syx_Buf);	 // (53) 1	108  - FxMixValue (0 - 127)
+	float_to_sysex5Bytes(data[54], sysexCount, Syx_Buf); // (54) 5	109  - FxMixValue (10000 - 60000)
+	uint8_to_sysex1Byte(data[55], sysexCount, Syx_Buf);	 // (55) 1	114  - Osc1WaveBank (0 - 15)
+	uint8_to_sysex1Byte(data[56], sysexCount, Syx_Buf);	 // (56) 1	115  - Osc1WaveBank (0 - 15)
+	uint8_to_sysex1Byte(data[57], sysexCount, Syx_Buf);	 // (57) 1	116  - myBoost (0 - 1)
+	float_to_sysex5Bytes(data[58], sysexCount, Syx_Buf); // (58) 5	117  - pitchEnvA (-1.00 - +1.00)
+	float_to_sysex5Bytes(data[59], sysexCount, Syx_Buf); // (59) 5	122  - pitchEnvB (-1.00 - +1.00)
+	float_to_sysex5Bytes(data[60], sysexCount, Syx_Buf); // (60) 2	127  - driveLevel (Osc level) (0.00 - 1.25)
+	float_to_sysex5Bytes(data[61], sysexCount, Syx_Buf); // (61) 5	129  - myFilVelocity (0 - 1.00)
+	float_to_sysex5Bytes(data[62], sysexCount, Syx_Buf); // (62) 5	134  - myAmpVelocity (0 - 1.00)
+	uint8_to_sysex1Byte(data[63], sysexCount, Syx_Buf);	 // (63) 1	139  - myUnisono (0-2)
 	// (64)			 - (not available)
 	// (65)			 - (not available)
-	uint8_to_sysex1Byte(data[66], sysexCount, Syx_Buf);			// (66) 1	140  - WShaperNo (0-14)
-	float_to_sysex5Bytes(data[67], sysexCount, Syx_Buf);		// (67) 5	141  - WShaperDrive (0.10 - 5.00)
-	uint14_to_sysex2Bytes(data[68], sysexCount, Syx_Buf);		// (68) 2	146  - LFO1phase (0 - 180.0)
-	uint14_to_sysex2Bytes(data[69], sysexCount, Syx_Buf);		// (69) 2	148  - LFO2phase (0 - 180.0)
-	for (uint8_t i = 0; i < 16; i++) {
-		uint8_to_sysex1Byte(data[70+i], sysexCount, Syx_Buf);	// (70-85)  16	150 - SeqNote1Buf (0 - 127)
+	uint8_to_sysex1Byte(data[66], sysexCount, Syx_Buf);	  // (66) 1	140  - WShaperNo (0-14)
+	float_to_sysex5Bytes(data[67], sysexCount, Syx_Buf);  // (67) 5	141  - WShaperDrive (0.10 - 5.00)
+	uint14_to_sysex2Bytes(data[68], sysexCount, Syx_Buf); // (68) 2	146  - LFO1phase (0 - 180.0)
+	uint14_to_sysex2Bytes(data[69], sysexCount, Syx_Buf); // (69) 2	148  - LFO2phase (0 - 180.0)
+	for (uint8_t i = 0; i < 16; i++)
+	{
+		uint8_to_sysex1Byte(data[70 + i], sysexCount, Syx_Buf); // (70-85)  16	150 - SeqNote1Buf (0 - 127)
 	}
-	for (uint8_t i = 0; i < 16; i++) {
-		uint8_to_sysex1Byte(data[86+i], sysexCount, Syx_Buf);	// (86-101) 16	166 - SeqNoteBufStatus (0 - 1)
+	for (uint8_t i = 0; i < 16; i++)
+	{
+		uint8_to_sysex1Byte(data[86 + i], sysexCount, Syx_Buf); // (86-101) 16	166 - SeqNoteBufStatus (0 - 1)
 	}
-	uint14_to_sysex2Bytes(data[102], sysexCount, Syx_Buf);		// (102) 2 	182  - SEQbpmValue (101 - 462)
-	float_to_sysex5Bytes(data[103], sysexCount, Syx_Buf);		// (103) 5	184  - SEQdivValue (float)
-	uint8_to_sysex1Byte(data[104], sysexCount, Syx_Buf);		// (104) 1	189  - SEQstepNumbers (0 - 15)
-	float_to_sysex5Bytes(data[105], sysexCount, Syx_Buf);		// (105) 5	190  - SEQGateTime (float)
-	uint8_to_sysex1Byte(data[106], sysexCount, Syx_Buf);		// (106) 1	195  - SEQdirection (0 - 3)
-	uint8_to_sysex1Byte(data[107], sysexCount, Syx_Buf);		// (107) 1	196  - oscDetuneSync (0 - 1)
-	int8_to_sysex2Bytes(data[108], sysexCount, Syx_Buf);		// (108) 2	197  - oscPitchA (-12 - +12)
-	float_to_sysex5Bytes(data[109], sysexCount, Syx_Buf);		// (109) 5	199  - oscMasterTune (float)
-	float_to_sysex5Bytes(data[110], sysexCount, Syx_Buf);		// (110) 5	204  - OscVCFMOD (float)
-	for (uint8_t i = 0; i < 16; i++) {
-		uint8_to_sysex1Byte(data[111+i], sysexCount, Syx_Buf);	// (111-126) 16	 209 - SeqVeloBuf (0 - 127)
+	uint14_to_sysex2Bytes(data[102], sysexCount, Syx_Buf); // (102) 2 	182  - SEQbpmValue (101 - 462)
+	float_to_sysex5Bytes(data[103], sysexCount, Syx_Buf);  // (103) 5	184  - SEQdivValue (float)
+	uint8_to_sysex1Byte(data[104], sysexCount, Syx_Buf);   // (104) 1	189  - SEQstepNumbers (0 - 15)
+	float_to_sysex5Bytes(data[105], sysexCount, Syx_Buf);  // (105) 5	190  - SEQGateTime (float)
+	uint8_to_sysex1Byte(data[106], sysexCount, Syx_Buf);   // (106) 1	195  - SEQdirection (0 - 3)
+	uint8_to_sysex1Byte(data[107], sysexCount, Syx_Buf);   // (107) 1	196  - oscDetuneSync (0 - 1)
+	int8_to_sysex2Bytes(data[108], sysexCount, Syx_Buf);   // (108) 2	197  - oscPitchA (-12 - +12)
+	float_to_sysex5Bytes(data[109], sysexCount, Syx_Buf);  // (109) 5	199  - oscMasterTune (float)
+	float_to_sysex5Bytes(data[110], sysexCount, Syx_Buf);  // (110) 5	204  - OscVCFMOD (float)
+	for (uint8_t i = 0; i < 16; i++)
+	{
+		uint8_to_sysex1Byte(data[111 + i], sysexCount, Syx_Buf); // (111-126) 16	 209 - SeqVeloBuf (0 - 127)
 	}
-	for (uint8_t i = 0; i < 48; i++) {
-		uint8_to_sysex1Byte(data[127+i], sysexCount, Syx_Buf);	// (127-174) 48	 225 - SeqNote1Buf (0 - 127)
+	for (uint8_t i = 0; i < 48; i++)
+	{
+		uint8_to_sysex1Byte(data[127 + i], sysexCount, Syx_Buf); // (127-174) 48	 225 - SeqNote1Buf (0 - 127)
 	}
-	for (uint8_t i = 0; i < 16; i++) {
-		uint8_to_sysex1Byte(data[175+i], sysexCount, Syx_Buf);	// (175-190) 16	 273 - SeqNoteCount (0 - 3)
+	for (uint8_t i = 0; i < 16; i++)
+	{
+		uint8_to_sysex1Byte(data[175 + i], sysexCount, Syx_Buf); // (175-190) 16	 273 - SeqNoteCount (0 - 3)
 	}
-	uint8_to_sysex1Byte(data[191], sysexCount, Syx_Buf);		// (191) 1	289 - SEQmode (0 - 2)
-	uint8_to_sysex1Byte(data[192], sysexCount, Syx_Buf);		// (192) 1	290 - SEQMidiClkSwitch (0 - 1)
-	uint8_to_sysex1Byte(data[193], sysexCount, Syx_Buf);		// (193) 1	291 - LadderFilterpassbandgain (0 - 127)
-	uint8_to_sysex1Byte(data[194], sysexCount, Syx_Buf);		// (194) 1	292 - LadderFilterDrive (1 - 127)
-	int8_to_sysex2Bytes(data[195], sysexCount, Syx_Buf);		// (195) 2	293 - envelopeType1 (-8 - +8)
-	int8_to_sysex2Bytes(data[196], sysexCount, Syx_Buf);		// (196) 2	295 - envelopeType2 (-8 - +8)
-	float_to_sysex5Bytes(data[197], sysexCount, Syx_Buf);		// (197) 5	297 - PitchWheelAmt (float)
-	float_to_sysex5Bytes(data[198], sysexCount, Syx_Buf);		// (198) 5	302 - MODWheelAmt (float)
-	uint8_to_sysex1Byte(data[199], sysexCount, Syx_Buf);		// (199) 1	307 - myFilter (1 - 2)
-	float_to_sysex5Bytes(data[200], sysexCount, Syx_Buf);		// (200) 5	308 - pwmRateA (-10.00 - + 10.00)
-	float_to_sysex5Bytes(data[201], sysexCount, Syx_Buf);		// (201) 5	313 - pwmRateB (-10.00 - + 10.00)
-	uint14_to_sysex2Bytes(data[202], sysexCount, Syx_Buf);		// (202) 2	318 - LFO1fadeTime (0 - 12000) Fade in
-	uint14_to_sysex2Bytes(data[203], sysexCount, Syx_Buf);		// (203) 2	320 - LFO1releaseTime (0 - 12000) Fade out
-	float_to_sysex5Bytes(data[204], sysexCount, Syx_Buf);		// (204) 5	322 - filterFM (0.00000 - 1.00000)  Osc1
-	float_to_sysex5Bytes(data[205], sysexCount, Syx_Buf);		// (205) 5	327 - filterFM2 (0.00000 - 1.00000)	Osc2
-	uint14_to_sysex2Bytes(data[206], sysexCount, Syx_Buf);		// (206) 2	332 - LFO2fadeTime (0 - 12000) Fade in
-	uint14_to_sysex2Bytes(data[207], sysexCount, Syx_Buf);		// (207) 2	334 - LFO2releaseTime (0 - 12000) Fade out
-	float_to_sysex5Bytes(data[208], sysexCount, Syx_Buf);		// (208) 5	336 - Osc1ModAmt (0.00000 - 1.00000) Fx Mod
-	int8_to_sysex2Bytes(data[209], sysexCount, Syx_Buf);		// (209) 2	341 - LFO1enCurve (-8 - +8)
-	int8_to_sysex2Bytes(data[210], sysexCount, Syx_Buf);		// (210) 2	343 - LFO2enCurve (-8 - +8)
-	uint8_to_sysex1Byte(data[211], sysexCount, Syx_Buf);		// (211) 1	345 - LFO1mode (0 - 1)
-	uint8_to_sysex1Byte(data[212], sysexCount, Syx_Buf);		// (212) 1	346 - LFO2mode (0 - 1)
-	
-	int8_to_sysex2Bytes(data[213], sysexCount, Syx_Buf);		// (213) 2	347 - LFO3enCurve (-8 - +8)
-	uint8_to_sysex1Byte(data[214], sysexCount, Syx_Buf);		// (214) 1	349 - LFO3mode (0 - 1)
-	uint14_to_sysex2Bytes(data[215], sysexCount, Syx_Buf);		// (215) 2	350 - LFO3fadeTime (0 - 12000) Fade in
-	uint14_to_sysex2Bytes(data[216], sysexCount, Syx_Buf);		// (216) 2	352 - LFO3releaseTime (0 - 12000) Fade out
-	float_to_sysex5Bytes(data[217], sysexCount, Syx_Buf);		// (217) 5 	354  - Lfo3amt (0 - 1.00000)
-	uint8_to_sysex1Byte(data[218], sysexCount, Syx_Buf);		// (218) 1	359 - AtouchAmt (1 - 127)
-	uint8_to_sysex1Byte(data[219], sysexCount, Syx_Buf);		// (219) 1	360 - AtouchPitchAmt (1 - 127)
-	uint8_to_sysex1Byte(data[220], sysexCount, Syx_Buf);		// (220) 1	361 - Lfo3Waveform (1 - 127)
-	uint8_to_sysex1Byte(data[221], sysexCount, Syx_Buf);		// (221) 1	362 - myLFO3RateValue (1 - 127)
-	uint14_to_sysex2Bytes(data[222], sysexCount, Syx_Buf);		// (222) 2	363 - LFO3phase (0 - 180.0)
-	uint8_to_sysex1Byte(data[223], sysexCount, Syx_Buf);		// (223) 1	365 - AtouchLFO1Amt (1 - 127)
-	uint8_to_sysex1Byte(data[224], sysexCount, Syx_Buf);		// (224) 1	366 - AtouchLFO2Amt (1 - 127)
-	uint8_to_sysex1Byte(data[225], sysexCount, Syx_Buf);		// (225) 1	367 - AtouchLFO3Amt (1 - 127)
-	uint8_to_sysex1Byte(data[226], sysexCount, Syx_Buf);		// (226) 1	368 - FxPot1amt (1 - 127)
-	uint8_to_sysex1Byte(data[227], sysexCount, Syx_Buf);		// (227) 1	369 - FxPot2amt (1 - 127)
-	uint8_to_sysex1Byte(data[228], sysexCount, Syx_Buf);		// (228) 1	370 - FxPot3amt (1 - 127)
-	uint8_to_sysex1Byte(data[229], sysexCount, Syx_Buf);		// (229) 1	371 - FxCLKamt (1 - 127)
-	uint8_to_sysex1Byte(data[230], sysexCount, Syx_Buf);		// (230) 1	372 - FxMIXamt (1 - 127)
-	uint8_to_sysex1Byte(data[231], sysexCount, Syx_Buf);		// (231) 1	373 - AtouchFxP1Amt (1 - 127)
-	uint8_to_sysex1Byte(data[232], sysexCount, Syx_Buf);		// (232) 1	374 - AtouchFxP2Amt (1 - 127)
-	uint8_to_sysex1Byte(data[233], sysexCount, Syx_Buf);		// (233) 1	375 - AtouchFxP3Amt (1 - 127)
-	uint8_to_sysex1Byte(data[234], sysexCount, Syx_Buf);		// (234) 1	376 - AtouchFxClkAmt (1 - 127)
-	uint8_to_sysex1Byte(data[235], sysexCount, Syx_Buf);		// (235) 1	377 - AtouchFxMixAmt (1 - 127)
-	uint8_to_sysex1Byte(data[236], sysexCount, Syx_Buf);		// (236) 1	378 - PWMaShape (1 - 127)
-	uint8_to_sysex1Byte(data[237], sysexCount, Syx_Buf);		// (237) 1	379 - PWMbShape (1 - 127)
-	float_to_sysex5Bytes(data[238], sysexCount, Syx_Buf);		// (238) 5	380 - HPF_filterFreq (float)
-	uint8_to_sysex1Byte(data[239], sysexCount, Syx_Buf);		// (239) 1	385 - UserPot1 (0 - xxx)
-	uint8_to_sysex1Byte(data[240], sysexCount, Syx_Buf);		// (240) 1	386 - UserPot2 (0 - xxx)
-	uint8_to_sysex1Byte(data[241], sysexCount, Syx_Buf);		// (241) 1	387 - UserPot3 (0 - xxx)
-	uint8_to_sysex1Byte(data[242], sysexCount, Syx_Buf);		// (242) 1	388 - UserPot4 (0 - xxx)
-	float_to_sysex5Bytes(data[243], sysexCount, Syx_Buf);		// (243) 5	389 - HPFRes (float)
-	uint8_to_sysex1Byte(data[244], sysexCount, Syx_Buf);		// (244) 1	394 - SupersawSpreadA (0-127)
-	uint8_to_sysex1Byte(data[245], sysexCount, Syx_Buf);		// (245) 1	395 - SupersawSpreadB (0-127)
-	uint8_to_sysex1Byte(data[246], sysexCount, Syx_Buf);		// (246) 1	396 - SupersawMixA (0-127)
-	uint8_to_sysex1Byte(data[247], sysexCount, Syx_Buf);		// (247) 1	397 - SupersawMixB (0-127)
-	uint8_to_sysex1Byte(data[248], sysexCount, Syx_Buf);		// (248) 1	398 - Voice_mode (0-8)
-	uint8_to_sysex1Byte(data[249], sysexCount, Syx_Buf);		// (249) 1	399 - VCA PAN (0...127)
-	float_to_sysex5Bytes(data[250], sysexCount, Syx_Buf);		// (250) 5	389 - ModWheelCutoffAmt (float)
-	float_to_sysex5Bytes(data[251], sysexCount, Syx_Buf);		// (251) 5	406 - ModWheelHPFamt (float)
-	uint8_to_sysex1Byte(data[252], sysexCount, Syx_Buf);		// (252) 1	411 - Lfo2Osc1PrmAAmt (0...127)
-	uint8_to_sysex1Byte(data[253], sysexCount, Syx_Buf);		// (253) 1	412 - Lfo2Osc1PrmBAmt (0...127)
-	uint8_to_sysex1Byte(data[254], sysexCount, Syx_Buf);		// (254) 1	413 - Lfo2Osc2PrmAAmt (0...127)
-	uint8_to_sysex1Byte(data[255], sysexCount, Syx_Buf);		// (255) 1	414 - Lfo2Osc2PrmBAmt (0...127)
-	uint8_to_sysex1Byte(data[256], sysexCount, Syx_Buf);		// (256) 1	415 - Lfo3Osc1PrmAAmt (0...127)
-	uint8_to_sysex1Byte(data[257], sysexCount, Syx_Buf);		// (257) 1	416 - Lfo3Osc1PrmBAmt (0...127)
-	uint8_to_sysex1Byte(data[258], sysexCount, Syx_Buf);		// (258) 1	417 - Lfo3Osc2PrmAAmt (0...127)
-	uint8_to_sysex1Byte(data[259], sysexCount, Syx_Buf);		// (259) 1	418 - Lfo3Osc2PrmBAmt (0...127)
-	uint8_to_sysex1Byte(data[260], sysexCount, Syx_Buf);		// (260) 1	419 - filterEnvOsc1PrmAAmt (0...127)
-	uint8_to_sysex1Byte(data[261], sysexCount, Syx_Buf);		// (261) 1	420 - filterEnvOsc1PrmBAmt (0...127)
-	uint8_to_sysex1Byte(data[262], sysexCount, Syx_Buf);		// (262) 1	421 - filterEnvOsc2PrmAAmt (0...127)
-	uint8_to_sysex1Byte(data[263], sysexCount, Syx_Buf);		// (263) 1	422 - filterEnvOsc2PrmBAmt (0...127)
+	uint8_to_sysex1Byte(data[191], sysexCount, Syx_Buf);   // (191) 1	289 - SEQmode (0 - 2)
+	uint8_to_sysex1Byte(data[192], sysexCount, Syx_Buf);   // (192) 1	290 - SEQMidiClkSwitch (0 - 1)
+	uint8_to_sysex1Byte(data[193], sysexCount, Syx_Buf);   // (193) 1	291 - LadderFilterpassbandgain (0 - 127)
+	uint8_to_sysex1Byte(data[194], sysexCount, Syx_Buf);   // (194) 1	292 - LadderFilterDrive (1 - 127)
+	int8_to_sysex2Bytes(data[195], sysexCount, Syx_Buf);   // (195) 2	293 - envelopeType1 (-8 - +8)
+	int8_to_sysex2Bytes(data[196], sysexCount, Syx_Buf);   // (196) 2	295 - envelopeType2 (-8 - +8)
+	float_to_sysex5Bytes(data[197], sysexCount, Syx_Buf);  // (197) 5	297 - PitchWheelAmt (float)
+	float_to_sysex5Bytes(data[198], sysexCount, Syx_Buf);  // (198) 5	302 - MODWheelAmt (float)
+	uint8_to_sysex1Byte(data[199], sysexCount, Syx_Buf);   // (199) 1	307 - myFilter (1 - 2)
+	float_to_sysex5Bytes(data[200], sysexCount, Syx_Buf);  // (200) 5	308 - pwmRateA (-10.00 - + 10.00)
+	float_to_sysex5Bytes(data[201], sysexCount, Syx_Buf);  // (201) 5	313 - pwmRateB (-10.00 - + 10.00)
+	uint14_to_sysex2Bytes(data[202], sysexCount, Syx_Buf); // (202) 2	318 - LFO1fadeTime (0 - 12000) Fade in
+	uint14_to_sysex2Bytes(data[203], sysexCount, Syx_Buf); // (203) 2	320 - LFO1releaseTime (0 - 12000) Fade out
+	float_to_sysex5Bytes(data[204], sysexCount, Syx_Buf);  // (204) 5	322 - filterFM (0.00000 - 1.00000)  Osc1
+	float_to_sysex5Bytes(data[205], sysexCount, Syx_Buf);  // (205) 5	327 - filterFM2 (0.00000 - 1.00000)	Osc2
+	uint14_to_sysex2Bytes(data[206], sysexCount, Syx_Buf); // (206) 2	332 - LFO2fadeTime (0 - 12000) Fade in
+	uint14_to_sysex2Bytes(data[207], sysexCount, Syx_Buf); // (207) 2	334 - LFO2releaseTime (0 - 12000) Fade out
+	float_to_sysex5Bytes(data[208], sysexCount, Syx_Buf);  // (208) 5	336 - Osc1ModAmt (0.00000 - 1.00000) Fx Mod
+	int8_to_sysex2Bytes(data[209], sysexCount, Syx_Buf);   // (209) 2	341 - LFO1enCurve (-8 - +8)
+	int8_to_sysex2Bytes(data[210], sysexCount, Syx_Buf);   // (210) 2	343 - LFO2enCurve (-8 - +8)
+	uint8_to_sysex1Byte(data[211], sysexCount, Syx_Buf);   // (211) 1	345 - LFO1mode (0 - 1)
+	uint8_to_sysex1Byte(data[212], sysexCount, Syx_Buf);   // (212) 1	346 - LFO2mode (0 - 1)
 
-	Syx_Buf[sysexCount++] = 0xF7;								//		 1	423 - End SysEx (0xF7)
-	if (sysexCount < NO_OF_SysEx_Data) {
+	int8_to_sysex2Bytes(data[213], sysexCount, Syx_Buf);   // (213) 2	347 - LFO3enCurve (-8 - +8)
+	uint8_to_sysex1Byte(data[214], sysexCount, Syx_Buf);   // (214) 1	349 - LFO3mode (0 - 1)
+	uint14_to_sysex2Bytes(data[215], sysexCount, Syx_Buf); // (215) 2	350 - LFO3fadeTime (0 - 12000) Fade in
+	uint14_to_sysex2Bytes(data[216], sysexCount, Syx_Buf); // (216) 2	352 - LFO3releaseTime (0 - 12000) Fade out
+	float_to_sysex5Bytes(data[217], sysexCount, Syx_Buf);  // (217) 5 	354  - Lfo3amt (0 - 1.00000)
+	uint8_to_sysex1Byte(data[218], sysexCount, Syx_Buf);   // (218) 1	359 - AtouchAmt (1 - 127)
+	uint8_to_sysex1Byte(data[219], sysexCount, Syx_Buf);   // (219) 1	360 - AtouchPitchAmt (1 - 127)
+	uint8_to_sysex1Byte(data[220], sysexCount, Syx_Buf);   // (220) 1	361 - Lfo3Waveform (1 - 127)
+	uint8_to_sysex1Byte(data[221], sysexCount, Syx_Buf);   // (221) 1	362 - myLFO3RateValue (1 - 127)
+	uint14_to_sysex2Bytes(data[222], sysexCount, Syx_Buf); // (222) 2	363 - LFO3phase (0 - 180.0)
+	uint8_to_sysex1Byte(data[223], sysexCount, Syx_Buf);   // (223) 1	365 - AtouchLFO1Amt (1 - 127)
+	uint8_to_sysex1Byte(data[224], sysexCount, Syx_Buf);   // (224) 1	366 - AtouchLFO2Amt (1 - 127)
+	uint8_to_sysex1Byte(data[225], sysexCount, Syx_Buf);   // (225) 1	367 - AtouchLFO3Amt (1 - 127)
+	uint8_to_sysex1Byte(data[226], sysexCount, Syx_Buf);   // (226) 1	368 - FxPot1amt (1 - 127)
+	uint8_to_sysex1Byte(data[227], sysexCount, Syx_Buf);   // (227) 1	369 - FxPot2amt (1 - 127)
+	uint8_to_sysex1Byte(data[228], sysexCount, Syx_Buf);   // (228) 1	370 - FxPot3amt (1 - 127)
+	uint8_to_sysex1Byte(data[229], sysexCount, Syx_Buf);   // (229) 1	371 - FxCLKamt (1 - 127)
+	uint8_to_sysex1Byte(data[230], sysexCount, Syx_Buf);   // (230) 1	372 - FxMIXamt (1 - 127)
+	uint8_to_sysex1Byte(data[231], sysexCount, Syx_Buf);   // (231) 1	373 - AtouchFxP1Amt (1 - 127)
+	uint8_to_sysex1Byte(data[232], sysexCount, Syx_Buf);   // (232) 1	374 - AtouchFxP2Amt (1 - 127)
+	uint8_to_sysex1Byte(data[233], sysexCount, Syx_Buf);   // (233) 1	375 - AtouchFxP3Amt (1 - 127)
+	uint8_to_sysex1Byte(data[234], sysexCount, Syx_Buf);   // (234) 1	376 - AtouchFxClkAmt (1 - 127)
+	uint8_to_sysex1Byte(data[235], sysexCount, Syx_Buf);   // (235) 1	377 - AtouchFxMixAmt (1 - 127)
+	uint8_to_sysex1Byte(data[236], sysexCount, Syx_Buf);   // (236) 1	378 - PWMaShape (1 - 127)
+	uint8_to_sysex1Byte(data[237], sysexCount, Syx_Buf);   // (237) 1	379 - PWMbShape (1 - 127)
+	float_to_sysex5Bytes(data[238], sysexCount, Syx_Buf);  // (238) 5	380 - HPF_filterFreq (float)
+	uint8_to_sysex1Byte(data[239], sysexCount, Syx_Buf);   // (239) 1	385 - UserPot1 (0 - xxx)
+	uint8_to_sysex1Byte(data[240], sysexCount, Syx_Buf);   // (240) 1	386 - UserPot2 (0 - xxx)
+	uint8_to_sysex1Byte(data[241], sysexCount, Syx_Buf);   // (241) 1	387 - UserPot3 (0 - xxx)
+	uint8_to_sysex1Byte(data[242], sysexCount, Syx_Buf);   // (242) 1	388 - UserPot4 (0 - xxx)
+	float_to_sysex5Bytes(data[243], sysexCount, Syx_Buf);  // (243) 5	389 - HPFRes (float)
+	//uint8_to_sysex1Byte(data[244], sysexCount, Syx_Buf); // (244) 1	394 - SupersawSpreadA (0-127)
+	//uint8_to_sysex1Byte(data[245], sysexCount, Syx_Buf); // (245) 1	395 - SupersawSpreadB (0-127)
+	//uint8_to_sysex1Byte(data[246], sysexCount, Syx_Buf); // (246) 1	396 - SupersawMixA (0-127)
+	//uint8_to_sysex1Byte(data[247], sysexCount, Syx_Buf); // (247) 1	397 - SupersawMixB (0-127)
+	uint14_to_sysex2Bytes(data[244], sysexCount, Syx_Buf); // (244) 2	394 - SupersawSpreadA (0-999)
+	uint14_to_sysex2Bytes(data[245], sysexCount, Syx_Buf); // (245) 2	396 - SupersawSpreadB (0-999)
+	uint14_to_sysex2Bytes(data[246], sysexCount, Syx_Buf); // (246) 2	398 - SupersawMixA (0-999)
+	uint14_to_sysex2Bytes(data[247], sysexCount, Syx_Buf); // (247) 2	400 - SupersawMixB (0-999)
+	uint8_to_sysex1Byte(data[248], sysexCount, Syx_Buf);   // (248) 1	402 - Voice_mode (0-8)
+	uint8_to_sysex1Byte(data[249], sysexCount, Syx_Buf);   // (249) 1	403 - VCA PAN (0...127)
+	float_to_sysex5Bytes(data[250], sysexCount, Syx_Buf);  // (250) 5	404 - ModWheelCutoffAmt (float)
+	float_to_sysex5Bytes(data[251], sysexCount, Syx_Buf);  // (251) 5	409 - ModWheelHPFamt (float)
+	uint8_to_sysex1Byte(data[252], sysexCount, Syx_Buf);   // (252) 1	414 - Lfo2Osc1PrmAAmt (0...127)
+	uint8_to_sysex1Byte(data[253], sysexCount, Syx_Buf);   // (253) 1	415 - Lfo2Osc1PrmBAmt (0...127)
+	uint8_to_sysex1Byte(data[254], sysexCount, Syx_Buf);   // (254) 1	416 - Lfo2Osc2PrmAAmt (0...127)
+	uint8_to_sysex1Byte(data[255], sysexCount, Syx_Buf);   // (255) 1	417 - Lfo2Osc2PrmBAmt (0...127)
+	uint8_to_sysex1Byte(data[256], sysexCount, Syx_Buf);   // (256) 1	418 - Lfo3Osc1PrmAAmt (0...127)
+	uint8_to_sysex1Byte(data[257], sysexCount, Syx_Buf);   // (257) 1	419 - Lfo3Osc1PrmBAmt (0...127)
+	uint8_to_sysex1Byte(data[258], sysexCount, Syx_Buf);   // (258) 1	420 - Lfo3Osc2PrmAAmt (0...127)
+	uint8_to_sysex1Byte(data[259], sysexCount, Syx_Buf);   // (259) 1	421 - Lfo3Osc2PrmBAmt (0...127)
+	uint8_to_sysex1Byte(data[260], sysexCount, Syx_Buf);   // (260) 1	422 - filterEnvOsc1PrmAAmt (0...127)
+	uint8_to_sysex1Byte(data[261], sysexCount, Syx_Buf);   // (261) 1	423 - filterEnvOsc1PrmBAmt (0...127)
+	uint8_to_sysex1Byte(data[262], sysexCount, Syx_Buf);   // (262) 1	424 - filterEnvOsc2PrmAAmt (0...127)
+	uint8_to_sysex1Byte(data[263], sysexCount, Syx_Buf);   // (263) 1	425 - filterEnvOsc2PrmBAmt (0...127)
+
+	Syx_Buf[sysexCount++] = 0xF7; //		 1	426 - End SysEx (0xF7)
+	if (sysexCount < NO_OF_SysEx_Data)
+	{
 		Serial.print("Error File: ");
 		Serial.println(fileString);
 	}
-	
+
 	// Send SysEx Dump
-	usbMIDI.sendSysEx(sysexCount, Syx_Buf, true);				// send SysEx Dump via USB	
+	usbMIDI.sendSysEx(sysexCount, Syx_Buf, true); // send SysEx Dump via USB
 }
 
 //*************************************************************************
 // update send SysEx Data
 //*************************************************************************
-FLASHMEM void update_Sendsysex (void)
+FLASHMEM void update_Sendsysex(void)
 {
 	boolean ProgBar_enabled;
 	uint8_t ProgBar_style;
@@ -7670,57 +8560,62 @@ FLASHMEM void update_Sendsysex (void)
 	uint8_t ProgBar_maxcount;
 	String ProgBar_string;
 	uint8_t send_speed = 126;
-	
-	if ((millis() - timer_sysexwait) < send_speed) {
+
+	if ((millis() - timer_sysexwait) < send_speed)
+	{
 		return;
 	}
 	timer_sysexwait = millis();
-	
-	if (sendSysExFlag == true){
-		
+
+	if (sendSysExFlag == true)
+	{
+
 		// send a Patch via USB -------------------------------------------
-		if (sysexDest == false && sysexTyp == false) {
-			
+		if (sysexDest == false && sysexTyp == false)
+		{
+
 			// set progressbar inits
 			ProgBar_enabled = true;
 			ProgBar_style = 1;
 			ProgBar_count = 127;
 			ProgBar_maxcount = 127;
-			
+
 			// send SysEx data
 			mySendSysEx(sysexSource, sysexBank);
-			//usb_midi_flush_output();
-			
+			// usb_midi_flush_output();
+
 			// set ProgressBar
 			ProgBar_string = "Send: " + patchname;
 			setProgressbar(ProgBar_enabled, ProgBar_style, ProgBar_count, ProgBar_maxcount, ProgBar_string);
-			
+
 			// sendSysExFlag is set by Key query and will be deleted here
 			sendSysExFlag = false;
 		}
-		
+
 		// send Patch Bank via USB ----------------------------------------
-		else if (sysexDest == false && sysexTyp == true) {
-			
+		else if (sysexDest == false && sysexTyp == true)
+		{
+
 			// set progressbar inits
 			ProgBar_enabled = true;
 			ProgBar_style = 1;
 			ProgBar_count = Patch_count;
 			ProgBar_maxcount = 127;
-			
+
 			// send SysEx data
 			mySendSysEx(Patch_count, sysexBank);
 			usb_midi_flush_output();
-			
+
 			// set ProgressBar
 			ProgBar_string = "Send: " + patchname;
 			setProgressbar(ProgBar_enabled, ProgBar_style, ProgBar_count, ProgBar_maxcount, ProgBar_string);
-			
+
 			// inc PatchNo
 			Patch_count++;
-			if (Patch_count >= 128) {
+			if (Patch_count >= 128)
+			{
 				Patch_count = 0;
-				
+
 				// sendSysExFlag is set by Key query and will be deleted here
 				sendSysExFlag = false;
 			}
@@ -7731,13 +8626,15 @@ FLASHMEM void update_Sendsysex (void)
 //*************************************************************************
 // update CPU Temp. und Audio Por. Usage
 //*************************************************************************
-FLASHMEM void updateTempAudioUsage (void)
+FLASHMEM void updateTempAudioUsage(void)
 {
-	if ((millis() - timer_Temperature) > 1000){
+	if ((millis() - timer_Temperature) > 1000)
+	{
 		static uint8_t count = 0;
 		CPUdegree_temp += tempmonGetTemp();
 		count++;
-		if (count >= 32 ) {
+		if (count >= 32)
+		{
 			CPUdegree = (CPUdegree_temp >> 5);
 			printTemperature();
 			CPUdegree_temp = 0;
@@ -7745,38 +8642,24 @@ FLASHMEM void updateTempAudioUsage (void)
 		}
 		timer_Temperature = millis();
 	}
-	
-	if ((millis() - timer_CPUmon) > 500){
-		if (PageNr == 12 && myPageShiftStatus[12] == false) {
-			CPUaudioMem = AudioProcessorUsageMax(); //AudioMemoryUsageMax();
-			CPUmem = AudioMemoryUsageMax(); //AudioMemoryUsageMax();
+
+	if ((millis() - timer_CPUmon) > 500)
+	{
+		if (PageNr == 12 && myPageShiftStatus[12] == false)
+		{
+			CPUaudioMem = AudioProcessorUsageMax(); // AudioMemoryUsageMax();
+			CPUmem = AudioMemoryUsageMax();			// AudioMemoryUsageMax();
 			printCPUmon();
-			AudioProcessorUsageMaxReset(); //AudioMemoryUsageMaxReset();
+			AudioProcessorUsageMaxReset(); // AudioMemoryUsageMaxReset();
 			AudioMemoryUsageMaxReset();
 		}
-		// disable scope line if envelopes is stoped
-		if (PageNr == 0 || PageNr == 12) {
-			if (ampEnvelope[0].isActive() == false &&
-			ampEnvelope[1].isActive() == false &&
-			ampEnvelope[2].isActive() == false &&
-			ampEnvelope[3].isActive() == false &&
-			ampEnvelope[4].isActive() == false &&
-			ampEnvelope[5].isActive() == false &&
-			ampEnvelope[6].isActive() == false &&
-			ampEnvelope[7].isActive() == false) {
-				EnvIdelFlag = false;
-				if (EnvelopeIdle == false) {
-					EnvelopeIdle = true;
-				}
-				} else {
-				EnvelopeIdle = false;
-			}
-		}
-		
+
 		// Unisono LED blink
-		if (unison == 2) {
+		if (unison == 2)
+		{
 			uint8_t LED_bit_pos = 0b00000010;
-			if (unisoFlashStatus == 0) {
+			if (unisoFlashStatus == 0)
+			{
 				unisoFlashStatus = 1;
 				HC595Register &= ~(LED_bit_pos);
 				SPI.transfer(HC595Register);
@@ -7784,7 +8667,8 @@ FLASHMEM void updateTempAudioUsage (void)
 				digitalWrite(CS_HC595, HIGH);
 				SPI.endTransaction();
 			}
-			else {
+			else
+			{
 				unisoFlashStatus = 0;
 				HC595Register |= LED_bit_pos;
 				SPI.transfer(HC595Register);
@@ -7800,80 +8684,96 @@ FLASHMEM void updateTempAudioUsage (void)
 //*************************************************************************
 // update LED Status
 //*************************************************************************
-FLASHMEM void updateLEDstatus (void)
+FLASHMEM void updateLEDstatus(void)
 {
 	static long LED_state_time = 0;
 	uint8_t LED_bit_pos = 0;
 	boolean change_state = false;
-	
-	if ((millis() - LED_state_time) > 20) {
-		LED_state_time = millis();
-		
+
+	if ((millis() - LED_state_time) > 129)
+	{
 		// FX LED
-		if (KeyLED1State == true) {
+		if (KeyLED1State == true)
+		{
 			LED_bit_pos = 0b00000001;
-			if (FxPrgNo > 0) {
+			if (FxPrgNo > 0)
+			{
 				HC595Register |= LED_bit_pos;
 			}
-			else {
+			else
+			{
 				HC595Register &= ~(LED_bit_pos);
 			}
 			KeyLED1State = false;
 			change_state = true;
 		}
-		
+
 		// Unisono LED
-		if (KeyLED2State == true) {
+		if (KeyLED2State == true)
+		{
 			LED_bit_pos = 0b00000010;
-			if (unison == 0) {
+			if (unison == 0)
+			{
 				HC595Register &= ~(LED_bit_pos);
-				} else if (unison == 1) {
+			}
+			else if (unison == 1)
+			{
 				HC595Register |= LED_bit_pos;
-				} else {
+			}
+			else
+			{
 				HC595Register |= LED_bit_pos;
 			}
 			KeyLED2State = false;
 			change_state = true;
 		}
-		
+
 		// Tempo LED
-		if (TempoLEDchange == true) {
+		if (TempoLEDchange == true)
+		{
 			LED_bit_pos = 0b00000100;
-			if (TempoLEDstate == true) {
+			if (TempoLEDstate == true)
+			{
 				HC595Register |= LED_bit_pos;
 			}
-			else {
+			else
+			{
 				HC595Register &= ~(LED_bit_pos);
 			}
 			TempoLEDchange = false;
 			change_state = true;
 		}
-		
+
 		// Boost LED
-		if (KeyLED4State == true) {
+		if (KeyLED4State == true)
+		{
 			LED_bit_pos = 0b00001000;
-			if (myBoost == 1) {
+			if (myBoost == 1)
+			{
 				HC595Register |= LED_bit_pos;
 			}
-			else {
+			else
+			{
 				HC595Register &= ~(LED_bit_pos);
 			}
 			KeyLED4State = false;
 			change_state = true;
 		}
-		
+
 		// set LED register and transmit
-		if (change_state == true) {
+		if (change_state == true)
+		{
 			SPI.transfer(HC595Register);
 			digitalWrite(CS_HC595, LOW);
 			digitalWrite(CS_HC595, HIGH);
 			SPI.endTransaction();
 		}
+		LED_state_time = millis();
 	}
 }
 
 //*************************************************************************
-FLASHMEM void clearSequencerData (void)
+FLASHMEM void clearSequencerData(void)
 {
 	allNotesOff();
 	clearPatternData();
@@ -7883,16 +8783,166 @@ FLASHMEM void clearSequencerData (void)
 	renderCurrentPatchPage();
 }
 
+//*************************************************************************
+// Encoder Menu switch
+//*************************************************************************
+FLASHMEM void onButtonChanged(int state)
+{
+	if (state == 0)
+	{
+		if (PAGE_SW_Status == false)
+		{
+			PAGE_SW_Status = true;
+			if (PageNr < 1)
+			{
+				PageNr = 1;
+			}
+			LastPageNr = PageNr;
+			PageNr = 0;
+			RefreshMainScreenFlag = true;
+			clearScreenFlag = true;
+			//renderCurrentPatchPage();
+			encoder.setValue(patchNo);
+			encPrevPatchNo = patchNo;
+		}
+		// Menu pages
+		else
+		{
+			PAGE_SW_Status = false;
+			PageNr = LastPageNr;
+			if (PageNr < 1)
+			{
+				PageNr = 1;
+			}
+			//renderCurrentPatchPage();
+			renderPageFlag = true;
+			encoder.setValue(PageNr);
+			encPrevMenuNo = PageNr;
+		}
+	}
+}
 
 //*************************************************************************
-// Encoder Query
+// Encoder query
 //*************************************************************************
-FLASHMEM void EncoderQuery(void)
+void EncoderQuery(void)
 {
-	encValue = encoder.read() >> 2;
-	if (encValue != previousValue) {
-		previousValue = encValue;
-		encoderflag = true;
+	if (encoder.valueChanged())
+	{
+		int32_t encRead = encoder.getValue();
+
+		// select Menu page -----------------------------------------------
+		if (PageNr > 0)
+		{
+			uint8_t oldPageNr = PageNr;
+
+			if ((encRead > encPrevMenuNo))
+			{
+				PageNr++;
+				if (PageNr > Pages)
+				{
+					PageNr = Pages;
+				}
+				else if (PageNr < 1)
+				{
+					PageNr = 1;
+				}
+				if (oldPageNr != PageNr)
+				{
+					renderCurrentPatchPage();
+				}
+				encPrevMenuNo = encRead;
+			}
+			else
+			{
+				PageNr--;
+				if (PageNr > Pages)
+				{
+					PageNr = Pages;
+				}
+				else if (PageNr < 1)
+				{
+					PageNr = 1;
+				}
+				if (oldPageNr != PageNr)
+				{
+					renderCurrentPatchPage();
+				}
+				encPrevMenuNo = encRead;
+			}
+		}
+		// select PatchNo --------------------------------------------------
+		else
+		{
+			uint8_t oldpatchNo = patchNo;
+			// encoder.setValue(patchNo);
+			if (encRead > encPrevPatchNo)
+			{
+				if (PrgSelShift == false)
+				{
+					patchNo++;
+				}
+				else
+					patchNo += 10;
+				if (patchNo > 128)
+				{
+					if (currentPatchBank < 15)
+					{ // Bank A-P
+						currentPatchBank++;
+						patchNo = patchNo - 128;
+					}
+					else
+					{
+						patchNo = 128;
+						currentPatchBank = 15;
+					}
+				}
+				if (oldpatchNo != patchNo)
+				{
+					mute_before_load_patch();
+					Keylock = true;
+					recallPatch(patchNo); // read only Patch name
+					Keylock = false;
+					currentPatchName = patchName;
+					newPatchNo = patchNo;
+					newPatchBank = currentPatchBank;
+					RefreshMainScreenFlag = true;
+				}
+				encPrevPatchNo = encRead;
+			}
+			else if (encRead < encPrevPatchNo)
+			{
+				if (PrgSelShift == false)
+				{
+					patchNo--;
+				}
+				else
+					patchNo -= 10;
+				if (patchNo < 1 || patchNo > 128)
+				{
+					if (currentPatchBank > 0 && currentPatchBank <= 15)
+					{
+						patchNo = patchNo - 128;
+						currentPatchBank--;
+					}
+					else
+					{
+						patchNo = 1;
+						currentPatchBank = 0;
+					}
+				}
+				if (oldpatchNo != patchNo)
+				{
+					mute_before_load_patch();
+					Keylock = true;
+					recallPatch(patchNo); // read only Patch name
+					Keylock = false;
+					currentPatchName = patchName;
+					RefreshMainScreenFlag = true;
+				}
+				encPrevPatchNo = encRead;
+			}
+		}
 	}
 }
 
@@ -7902,29 +8952,31 @@ FLASHMEM void EncoderQuery(void)
 FLASHMEM void mute_before_load_patch(void)
 {
 	// all voice off
-	for (uint8_t i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++)
+	{
 		endVoice(i);
 	}
-	
+
 	ampEnvelopes_off();
 	setFxPrg(0);
 	timer8 = millis();
 	mute_sound = true;
 }
 
-
 //*************************************************************************
 // update Sound mute time
 //*************************************************************************
 FLASHMEM void update_Sound_mute(void)
-{	
-	if (mute_sound == true) {				// If you switch a patch, mute_sound = true
-		if ((millis() - timer8) > t8_value){			
-			recallPatch(patchNo);	
+{
+	if (mute_sound == true)
+	{ // If you switch a patch, mute_sound = true
+		if ((millis() - timer8) > t8_value)
+		{
+			recallPatch(patchNo);
 			storeSoundPatchNo(patchNo);
 			storePatchBankNo(currentPatchBank);
 			RefreshMainScreenFlag = true;
-			setFxPrg (FxPrgNo);
+			setFxPrg(FxPrgNo);
 			updateFxChip();
 			updateBoost();
 			KeyLED1State = true;
@@ -7932,45 +8984,55 @@ FLASHMEM void update_Sound_mute(void)
 			KeyLED3State = true;
 			KeyLED4State = true;
 			// clear voices and note stack
-			for (int i = 0; i < NO_OF_VOICES; i++) {
+			for (int i = 0; i < NO_OF_VOICES; i++)
+			{
 				voices[i].voiceOn = 0;
 				NoteStack_pool[i] = 0xFF;
 				NoteStack_ptr = 0;
-			}		
-			mute_sound = false;	// clr mute flag
+			}
+			mute_sound = false; // clr mute flag
 		}
 	}
 }
 
 //*************************************************************************
+// Encoder query
+//*************************************************************************
+FLASHMEM void Enc_query_Timer(void)
+{
+	encoder.tick(); // polled encoders
+}
+
+//*************************************************************************
 // Midi Timer Interrupt
 //*************************************************************************
-FLASHMEM void MidiClockTimer (void)
+FLASHMEM void MidiClockTimer(void)
 {
-	if (clrSEQflag == true) {
+	/*
+	if (clrSEQflag == true)
+	{
 		return;
 	}
-	
-	//read Midi datas
-	MIDI.read(midiChannel);				// MIDI 5 Pin DIN
-	usbMIDI.read(midiChannel);			// usbMidi
-	
+
+	// read Midi datas
+	//MIDI.read(midiChannel);	   // MIDI 5 Pin DIN
+	//usbMIDI.read(midiChannel); // usbMidi
+
 	// play Sequencer notes
-	polySequencer();
-	
-	// update LFO3 Modulation 
-	updateLfo3FxMod();
-	
-	// Encoder Query
-	EncoderQuery();
-	
+	//polySequencer();
+
+	// update LFO3 Modulation
+	//updateLfo3FxMod();
+	*/
 }
+
+
 
 //*************************************************************************
 // Setup
 //*************************************************************************
-FLASHMEM void setup() {
-
+FLASHMEM void setup()
+{
 	// init Hardware ------------------------------------------------------
 	Serial.begin(19200);
 	setupDisplay();
@@ -7980,36 +9042,40 @@ FLASHMEM void setup() {
 	digitalWrite(SPI_CS, HIGH);
 	SPI.begin();
 	SPI.beginTransaction(settings);
+	encoder.begin(ENCODER_PINA, ENCODER_PINB, PAGE_SW);
+	// encoder.setLimits(0, 128);
+	//  encoder.attachCallback(onValueChanged);        // call 'onValueChanged' whenever the encoder value changed
+	encoder.attachButtonCallback(onButtonChanged); // call 'onButtonChanged' whenever the button state changed
 	initPWMFx();
 	initHC595();
 	setFxPrg(0);
-	
+
 	// init Audio buffer --------------------------------------------------
-	AudioMemory(255);	// Sample Blocks
-	
+	AudioMemory(256); // Sample Blocks
+
 	// init Waveforms and more --------------------------------------------
 	constant1Dc.amplitude(ONE);
 	pwmLfoA.amplitude(ONE);
 	pwmLfoA.begin(PWMWAVEFORMA);
 	pwmLfoB.amplitude(ONE);
 	pwmLfoB.begin(PWMWAVEFORMB);
-	pwmLfoB.phase(10.0f);//Off set phase of second osc
+	pwmLfoB.phase(10.0f); // Off set phase of second osc
 	pwmLfoA.offset(0.0f);
 	pwmLfoB.offset(0.0f);
-	filterMixer1.gain(1,-1.0f);
+	filterMixer1.gain(1, -1.0f);
 	pitchLfo.amplitude(1.0f);
-	init_ModLfo1 ();
-	init_ModLfo2 ();
-	init_ModLfo3 ();
+	init_ModLfo1();
+	init_ModLfo2();
+	init_ModLfo3();
 
-	//This removes dc offset for Scope and Peak function
+	// This removes dc offset for Scope and Peak function
 	hpFilter1.octaveControl(1.0f);
 	hpFilter2.octaveControl(1.0f);
 	hpFilter1.frequency(20.0f);
 	hpFilter2.frequency(20.0f);
 	hpFilter1.resonance(0.7f);
 	hpFilter2.resonance(0.7f);
-	
+
 	// init 10Hz Atouch Filter
 	AtouchFilter.octaveControl(1.0f);
 	AtouchFilter.frequency(5.0f);
@@ -8021,7 +9087,7 @@ FLASHMEM void setup() {
 	FilterModCC.resonance(0.7f);
 	DC_FilterModCC.amplitude(1.0f);
 	DC_FilterModwheel.amplitude(1.0f);
-	
+
 	init_waveformMod();
 	init_FilterVelocity();
 	init_Keytracking();
@@ -8034,7 +9100,7 @@ FLASHMEM void setup() {
 	init_LFO_envelopes();
 	initAtouchPitch();
 	init_voices();
-	
+
 	// init Midi 5pol -----------------------------------------------------
 	MIDI.begin();
 	MIDI.setHandleNoteOn(myNoteOn);
@@ -8047,9 +9113,9 @@ FLASHMEM void setup() {
 	MIDI.setHandleStart(myMIDIClockStart);
 	MIDI.setHandleContinue(myMIDIClockStart);
 	MIDI.setHandleStop(myMIDIClockStop);
-	
+
 	// init USB Midi ------------------------------------------------------
-	usbMIDI.begin();
+	//usbMIDI.begin();
 	usbMIDI.setHandleNoteOff(myNoteOff);
 	usbMIDI.setHandleNoteOn(myNoteOn);
 	usbMIDI.setHandlePitchChange(myPitchBend);
@@ -8061,18 +9127,21 @@ FLASHMEM void setup() {
 	usbMIDI.setHandleContinue(myMIDIClockStart);
 	usbMIDI.setHandleStop(myMIDIClockStop);
 	usbMIDI.setHandleSysEx(getSysexDump);
-		
-	//Read MIDI Channel from EEPROM ---------------------------------------
+
+	// Read MIDI Channel from EEPROM ---------------------------------------
 	midiChannel = getMIDIChannel();
-	//timer_intMidiClk = micros();					// interval Intern Midi Clock ms
-	myMidiTimer.begin(MidiClockTimer, 256);			// Midi Timer interrupt
-	myMidiTimer.priority(254);						// Timer interrupt priority
-	getMidiCkl();
-	MIDIClkSignal = true;
-	filterLFOMidiClkSync = true;
-	
+	// timer_intMidiClk = micros();					// interval Intern Midi Clock ms
+	//myMidiTimer.begin(MidiClockTimer, 555); 		// Midi Timer interrupt
+	//myMidiTimer.priority(120);						// Timer interrupt priority
+	//getMidiCkl();
+	//MIDIClkSignal = true;
+	//filterLFOMidiClkSync = true;
+	myEncTimer.begin(Enc_query_Timer, 120);
+	myEncTimer.priority(100);
+
 	// init EEPROM --------------------------------------------------------
-	if (myEEPROMinit != getEEPROMinit()) {
+	if (myEEPROMinit != getEEPROMinit())
+	{
 		Serial.println("EEPROM data: fault!");
 		storeEEPROMinit();
 		delay(50);
@@ -8091,94 +9160,95 @@ FLASHMEM void setup() {
 		// Soft Reset Teensy 4.1
 		SCB_AIRCR = 0x05FA0004;
 	}
-	else {
+	else
+	{
 		Serial.println("EEPROM data: ok!");
 	}
-	
+
 	// load Global datas from EEPROM --------------------------------------
 	getMIDIChannel();
 	getPRGchange();
-	//getPickup();
-	
+
+	// init Sound synthesis -----------------------------------------------
+	init_SoundSynthesis();
+
 	// load Sound Programm ------------------------------------------------
 	int mux5Read = MCP_adc.read(MCP3208::Channel::SINGLE_7);
 	uint8_t value = mux5Read >> 5;
-	
+
 	// If the "Mute" button is pressed when switching on, then the system boots with patch A000
-	if (value < (S4 + hysteresis) && value > (S4 - hysteresis)) {
-		
-		} else {
+	if (value < (S4 + hysteresis) && value > (S4 - hysteresis))
+	{
+	}
+	else
+	{
 		initPatternData();
 		Init_Patch();
 	}
-	
+
 	Keylock = false;
 	mute_before_load_patch();
-	
+
 	// read Temp.
 	CPUdegree = tempmonGetTemp();
-	
+
 	// init potentiometer -------------------------------------------------
 	pot_init();
 
 	/*
 	while(!Serial) ;
-    if (CrashReport)
-      Serial.print(CrashReport);
-	  */
+	if (CrashReport)
+	  Serial.print(CrashReport);
+	*/
+
+	// Dissabled Pullup Encoder inputs
+	pinMode(4, INPUT);
+	pinMode(5, INPUT);
 }
-
-
 
 //*************************************************************************
 // Main Loop
 //*************************************************************************
-FLASHMEM void loop(void) {
-	
-	// Special function for Midi CC PrgChange & Bank select----------------
-	myPrgChange();
-	myMidiBankSel();
-	
-	// Potentiometer query ------------------------------------------------
-	checkPots();
-	
-	// Encoder query ------------------------------------------------------
-	checkEncoder();
-	
-	// Mute time for switch Patch
-	update_Sound_mute();
-	
-	// Key query ----------------------------------------------------------
-	checkSwitches();
+FLASHMEM void loop(void)
+{
+	if (loopCount++ > 15)
+	{
+		checkSwitches();				// Buttons read
+		checkPots();					// update pots
+		displayThread();				// update screen
+		updateLEDstatus();				// update LEDs
+		updateTempAudioUsage();			// update CPU Temp and AudioProzess usage
+		update_Sound_mute();			// update audio mute
+		updateLfo3FxMod();				// update LFO3 Modulation
+		myPrgChange();
+		myMidiBankSel();
+		update_Sendsysex();
+		
+		// update Step frame into Sequencer -----------------------------------
+		if (PageNr == 11 && SEQStepStatus == true)
+		{
+			drawSEQStepFrame(SEQselectStepNo);
+			SEQStepStatus = false;
+		}
 
-	// update mySendSysEx -------------------------------------------------
-	update_Sendsysex();
-	
-	// update Step frame into Sequencer -----------------------------------
-	if (PageNr == 11 && SEQStepStatus == true) {
-		drawSEQStepFrame(SEQselectStepNo);
-		SEQStepStatus = false;
+		// clear Sequencer data -----------------------------------------------
+		if (clrSEQflag == true)
+		{
+			clearSequencerData();
+			clrSEQflag = false;
+		}
+
+		// draw Sequencer recording Notes -------------------------------------
+		if (SEQRecNoteFlag == true)
+		{
+			drawSEQRecNotes();
+			SEQRecNoteFlag = false;
+		}
+		loopCount = 0;
 	}
-	
-	// clear Sequencer data -----------------------------------------------
-	if (clrSEQflag == true) {
-		clearSequencerData();
-		clrSEQflag = false;
-	}
-	
-	// draw Sequencer recording Notes -------------------------------------
-	if (SEQRecNoteFlag == true) {
-		drawSEQRecNotes();
-		SEQRecNoteFlag = false;
-	}
-	
-	// refresh screen -----------------------------------------------------
-	displayThread();
-	
-	// update LED Status --------------------------------------------------
-	updateLEDstatus();
-	
-	// read CPU Temp and AudioPro. usage ----------------------------------
-	updateTempAudioUsage();
+	usbMIDI.read(midiChannel); 			// USB Client MIDI
+	MIDI.read(midiChannel);	   			// MIDI 5 Pin DIN
+	encoder.tick(); 					// Encoder read			
+	EncoderQuery();
+	polySequencer();
 }
-

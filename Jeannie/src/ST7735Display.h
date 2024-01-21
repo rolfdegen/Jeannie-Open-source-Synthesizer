@@ -2,7 +2,7 @@
 
 // Teensy 4.1 Port connection
 #define sclk 27
-#define mosi 26
+#define mosi_0 26
 #define cs 2
 #define dc 3
 #define rst 9
@@ -26,7 +26,7 @@
 #define FILTER_ENV 3
 #define AMP_ENV 4
 
-ST7735_t3 tft = ST7735_t3(cs, dc, mosi, sclk, rst);
+ST7735_t3 tft = ST7735_t3(cs, dc, mosi_0, sclk, rst);
 
 String currentParameter = "";
 String currentValue = "";
@@ -127,7 +127,7 @@ uint8_t readModParameter(uint8_t ParameterNr);
 void readModMatrixParameter (uint8_t ParameterNo);
 void print_UserPOT(uint8_t potnumber);
 void printVoiceMode(void);
-void myControlChange(byte channel, byte control, byte value);
+void myControlChange(byte channel, byte control, uint16_t value);
 void updateFilterFM(void);
 void updateFilterFM2(void);
 void updateLFO3amt(void);
@@ -193,7 +193,7 @@ FLASHMEM void drawEnvMarkerVCF(int posx)
 	tft.fillRoundRect(posx,30,16,9,2,ST7735_GRAY);
 	tft.setFont(&Picopixel);
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(posx+2,36);
+	tft.setCursor(posx+2,33);
 	tft.print("ENV");
 	tft.setFont(NULL);
 }
@@ -206,7 +206,7 @@ FLASHMEM void drawLFOMarkerVCF(int posx)
 	tft.fillRoundRect(posx,60,16,9,2,ST7735_DARKGREEN);
 	tft.setFont(&Picopixel);
 	tft.setTextColor(ST7735_WHITE);
-	tft.setCursor(posx+3,66);
+	tft.setCursor(posx+3,63);
 	tft.print("LFO");
 	tft.setFont(NULL);
 }
@@ -253,8 +253,6 @@ FLASHMEM void draw_PWM_curve(float value)
 	tft.drawFastHLine(87+5+val,22+24,58-val,color);
 	drawPWMarrows (val);
 	
-	
-	
 	tft.setFont(&Picopixel);
 	if (oscWaveformA == 5 || oscWaveformB == 5) {
 		tft.setCursor(136, 22);
@@ -292,14 +290,14 @@ FLASHMEM void printPWMrate (float pwmRate)
 		tft.print("ENV");
 		if (PageNr == 1 && Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12)) {
 			tft.setFont(&Picopixel);
-			tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
+			tft.fillRoundRect(135,28,17,9,2,ST7735_GRAY);
 			tft.setCursor(137,31);
 			tft.print("ENV");
 			tft.setFont(NULL);
 		}
 		else if (PageNr == 2 && Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12)) {
 			tft.setFont(&Picopixel);
-			tft.fillRoundRect(135,25,17,9,2,ST7735_GRAY);
+			tft.fillRoundRect(135,28,17,9,2,ST7735_GRAY);
 			tft.setCursor(137,31);
 			tft.print("ENV");
 			tft.setFont(NULL);
@@ -310,14 +308,14 @@ FLASHMEM void printPWMrate (float pwmRate)
 		tft.print(value);
 		if (PageNr == 1 && Osc1WaveBank == 0 && (oscWaveformA == 5 || oscWaveformA == 8 || oscWaveformA == 12)) {
 			tft.setFont(&Picopixel);
-			tft.fillRoundRect(135,25,17,9,2,ST7735_DARKGREEN);
+			tft.fillRoundRect(135,28,17,9,2,ST7735_DARKGREEN);
 			tft.setCursor(138,31);
 			tft.print("LFO");
 			tft.setFont(NULL);
 		}
 		else if (PageNr == 2 && Osc2WaveBank == 0 && (oscWaveformB == 5 || oscWaveformB == 8 || oscWaveformB == 12)) {
 			tft.setFont(&Picopixel);
-			tft.fillRoundRect(135,25,17,9,2,ST7735_DARKGREEN);
+			tft.fillRoundRect(135,28,17,9,2,ST7735_DARKGREEN);
 			tft.setCursor(138,31);
 			tft.print("LFO");
 			tft.setFont(NULL);
@@ -357,14 +355,14 @@ FLASHMEM void printOscLevel (void)
 //*************************************************************************
 FLASHMEM void startTimer()
 {
-	timer1 = millis();
+	Disp_Timer1 = millis();
 	timer2 = millis();
 }
 
 //*************************************************************************
 // enable Scope
 //*************************************************************************
-FLASHMEM void enableScope(boolean enable) {
+void enableScope(boolean enable) {
 	enable ? scope.ScreenSetup(&tft) : scope.ScreenSetup(NULL);
 }
 
@@ -633,7 +631,7 @@ FLASHMEM void MidiSymbol ()
 		tft.drawFastVLine(xpos + 4, ypos + 1, 2, ST7735_YELLOW);
 		tft.drawPixel(xpos + 5, ypos + 2, ST7735_YELLOW);
 		MidiStatusSymbol = 2;
-		MidiStatusHoldTime = 1;
+		MidiStatusHoldTime = 63;
 		tftUpdate = false;
 	}
 
@@ -715,7 +713,7 @@ FLASHMEM void drawVoiceLED (void)
 //*************************************************************************
 // draw voice LED in main page
 //*************************************************************************
-FLASHMEM void drawVoiceLED_mainpage(void)
+void drawVoiceLED_mainpage(void)
 {
 	tft.fillRect(117, 7, 37, 17, ST7735_BLACK);
 	
@@ -779,7 +777,7 @@ FLASHMEM void printCurrentPatchName (void)
 //*************************************************************************
 // render Peakmeter
 //*************************************************************************
-FLASHMEM void renderPeak() {
+void renderPeak() {
 	
 	uint8_t BARnew = 0;
 	static uint8_t BARold = 0;
@@ -2212,9 +2210,9 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 	
 	// Bank P (Mutable Instruments Braids)
 	if (WaveBank == 15) {
-		if (WaveNr >= 15)
+		if (WaveNr >= max_waveform_BankP)
 		{
-			WaveNr = 15;
+			WaveNr = max_waveform_BankP;
 		}
 		
 		tft.setFont(NULL);
@@ -2278,7 +2276,31 @@ FLASHMEM void draw_Waveform(int WaveNr, uint16_t waveColor)
 			case 15:
 				print_String(297,101,24);	// BRAIDS
 				print_String(306,107,38);	// ZHPF
-			break;				
+			break;
+			case 16:
+				print_String(297,101,24);	// BRAIDS
+				print_String(307,107,38);	// RING
+			break;
+			case 17:
+				print_String(297,101,24);	// BRAIDS
+				print_String(308,112,38);	// FM
+			break;	
+			case 18:
+				print_String(297,101,24);	// BRAIDS
+				print_String(309,107,38);	// WTBL
+			break;
+			case 19:
+				print_String(297,101,24);	// BRAIDS
+				print_String(310,105,38);	// WMAP
+			break;	
+			case 20:
+				print_String(297,101,24);	// BRAIDS
+				print_String(311,105,38);	// WLIN
+			break;
+			case 21:
+				print_String(297,101,24);	// BRAIDS
+				print_String(312,105,38);	// WTX4
+			break;						
 		}
 		
 	}
@@ -2610,7 +2632,7 @@ FLASHMEM void update_LFO2_Osc1_PRMA_mod (void) {
 	float amount = Lfo2Osc1PrmAAmt * DIV127;
 	for (size_t i = 0; i < 8; i++)
 	{
-		Osc_Prm_mixer_A[i].gain(0, amount * 0.5f);
+		Osc_Prm_mixer_A[i].gain(0, amount);
 	}
 }
 
@@ -2674,7 +2696,7 @@ FLASHMEM void update_filterEnv_Osc1_PRMA_mod (void) {
 	float amount = filterEnvOsc1PrmAAmt * DIV127;
 	for (size_t i = 0; i < 8; i++)
 	{
-		Osc_Prm_mixer_A[i].gain(2, (amount * 0.5f));
+		Osc_Prm_mixer_A[i].gain(2, amount);
 	}
 }
 
@@ -2682,7 +2704,7 @@ FLASHMEM void update_filterEnv_Osc1_PRMB_mod (void) {
 	float amount = filterEnvOsc1PrmBAmt * DIV127;
 	for (size_t i = 0; i < 8; i++)
 	{
-		Osc_Prm_mixer_B[i].gain(2, (amount * 0.5f));
+		Osc_Prm_mixer_B[i].gain(2, amount);
 	}
 }
 
@@ -2690,7 +2712,7 @@ FLASHMEM void update_filterEnv_Osc2_PRMA_mod (void) {
 	float amount = filterEnvOsc2PrmAAmt * DIV127;
 	for (size_t i = 0; i < 8; i++)
 	{
-		Osc_Prm_mixer_C[i].gain(2, (amount * 0.5f));
+		Osc_Prm_mixer_C[i].gain(2, amount);
 	}
 }
 
@@ -2698,7 +2720,7 @@ FLASHMEM void update_filterEnv_Osc2_PRMB_mod (void) {
 	float amount = filterEnvOsc2PrmBAmt * DIV127;
 	for (size_t i = 0; i < 8; i++)
 	{
-		Osc_Prm_mixer_D[i].gain(2, (amount * 0.5f));
+		Osc_Prm_mixer_D[i].gain(2, amount);
 	}
 }
 
@@ -3094,7 +3116,7 @@ FLASHMEM uint8_t readModParameter(uint8_t ParameterNr)
 //*************************************************************************
 // render current Parameter
 //*************************************************************************
-FLASHMEM void renderCurrentParameter(uint8_t Page,uint16_t ParameterNr, uint8_t value)
+FLASHMEM void renderCurrentParameter(uint8_t Page,uint16_t ParameterNr, uint16_t value)
 {
 	// Page:0 Main --------------------------------------------------------
 	if (Page == 0){
@@ -5588,7 +5610,7 @@ FLASHMEM void printEnvRELvaluesX (uint8_t value, uint8_t prevValue, boolean prev
 //*************************************************************************
 // print Pick up value 0-100 / pot 0-3
 //*************************************************************************
-FLASHMEM void printPickupValue (uint8_t pot, uint8_t value, uint8_t prevValue, boolean prevFlag)
+FLASHMEM void printPickupValue (uint8_t pot, uint16_t value, uint8_t prevValue, boolean prevFlag)
 {
 	uint8_t xpos = 10 + (40 * pot);
 	const uint8_t ypos = 116;
@@ -5647,7 +5669,7 @@ FLASHMEM void printPickupValue (uint8_t pot, uint8_t value, uint8_t prevValue, b
 //*************************************************************************
 // print Pick up value +-64 / pot 0-3
 //*************************************************************************
-FLASHMEM void printPickupInt64 (uint8_t pot, int8_t value, int8_t prevValue, boolean prevFlag)
+FLASHMEM void printPickupInt64 (uint8_t pot, int16_t value, int8_t prevValue, boolean prevFlag)
 {
 	uint8_t xpos = 10 + (40 * pot);
 	const uint8_t ypos = 116;
@@ -5745,7 +5767,7 @@ FLASHMEM void printPickupInt64 (uint8_t pot, int8_t value, int8_t prevValue, boo
 //*************************************************************************
 // print Pick up value +-8 / pot 0-3
 //*************************************************************************
-FLASHMEM void printPickupInt8 (uint8_t pot, int8_t value, int8_t prevValue, boolean prevFlag)
+FLASHMEM void printPickupInt8 (uint8_t pot, int16_t value, int8_t prevValue, boolean prevFlag)
 {
 	uint8_t xpos = 10 + (40 * pot);
 	const uint8_t ypos = 116;
@@ -5849,7 +5871,7 @@ FLASHMEM void printPickupInt8 (uint8_t pot, int8_t value, int8_t prevValue, bool
 //*************************************************************************
 // print Pick up value 0-100 / pot 0-3
 //*************************************************************************
-FLASHMEM void printPickupVCFTyp (uint8_t pot, uint8_t value, uint8_t prevValue, boolean prevFlag)
+FLASHMEM void printPickupVCFTyp (uint8_t pot, uint16_t value, uint8_t prevValue, boolean prevFlag)
 {
 	uint8_t xpos = 10 + (40 * pot);
 	const uint8_t ypos = 116;
@@ -5932,6 +5954,8 @@ FLASHMEM void drawPeakmeter (void)
 //*************************************************************************
 FLASHMEM void print_quadsaw_pwamt(void)
 {
+	uint16_t val16_;
+
 	tft.fillRect(85,58,36,9,ST7735_BLACK);
 	tft.fillRect(85,77,36,9,ST7735_BLACK);
 	tft.setTextColor(ST7735_GRAY);
@@ -6005,9 +6029,20 @@ FLASHMEM void print_quadsaw_pwamt(void)
 		tft.fillRoundRect(133,76,22,10,2,ST7735_BLUE);
 		tft.setTextColor(ST7735_WHITE);
 		tft.setCursor(135,59);
-		tft.print(SupersawSpreadA);
+		if (SupersawSpreadA >= 999)
+		{
+			val16_ = 999;
+		}
+		else val16_ = SupersawSpreadA;
+		
+		tft.print(val16_);
 		tft.setCursor(135,78);
-		tft.print(SupersawMixA);
+		if (SupersawMixA >= 999)
+		{
+			val16_ = 999;
+		}
+		else val16_ = SupersawMixA;
+		tft.print(val16_);
 			
 	}
 	else if (PageNr == 2 && (Osc2WaveBank == 15 && oscWaveformB >= 1)) {
@@ -6017,10 +6052,20 @@ FLASHMEM void print_quadsaw_pwamt(void)
 		tft.fillRoundRect(133,76,22,10,2,ST7735_BLUE);
 		tft.setTextColor(ST7735_WHITE);
 		tft.setCursor(135,59);
-		tft.print(SupersawSpreadB);
+		if (SupersawSpreadB >= 999)
+		{
+			val16_ = 999;
+		}
+		else val16_ = SupersawSpreadB;
+		
+		tft.print(val16_);
 		tft.setCursor(135,78);
-		tft.print(SupersawMixB);
-			
+		if (SupersawMixB >= 999)
+		{
+			val16_ = 999;
+		}
+		else val16_ = SupersawMixB;
+		tft.print(val16_);
 	}
 	else {		
 		print_String(6,85,59);		// print "PWAMT"
@@ -6192,7 +6237,7 @@ FLASHMEM void read_live_ctrl_values (void) {
 //*************************************************************************
 // draw Main page
 //*************************************************************************
-FLASHMEM void drawMainPage (void) {
+void drawMainPage (void) {
 	
 	int16_t x1, y1;
 	uint16_t w1, h1;
@@ -6216,17 +6261,17 @@ FLASHMEM void drawMainPage (void) {
 		// clear PatchNo
 		tft.fillRect(61,8,47,18,ST7735_BLACK);
 		// clear Patch Name
-		tft.fillRect(0,39,160,18,ST7735_BLACK);
+		tft.fillRect(0,43,160,18,ST7735_BLACK);
 		// print bank nr
-		const uint8_t ypos = 22;
-		tft.fillRoundRect(44,7,16,20,2, ST7735_RED);
+		const uint8_t ypos = 12;
+		tft.fillRoundRect(44,8,16,20,2, ST7735_RED);
 		tft.setTextColor(ST7735_WHITE);
 		tft.setFont(&FreeSans9pt7b);
 		tft.setTextSize(1);
 		tft.setCursor(xposBankNo[currentPatchBank], ypos);
 		tft.print(BankNo[currentPatchBank]);
 		tft.setTextColor(ST7735_YELLOW);
-		tft.setCursor(62, 22);
+		tft.setCursor(62, 12);
 		int patchnumber = patchNo;
 		if (patchnumber < 10) {
 			tft.print("00");
@@ -6241,7 +6286,7 @@ FLASHMEM void drawMainPage (void) {
 		currentPatchName.trim();	// delete spaces
 		tft.drawFastHLine(10, 63, tft.width() - 20, ST7735_RED);
 		tft.getTextBounds(currentPatchName , 0, 0, &x1, &y1, &w1, &h1); // string width in pixels
-		tft.setCursor(80 - (w1 / 2), 52);	// print string in the middle
+		tft.setCursor(80 - (w1 / 2), 45);	// print string in the middle
 		tft.setTextColor(ST7735_WHITE);
 		tft.println(currentPatchName);
 		
@@ -6255,7 +6300,7 @@ FLASHMEM void drawMainPage (void) {
 			tft.setTextColor(ST77XX_DARKGREY);
 		}
 		tft.setFont(&Picopixel);
-		tft.setCursor(104,13);
+		tft.setCursor(104,10);
 		tft.print("S");
 		printVoiceMode();
 	}
@@ -6383,13 +6428,9 @@ FLASHMEM void drawOsc1Page (void)
 		tft.drawFastVLine(49,98,5,ST7735_YELLOW);
 		tft.drawFastVLine(50,99,3,ST7735_YELLOW);
 		tft.drawPixel(51,100,ST7735_YELLOW);
-		//tft.drawFastVLine(128,79,5,ST7735_YELLOW);
-		//tft.drawFastVLine(129,80,3,ST7735_YELLOW);
-		//tft.drawPixel(130,81,ST7735_YELLOW);
 		tft.drawFastVLine(128,98,5,ST7735_YELLOW);
 		tft.drawFastVLine(129,99,3,ST7735_YELLOW);
 		tft.drawPixel(130,100,ST7735_YELLOW);
-		
 		tft.drawFastVLine(0,14,95,ST7735_GRAY);
 		tft.drawFastVLine(80,14,95,ST7735_GRAY);
 		tft.drawFastVLine(159,14,95,ST7735_GRAY);
@@ -6845,9 +6886,9 @@ FLASHMEM void draw_StateVariable_Filter_page (void)
 	tft.drawLine(19,39,19,86,ST7735_GRAY);
 	tft.drawLine(19,86,134,86,ST7735_GRAY);
 	tft.setTextColor(ST7735_GRAY);
-	tft.setCursor(7, 40);
+	tft.setCursor(6, 40);
 	tft.print("dB");
-	tft.setCursor(110, 88);
+	tft.setCursor(110, 89);
 	tft.print("f/Hz");
 	
 	uint8_t Frq_value = 0;
@@ -8623,7 +8664,7 @@ FLASHMEM void printVoiceMode(void) {
 	if (PageNr == 0) {
 		tft.setFont(&Picopixel);
 		tft.setTextColor(ST7735_WHITE);
-		tft.fillRect(96,20,18,6,ST7735_BLACK);
+		tft.fillRect(96,23,18,6,ST7735_BLACK);
 		
 		if (unison == 0) {
 			print_String(235,98,24);		// print "POLY"
@@ -8697,7 +8738,7 @@ FLASHMEM void printVoiceMode(void) {
 //*************************************************************************
 // draw Menu Page
 //*************************************************************************
-FLASHMEM void renderCurrentPatchPage(void)
+void renderCurrentPatchPage(void)
 {
 	switch (PageNr) {
 		case 0: drawMainPage();	break;
@@ -9078,49 +9119,93 @@ FLASHMEM void drawProgressbar() {
 }
 
 //*************************************************************************
+// clear scope line if envelopes is stoped
+//*************************************************************************
+FLASHMEM void clear_scope_line(void)
+{
+	if (PageNr == 0 || PageNr == 12)
+		{
+			if (ampEnvelope[0].isActive() == false &&
+				ampEnvelope[1].isActive() == false &&
+				ampEnvelope[2].isActive() == false &&
+				ampEnvelope[3].isActive() == false &&
+				ampEnvelope[4].isActive() == false &&
+				ampEnvelope[5].isActive() == false &&
+				ampEnvelope[6].isActive() == false &&
+				ampEnvelope[7].isActive() == false)
+			{
+				EnvIdelFlag = false;
+				if (EnvelopeIdle == false)
+				{
+					EnvelopeIdle = true;
+				}
+			}
+			else
+			{
+				EnvelopeIdle = false;
+			}
+		}
+}
+
+//*************************************************************************
 // Display Thread
 //*************************************************************************
-void displayThread() {
+void displayThread()
+{
+	const uint16_t Time_1 = 40; // render pages
+	const uint16_t Time_2 = 50; // Screen refresh
 
-	const uint8_t timeVal1 = 38;
-	const uint8_t timeVal2 = 32;
-	
-	if (PageNr == 0) {
-		vuMeter = false;
-		if ((millis() - timer1) > timeVal1){	// refresh Main Page and Scope all 25ms
+	if ((millis() - Disp_Timer1) > Time_1)
+	{
+		tft.waitUpdateAsyncComplete();  // - Wait for any active update to complete
+
+		if (PageNr == 0)
+		{
+			vuMeter = false;
+			VoicLEDtime = 85;	 // note off time for LED symbols
+			render_Scope = true; // render scope line
+			clear_scope_line();
 			enableScope(true);
-			renderCurrentPatchPage();
-			tft.updateScreen();
-			timer1 = millis();
-			VoicLEDtime = 1;			// note off time for LED symbols
+			renderCurrentPatchPage(); // render menu page
 		}
-	}
-	if (PageNr > 0) {
-		if ((millis() - timer7) > timeVal2){	// refresh menu pages all 50ms
+		else if (PageNr < 96)	// PageNr < 96 - without Save/Load menu
+		{
+			if (renderPageFlag == true)
+			{
+				renderCurrentPatchPage(); // render menu page
+				renderPageFlag = false;
+			}
 			vuMeter = true;
+			enableScope(false);
 			MidiSymbol();
 			renderPeak();
 			drawVoiceLED();
 			SysExRecTimer();
 			drawProgressbar();
-			tft.updateScreen();
-			timer7 = millis();
-			VoicLEDtime = 1;			// note off time for LED symbols
-		}
-		if ((millis() - timer4) > blinkiTime){	// Time for green SUB Page Marker
-			blinkiTime = 250;
-			timer4 = millis();
-			drawSubPageInfo();
+			
+			VoicLEDtime = 85; 	// note off time for LED symbols
+
+			// Time for green SUB Page Marker
+			if ((millis() - Blinki_Timer) > blinkiTime)
+			{
+				blinkiTime = 250;
+				Blinki_Timer = millis();
+				drawSubPageInfo();
+			}
 		}
 	}
+	if ((millis() - Disp_Timer1) > Time_2)
+	{
+		tft.updateScreenAsync(false); // one-time update		
+		Disp_Timer1 = millis();
+	}
 }
-
 
 //*************************************************************************
 // set Display and init Thread
 //*************************************************************************
 FLASHMEM void setupDisplay() {
-	tft.useFrameBuffer(false);
+
 	tft.initR(INITR_BLACKTAB);	// 1.8" TFT 128x160 Pixel
 	//tft.initR(INITR_GREENTAB);	// 1.8" TFT 128x160 Pixel
 	//tft.initR(INITR_REDTAB);	// 1.8" TFT 128x160 Pixel
@@ -9192,7 +9277,8 @@ FLASHMEM void setupDisplay() {
 		delay(waitTime);
 		bmpDraw("PIC/PIC1.bmp",0,0);
 	}
-	
+	tft.setFrameBuffer(my_frame_buffer);
 	tft.useFrameBuffer(true); // activate Screen Buffer
+	
 }
 
