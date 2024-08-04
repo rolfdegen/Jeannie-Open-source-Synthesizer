@@ -1,4 +1,4 @@
-# Jeannie 8-voice polyphonic open source synthesizer with 24dB Ladder Filter and 12dB State Variable Multimode Filter
+# Jeannie 8-voice polyphonic open source virtuel analog/wavetable synthesizer and digital Ladder/State Variable Filter
 
 Jeannie is an 8-voice polyphonic open source synthesizer kit with digital sound synthesis and digital
 filters based on a fast ARM Cortex-M7 processor with 1MByte Ram. For sound generation, the user has
