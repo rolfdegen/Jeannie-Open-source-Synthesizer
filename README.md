@@ -13,7 +13,7 @@ Specifications
      • 12 standard waveforms, some of which are band-limited
      * Some Mutable instruments Shruthi and Braids synthesis
        Vowel, SuperSaw, Csaw, Vosim and many more...
-     * 8bit Wavetable synthesis with 54 Wavetables
+     * 8bit Wavetable synthesis with 54 different Wavetables and adjustable interpolation
      • Noise generator (white and pink noise)
      • Oscillator Modulation (XOR, XMOD, MOD, AND, PHA, FM)
      • Waveshaper with different curve shapes
