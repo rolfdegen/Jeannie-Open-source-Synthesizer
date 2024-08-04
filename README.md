@@ -15,6 +15,8 @@ parameters are entered via four rotary knobs below the display and an encoder fo
 programmes and switching to the menu functions. In addition, there are six buttons for operating special
 synthesizer functions.
 
+![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3b64f99f-8dd1-41cb-93d6-d4b6907a5fe9)
+
 Specifications
 
      • DIY 8-voice polyphonic synthesizer
@@ -59,8 +61,6 @@ Pictures
 ![hinten04283](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/a46b4db3-212a-4baa-bd91-be278c90c8f0)
 
 ![20211111_085558](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/2396a274-2f4c-4c56-a4c6-1174e4c848d1)
-
-![Seite](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/3b64f99f-8dd1-41cb-93d6-d4b6907a5fe9)
 
 ![Screenshot 2023-10-08 192844](https://github.com/rolfdegen/Jeannie-Open-source-Synthesizer/assets/16689445/82113774-1c11-4d4e-b995-6286131a5f38)
 
