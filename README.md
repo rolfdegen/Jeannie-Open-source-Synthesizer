@@ -22,7 +22,7 @@ Specifications
      • Digital filters
        12dB State Variable Filter with Resonance LP/HP/BP per voice
        24dB low pass ladder filter with resonance, gain and saturation per voice
-       global 12dB high-pass filter 20Hz – 2000Hz with resonance at the sum output
+       Stereo 12dB high-pass filter 20Hz – 2000Hz with resonance at the sum output
      • 2 ADSR generators with linear and exponential curves
      • 24Bit DSP effect module with 15 effects and adjustable parameters
      • Polyphonic sequencer with 16 steps
